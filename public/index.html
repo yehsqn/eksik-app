@@ -93,6 +93,11 @@
                         <span>💾</span>
                         <span>Yedek Al</span>
                     </button>
+                    <button class="btn btn-secondary" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
+                        <span>📥</span>
+                        <span>Yedek Yükle</span>
+                    </button>
+                    <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
                     <button class="btn btn-secondary btn-icon-only" id="btn-toggle-sound" title="Ses Bildirimleri">
                         <span>🔔</span>
                     </button>
@@ -490,6 +495,51 @@
         </div>
     </div>
 
+    <!-- MODAL: Import Backup Preview & Confirmation -->
+    <div class="modal-overlay" id="import-backup-modal">
+        <div class="modal-card" style="max-width: 460px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📥</span>
+                    <span>Yedek Dosyasını İçe Aktar</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div style="margin-bottom: 1.25rem;">
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.9rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #a5b4fc; margin-bottom: 0.35rem;" id="import-file-name">📁 dosya.json</div>
+                    <div style="font-size: 0.98rem; font-weight: 800; color: #fff;" id="import-summary-text">Yedek dosyası inceleniyor...</div>
+                </div>
+
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.6rem;">Yükleme Yöntemini Seçin:</div>
+                
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); margin-bottom: 0.6rem; cursor: pointer;">
+                    <input type="radio" name="import-mode" value="merge" checked style="margin-top: 0.25rem;">
+                    <div>
+                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">🔄 Mevcut Listeyle Birleştir (Tavsiye Edilen)</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Şu anki dükkan ürünleriniz silinmez, yedekteki ürünler listenize eklenir / güncellenir.</div>
+                    </div>
+                </label>
+
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); cursor: pointer;">
+                    <input type="radio" name="import-mode" value="replace" style="margin-top: 0.25rem;">
+                    <div>
+                        <div style="font-weight: 700; color: #f87171; font-size: 0.88rem;">⚠️ Listeyi Temizle ve Sıfırdan Yükle</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Mevcut ürünler temizlenir, sadece yedek dosyasındaki ürünler yüklenir.</div>
+                    </div>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup" style="padding: 0.65rem 1.35rem; font-weight: 800;">
+                    <span>📥</span>
+                    <span>Yedeği Şimdi Yükle</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Force unregister all old service workers and purge caches
         if ('serviceWorker' in navigator) {
@@ -505,11 +555,11 @@
     </script>
 
     <!-- App Scripts with Cache Busting -->
-    <script src="/js/duplicate-detector.js?v=20261017_2350"></script>
-    <script src="/js/audio.js?v=20261017_2350"></script>
-    <script src="/js/speech.js?v=20261017_2350"></script>
-    <script src="/js/export.js?v=20261017_2350"></script>
-    <script src="/js/app.js?v=20261017_2350"></script>
+    <script src="/js/duplicate-detector.js?v=20261017_2358"></script>
+    <script src="/js/audio.js?v=20261017_2358"></script>
+    <script src="/js/speech.js?v=20261017_2358"></script>
+    <script src="/js/export.js?v=20261017_2358"></script>
+    <script src="/js/app.js?v=20261017_2358"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

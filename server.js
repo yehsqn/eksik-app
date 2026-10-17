@@ -17,9 +17,9 @@ const PORT = process.env.PORT || 3000;
 const fs = require('fs');
 
 app.use(cors());
-// 15MB limit for photo uploads directly to SQLite / Turso
-app.use(express.json({ limit: '15mb' }));
-app.use(express.urlencoded({ extended: true, limit: '15mb' }));
+// 50MB limit for photo uploads and full backup imports directly to SQLite / Turso
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // GitHub veya Render'a zip olarak yüklendiyse public.zip'i otomatik çıkart
 const zipPath = path.join(__dirname, 'public.zip');
@@ -402,6 +402,90 @@ app.post('/api/items/clear-completed', async (req, res) => {
     } catch (err) {
         console.error('Clear completed error:', err);
         res.status(500).json({ error: 'Temizleme başarısız' });
+    }
+});
+
+// Backup Import API Endpoint
+app.post('/api/backup/import', async (req, res) => {
+    let { items, suppliers, mode } = req.body;
+
+    if (Array.isArray(req.body)) {
+        items = req.body;
+        suppliers = [];
+    }
+
+    if (!Array.isArray(items) || items.length === 0) {
+        return res.status(400).json({ error: 'Yedek dosyasında içe aktarılacak ürün bulunamadı' });
+    }
+
+    try {
+        if (mode === 'replace') {
+            await db.execute('DELETE FROM items');
+        }
+
+        let importedItemsCount = 0;
+        let importedSuppliersCount = 0;
+
+        // Import suppliers if provided
+        if (Array.isArray(suppliers) && suppliers.length > 0) {
+            for (const s of suppliers) {
+                if (!s || !s.name || !s.name.trim()) continue;
+                const supId = s.id || ('sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
+                const supName = s.name.trim();
+                const supCreated = s.createdAt || new Date().toISOString();
+                try {
+                    await db.execute({
+                        sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
+                        args: [supId, supName, supCreated]
+                    });
+                    importedSuppliersCount++;
+                } catch (e) {}
+            }
+        }
+
+        // Import items
+        for (const item of items) {
+            if (!item || !item.name || !item.name.trim()) continue;
+
+            const id = item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
+            const name = item.name.trim();
+            const quantity = (item.quantity || '1 adet').trim();
+            const category = item.category || 'Genel';
+            const supplier = item.supplier || 'Belirtilmedi';
+            const urgency = item.urgency || 'normal';
+            const status = item.status || 'pending';
+            const notes = (item.notes || '').trim();
+            const image = item.image || '';
+            const barcode = item.barcode || '';
+            const createdAt = item.createdAt || new Date().toISOString();
+            const updatedAt = item.updatedAt || new Date().toISOString();
+            const source = item.source || 'backup';
+
+            await db.execute({
+                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source]
+            });
+            importedItemsCount++;
+        }
+
+        const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
+        const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
+
+        io.emit('backup:imported', {
+            items: itemsRes.rows,
+            suppliers: supsRes.rows
+        });
+
+        res.json({
+            success: true,
+            importedItemsCount,
+            importedSuppliersCount,
+            totalItems: itemsRes.rows.length
+        });
+    } catch (err) {
+        console.error('Import backup error:', err);
+        res.status(500).json({ error: 'Yedek içe aktarma işlemi sırasında sunucu hatası oluştu' });
     }
 });
 

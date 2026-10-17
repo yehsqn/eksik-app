@@ -23,6 +23,7 @@ class App {
 
         this.pendingDeleteId = null;
         this.pendingDeleteTimer = null;
+        this.pendingImportData = null;
 
         this.init();
     }
@@ -420,6 +421,19 @@ class App {
             this.socket.on('items:trash-emptied', () => {
                 this.items = this.items.filter(i => i.status !== 'deleted');
                 this.render();
+            });
+
+            this.socket.on('backup:imported', (data) => {
+                if (data.items) this.items = data.items;
+                if (data.suppliers) {
+                    this.suppliers = data.suppliers;
+                    this.populateSupplierSelects();
+                }
+                this.render();
+                if (window.soundManager && window.soundManager.playCompleted) {
+                    window.soundManager.playCompleted();
+                }
+                this.showToast('📥 Canlı yedek senkronizasyonu tamamlandı!');
             });
 
             this.socket.on('supplier:added', (newSup) => {
@@ -834,6 +848,31 @@ class App {
         if (btnBackup) {
             btnBackup.addEventListener('click', () => {
                 this.exportBackupJson();
+            });
+        }
+
+        // Backup File Import Trigger
+        const btnImportTrigger = document.getElementById('btn-import-backup-trigger');
+        const backupFileInput = document.getElementById('backup-file-input');
+        if (btnImportTrigger && backupFileInput) {
+            btnImportTrigger.addEventListener('click', () => {
+                backupFileInput.value = '';
+                backupFileInput.click();
+            });
+
+            backupFileInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) {
+                    this.handleBackupFileSelect(file);
+                }
+            });
+        }
+
+        // Confirm Backup Import Button
+        const btnConfirmImport = document.getElementById('btn-confirm-import-backup');
+        if (btnConfirmImport) {
+            btnConfirmImport.addEventListener('click', () => {
+                this.executeBackupImport();
             });
         }
 
@@ -1307,6 +1346,104 @@ class App {
         URL.revokeObjectURL(url);
 
         this.showToast(`💾 ${this.items.length} ürünün tam güvenlik yedeği indirildi!`);
+    }
+
+    // Handle Backup File Select (Parse and preview before importing)
+    handleBackupFileSelect(file) {
+        if (!file.name.endsWith('.json')) {
+            this.showToast('Lütfen geçerli bir .json yedek dosyası seçin.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const content = JSON.parse(e.target.result);
+                let items = [];
+                let suppliers = [];
+
+                if (Array.isArray(content)) {
+                    items = content;
+                } else if (content && typeof content === 'object') {
+                    items = content.items || [];
+                    suppliers = content.suppliers || [];
+                }
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    this.showToast('Yedek dosyasında içe aktarılacak ürün bulunamadı.');
+                    return;
+                }
+
+                this.pendingImportData = {
+                    fileName: file.name,
+                    items,
+                    suppliers
+                };
+
+                const nameEl = document.getElementById('import-file-name');
+                const summaryEl = document.getElementById('import-summary-text');
+                if (nameEl) nameEl.textContent = `📁 ${file.name}`;
+                if (summaryEl) {
+                    summaryEl.textContent = `${items.length} adet ürün ve ${suppliers.length} toptancı tespit edildi.`;
+                }
+
+                this.openModal('import-backup-modal');
+            } catch (err) {
+                console.error('Yedek okuma hatası:', err);
+                this.showToast('Yedek dosyası okunamadı veya JSON formatı bozuk.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Execute Backup Import to Turso / SQLite
+    async executeBackupImport() {
+        if (!this.pendingImportData) return;
+
+        const modeRadio = document.querySelector('input[name="import-mode"]:checked');
+        const mode = modeRadio ? modeRadio.value : 'merge';
+
+        const payload = {
+            items: this.pendingImportData.items,
+            suppliers: this.pendingImportData.suppliers,
+            mode: mode
+        };
+
+        const btnConfirm = document.getElementById('btn-confirm-import-backup');
+        if (btnConfirm) {
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<span>⏳</span><span>Yükleniyor...</span>';
+        }
+
+        try {
+            const res = await fetch('/api/backup/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.closeAllModals();
+                this.showToast(`✅ ${data.importedItemsCount} ürün başarıyla içe aktarıldı!`);
+                if (window.soundManager && window.soundManager.playCompleted) {
+                    window.soundManager.playCompleted();
+                }
+                await this.loadInitialData();
+                await this.loadSuppliers();
+            } else {
+                this.showToast(data.error || 'İçe aktarma başarısız oldu.');
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            this.showToast('Sunucuya bağlanırken hata oluştu.');
+        } finally {
+            if (btnConfirm) {
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<span>📥</span><span>Yedeği Şimdi Yükle</span>';
+            }
+            this.pendingImportData = null;
+        }
     }
 
     async clearCompletedItems() {
