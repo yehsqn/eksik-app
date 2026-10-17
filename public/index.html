@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/style.css?v=20261017_2339">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -471,12 +471,26 @@
         </div>
     </div>
 
-    <!-- App Scripts -->
-    <script src="/js/duplicate-detector.js"></script>
-    <script src="/js/audio.js"></script>
-    <script src="/js/speech.js"></script>
-    <script src="/js/export.js"></script>
-    <script src="/js/app.js"></script>
+    <script>
+        // Force unregister all old service workers and purge caches
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+                for (let r of regs) r.unregister();
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                for (let k of keys) caches.delete(k);
+            });
+        }
+    </script>
+
+    <!-- App Scripts with Cache Busting -->
+    <script src="/js/duplicate-detector.js?v=20261017_2339"></script>
+    <script src="/js/audio.js?v=20261017_2339"></script>
+    <script src="/js/speech.js?v=20261017_2339"></script>
+    <script src="/js/export.js?v=20261017_2339"></script>
+    <script src="/js/app.js?v=20261017_2339"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

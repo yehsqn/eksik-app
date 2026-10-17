@@ -1024,12 +1024,21 @@ class App {
         }
     }
 
-    async deleteItem(id) {
+    async deleteItem(id, event) {
+        if (event) {
+            try {
+                event.stopPropagation();
+                event.preventDefault();
+            } catch (e) {}
+        }
+
         const item = this.items.find(i => i.id === id);
         const itemName = item ? item.name : 'Ürün';
 
         this.items = this.items.filter(i => i.id !== id);
-        window.soundManager.playDelete();
+        if (window.soundManager && window.soundManager.playDelete) {
+            window.soundManager.playDelete();
+        }
         this.render();
         this.showToast(`Silindi: ${itemName}`);
 
@@ -1303,10 +1312,10 @@ class App {
                     </div>
 
                     <div class="item-actions">
-                        <button class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="window.app.triggerCardPhotoUpload('${item.id}')">
+                        <button type="button" class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="event.stopPropagation(); window.app.triggerCardPhotoUpload('${item.id}')">
                             📷
                         </button>
-                        <button class="btn btn-danger btn-icon-only" title="Sil" onclick="window.app.deleteItem('${item.id}')">
+                        <button type="button" class="btn btn-danger btn-icon-only" title="Sil" onclick="event.stopPropagation(); window.app.deleteItem('${item.id}', event)">
                             🗑️
                         </button>
                     </div>
@@ -1387,7 +1396,4 @@ class App {
 // Bootstrap
 window.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => {});
-    }
 });
