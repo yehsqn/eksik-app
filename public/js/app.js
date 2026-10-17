@@ -16,6 +16,11 @@ class App {
         this.selectedAddPhoto = ''; // Base64 data URL for new item
         this.targetPhotoItemId = null; // Used when attaching photo to an existing item card
 
+        this.isPillsEditMode = false;
+        this.selectedPillEmoji = '🔩';
+        this.quickItems = [];
+        this.loadQuickPills();
+
         this.init();
     }
 
@@ -24,6 +29,7 @@ class App {
         this.initAuth();
         this.initEventListeners();
         this.initPhotoHandlers();
+        this.renderQuickPills();
 
         if (this.isAuthenticated()) {
             this.showAppScreen();
@@ -183,6 +189,163 @@ class App {
             qtyInput.value = qty || '1 kutu';
         }
         this.showToast(`Seçildi: ${name} (${qty || '1 kutu'})`);
+    }
+
+    // Quick Selection Pills Dynamic Manager
+    getDefaultQuickItems() {
+        return [
+            { id: '1', name: '4x50 Sunta Vidası', qty: '10 kutu', emoji: '🔩' },
+            { id: '2', name: 'Şeffaf Silikon', qty: '1 koli', emoji: '🧴' },
+            { id: '3', name: '115mm Taşlama Taşı', qty: '25 adet', emoji: '⚙️' },
+            { id: '4', name: 'Teflon Bant', qty: '10 adet', emoji: '🩹' },
+            { id: '5', name: 'Koli Bandı 45x100', qty: '1 koli', emoji: '📦' },
+            { id: '6', name: 'Beyaz Akrilik Mastik', qty: '1 koli', emoji: '🧱' },
+            { id: '7', name: '8mm Plastik Dübel', qty: '5 paket', emoji: '📍' },
+            { id: '8', name: 'Poliüretan Köpük 750ml', qty: '1 koli', emoji: '🧼' },
+            { id: '9', name: 'WD-40 Pas Sökücü 400ml', qty: '6 adet', emoji: '🛢️' },
+            { id: '10', name: 'Siyah Elektrik Bandı', qty: '10 adet', emoji: '🔌' },
+            { id: '11', name: 'Dekupaj Testere Ucu', qty: '5 paket', emoji: '🪚' },
+            { id: '12', name: 'Hızlı Yapıştırıcı (MDF Kit)', qty: '1 koli', emoji: '⚡' }
+        ];
+    }
+
+    loadQuickPills() {
+        try {
+            const saved = localStorage.getItem('dukkan_quick_items');
+            if (saved) {
+                this.quickItems = JSON.parse(saved);
+            } else {
+                this.quickItems = this.getDefaultQuickItems();
+                this.saveQuickPills();
+            }
+        } catch (e) {
+            this.quickItems = this.getDefaultQuickItems();
+        }
+    }
+
+    saveQuickPills() {
+        try {
+            localStorage.setItem('dukkan_quick_items', JSON.stringify(this.quickItems));
+        } catch (e) {
+            console.warn('Quick pills kaydedilemedi:', e);
+        }
+    }
+
+    renderQuickPills() {
+        const container = document.getElementById('hardware-quick-pills-container');
+        if (!container) return;
+
+        if (!this.quickItems || this.quickItems.length === 0) {
+            container.innerHTML = `
+                <div style="color:var(--text-muted); font-size:0.8rem; padding:0.4rem 0;">
+                    Kayıtlı hızlı seçenek kalmadı. 
+                    <button type="button" class="btn btn-secondary btn-xs" onclick="window.app.restoreDefaultQuickPills()" style="margin-left:0.5rem;">Varsayılanları Yükle</button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.quickItems.map(item => `
+            <div class="quick-pill-item ${this.isPillsEditMode ? 'edit-mode' : ''}" id="pill-${item.id}">
+                <button type="button" class="quick-pill-btn" onclick="window.app.handleQuickPillClick('${item.id}')" title="${item.name} (${item.qty})">
+                    <span>${item.emoji || '⚡'}</span>
+                    <span>${this.escapeHtml(item.name)}</span>
+                </button>
+                <button type="button" class="quick-pill-delete-btn" title="Bu seçeneği kaldır" onclick="window.app.deleteQuickPill('${item.id}', event)">✕</button>
+            </div>
+        `).join('');
+    }
+
+    handleQuickPillClick(id) {
+        if (this.isPillsEditMode) {
+            this.deleteQuickPill(id);
+            return;
+        }
+        const item = (this.quickItems || []).find(q => q.id === id);
+        if (item) {
+            this.fillQuickItem(item.name, item.qty);
+        }
+    }
+
+    togglePillsEditMode() {
+        this.isPillsEditMode = !this.isPillsEditMode;
+        const icon = document.getElementById('edit-pills-icon');
+        const text = document.getElementById('edit-pills-text');
+        const btn = document.getElementById('btn-toggle-edit-pills');
+
+        if (this.isPillsEditMode) {
+            if (icon) icon.textContent = '✓';
+            if (text) text.textContent = 'Tamamla';
+            if (btn) btn.classList.add('active');
+            this.showToast('Çıkarmak istediğiniz hızlı seçeneğin üzerindeki ✕ butonuna dokunun');
+        } else {
+            if (icon) icon.textContent = '🗑️';
+            if (text) text.textContent = 'Çıkar / Düzenle';
+            if (btn) btn.classList.remove('active');
+        }
+
+        this.renderQuickPills();
+    }
+
+    deleteQuickPill(id, event) {
+        if (event) event.stopPropagation();
+        const found = (this.quickItems || []).find(q => q.id === id);
+        this.quickItems = (this.quickItems || []).filter(q => q.id !== id);
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.showToast(`Çıkarıldı: ${found ? found.name : 'Seçenek'}`);
+    }
+
+    openAddQuickPillModal() {
+        const nameInput = document.getElementById('new-pill-name');
+        const qtyInput = document.getElementById('new-pill-qty');
+        if (nameInput) nameInput.value = '';
+        if (qtyInput) qtyInput.value = '1 kutu';
+        this.selectedPillEmoji = '🔩';
+        this.updateEmojiPickerUI();
+        this.openModal('add-quick-pill-modal');
+        if (nameInput) setTimeout(() => nameInput.focus(), 150);
+    }
+
+    updateEmojiPickerUI() {
+        document.querySelectorAll('.emoji-opt-btn').forEach(btn => {
+            if (btn.dataset.emoji === this.selectedPillEmoji) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    handleAddQuickPill(e) {
+        if (e) e.preventDefault();
+        const nameInput = document.getElementById('new-pill-name');
+        const qtyInput = document.getElementById('new-pill-qty');
+        const name = nameInput ? nameInput.value.trim() : '';
+        const qty = qtyInput ? qtyInput.value.trim() || '1 kutu' : '1 kutu';
+
+        if (!name) return;
+
+        const newItem = {
+            id: Date.now().toString(),
+            name: name,
+            qty: qty,
+            emoji: this.selectedPillEmoji || '⚡'
+        };
+
+        if (!this.quickItems) this.quickItems = [];
+        this.quickItems.push(newItem);
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.closeAllModals();
+        this.showToast(`Hızlı Seçeneklere Eklendi: ${name}`);
+    }
+
+    restoreDefaultQuickPills() {
+        this.quickItems = this.getDefaultQuickItems();
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.showToast('Varsayılan hırdavat seçenekleri geri yüklendi');
     }
 
     // Socket.IO
@@ -640,10 +803,31 @@ class App {
             });
         }
 
-        // Theme Toggle
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => this.toggleTheme());
+        // Quick Pills Controls
+        const btnAddPill = document.getElementById('btn-open-add-pill');
+        if (btnAddPill) {
+            btnAddPill.addEventListener('click', () => this.openAddQuickPillModal());
+        }
+
+        const btnEditPills = document.getElementById('btn-toggle-edit-pills');
+        if (btnEditPills) {
+            btnEditPills.addEventListener('click', () => this.togglePillsEditMode());
+        }
+
+        const formAddPill = document.getElementById('add-quick-pill-form');
+        if (formAddPill) {
+            formAddPill.addEventListener('submit', (e) => this.handleAddQuickPill(e));
+        }
+
+        const emojiGrid = document.getElementById('pill-emoji-grid');
+        if (emojiGrid) {
+            emojiGrid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.emoji-opt-btn');
+                if (btn && btn.dataset.emoji) {
+                    this.selectedPillEmoji = btn.dataset.emoji;
+                    this.updateEmojiPickerUI();
+                }
+            });
         }
 
         // Close buttons

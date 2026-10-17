@@ -575,11 +575,84 @@ body {
     animation: pulseAnim 1.2s infinite;
 }
 
-.quick-add-form.custom-layout {
+/* Quick Add Vertical Responsive Form */
+.quick-add-form-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.95rem;
+    width: 100%;
+}
+
+.form-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+}
+
+.input-label {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.form-row-responsive {
     display: grid;
-    grid-template-columns: 2.5fr 1.1fr 1.4fr 1.1fr auto;
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1.25fr 1.1fr;
+    gap: 0.85rem;
+    align-items: flex-end;
+}
+
+@media (max-width: 768px) {
+    .form-row-responsive {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+.form-actions-vertical {
+    display: flex;
     align-items: center;
+    gap: 0.65rem;
+    margin-top: 0.35rem;
+}
+
+.action-btn-extra {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.7rem 1.15rem;
+    font-weight: 600;
+    white-space: nowrap;
+    border-radius: var(--radius-md);
+}
+
+.action-btn-submit {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.72rem 1.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+    .form-actions-vertical {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .action-btn-extra,
+    .action-btn-submit {
+        width: 100%;
+        justify-content: center;
+    }
 }
 
 .item-card-with-photo {
@@ -1200,46 +1273,186 @@ select option {
     padding: 0.65rem;
 }
 
-/* Hardware Store Quick Favorites Bar */
-.hardware-quick-pills {
+/* Quick Pills Section & Dynamic Management */
+.quick-pills-section {
+    margin-top: 1.15rem;
+    padding-top: 0.95rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.quick-pills-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.quick-pills-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.quick-pills-controls {
     display: flex;
     align-items: center;
     gap: 0.45rem;
-    overflow-x: auto;
-    padding: 0.75rem 0 0.25rem 0;
-    margin-top: 0.65rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    scrollbar-width: none;
 }
-.hardware-quick-pills::-webkit-scrollbar {
-    display: none;
-}
-.quick-pill-label {
-    font-size: 0.75rem;
+
+.btn-pill-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.74rem;
     font-weight: 700;
-    color: #38bdf8;
-    white-space: nowrap;
-    margin-right: 0.2rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    padding: 0.28rem 0.65rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: 1px solid transparent;
 }
+
+.btn-pill-action.primary {
+    background: rgba(99, 102, 241, 0.15);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.35);
+}
+.btn-pill-action.primary:hover {
+    background: #6366f1;
+    color: #fff;
+    transform: translateY(-1px);
+}
+
+.btn-pill-action.danger {
+    background: rgba(244, 63, 94, 0.12);
+    color: #fb7185;
+    border-color: rgba(244, 63, 94, 0.25);
+}
+.btn-pill-action.danger:hover,
+.btn-pill-action.danger.active {
+    background: #f43f5e;
+    color: #fff;
+    border-color: #f43f5e;
+}
+
+.hardware-quick-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.4rem 0.1rem 0.6rem 0.1rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+.quick-pill-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
 .quick-pill-btn {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-full);
     color: var(--text-secondary);
-    padding: 0.3rem 0.75rem;
-    font-size: 0.78rem;
+    padding: 0.38rem 0.85rem;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     white-space: nowrap;
     transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }
+
 .quick-pill-btn:hover {
     background: rgba(99, 102, 241, 0.18);
     border-color: rgba(99, 102, 241, 0.45);
     color: #ffffff;
     transform: translateY(-1px);
+}
+
+.quick-pill-item.edit-mode .quick-pill-btn {
+    border-color: rgba(244, 63, 94, 0.6);
+    padding-right: 2rem;
+    animation: wigglePill 0.35s infinite ease-in-out alternate;
+}
+
+@keyframes wigglePill {
+    0% { transform: rotate(-1.5deg); }
+    100% { transform: rotate(1.5deg); }
+}
+
+.quick-pill-delete-btn {
+    display: none;
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #f43f5e;
+    color: #ffffff;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 800;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    transition: var(--transition-fast);
+}
+
+.quick-pill-item.edit-mode .quick-pill-delete-btn {
+    display: flex;
+}
+
+.quick-pill-delete-btn:hover {
+    background: #e11d48;
+    transform: translateY(-50%) scale(1.2);
+}
+
+/* Emoji Picker Grid in Modal */
+.emoji-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0.45rem;
+}
+
+.emoji-opt-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-sm);
+    font-size: 1.3rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-opt-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    border-color: #6366f1;
+    transform: scale(1.1);
+}
+
+.emoji-opt-btn.active {
+    background: rgba(99, 102, 241, 0.35);
+    border-color: #6366f1;
+    box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
 }
 
 /* QR Code Modal Content */
@@ -1406,19 +1619,6 @@ select option {
 /* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
-@media (max-width: 1024px) {
-    .quick-add-form {
-        grid-template-columns: 1fr 1fr;
-    }
-    .quick-add-form .form-group:first-child {
-        grid-column: 1 / -1;
-    }
-    .quick-add-form .quick-action-btns {
-        grid-column: 1 / -1;
-        justify-content: flex-end;
-    }
-}
-
 @media (max-width: 768px) {
     .header {
         padding: 0.75rem 1rem;
@@ -1429,12 +1629,6 @@ select option {
     .header-actions {
         justify-content: space-between;
         overflow-x: auto;
-    }
-    .quick-add-form {
-        grid-template-columns: 1fr;
-    }
-    .quick-add-form .form-group {
-        grid-column: 1 / -1;
     }
     .toolbar-bar {
         flex-direction: column;

@@ -162,77 +162,88 @@
                     </span>
                 </div>
 
-                <form id="quick-add-form" class="quick-add-form custom-layout">
-                    <!-- Product Name -->
-                    <div class="form-group flex-2">
+                <form id="quick-add-form" class="quick-add-form-vertical">
+                    <!-- Row 1: Product Name -->
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="input-name">Ürün Adı ve Modeli</label>
                         <div class="input-icon-wrapper">
                             <span class="input-icon">🔍</span>
                             <input type="text" id="input-name" placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)" required autocomplete="off">
                         </div>
                     </div>
 
-                    <!-- Quantity -->
-                    <div class="form-group flex-1">
-                        <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)" value="1 kutu">
-                    </div>
+                    <!-- Row 2: Responsive 3-box Grid -->
+                    <div class="form-row-responsive">
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-quantity">Miktar & Birim</label>
+                            <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)" value="1 kutu">
+                        </div>
 
-                    <!-- Supplier Selector (Dynamic from DB) -->
-                    <div class="form-group flex-1">
-                        <select id="input-supplier">
-                            <option value="Belirtilmedi">Toptancı Seçiniz (Opsiyonel)</option>
-                        </select>
-                    </div>
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-supplier">Toptancı (Opsiyonel)</label>
+                            <select id="input-supplier">
+                                <option value="Belirtilmedi">Toptancı Seçiniz</option>
+                            </select>
+                        </div>
 
-                    <!-- Urgency -->
-                    <div class="form-group flex-1">
-                        <select id="input-urgency">
-                            <option value="normal">Normal</option>
-                            <option value="urgent">Acil</option>
-                            <option value="critical">🔴 Yok Satıyor (Kritik)</option>
-                        </select>
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-urgency">Aciliyet Durumu</label>
+                            <select id="input-urgency">
+                                <option value="normal">Normal</option>
+                                <option value="urgent">🚨 Acil</option>
+                                <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Hidden file input for Photo -->
                     <input type="file" id="input-photo" accept="image/*" style="display:none;">
 
-                    <div class="quick-action-btns">
-                        <!-- Photo Button -->
-                        <button type="button" class="btn btn-secondary" id="btn-trigger-photo" title="Fotoğraf Çek / Yükle">
+                    <!-- Row 3: Action Buttons -->
+                    <div class="form-actions-vertical">
+                        <button type="button" class="btn btn-secondary action-btn-extra" id="btn-trigger-photo" title="Fotoğraf Çek / Yükle">
                             <span>📷</span>
                             <span id="photo-btn-text">Fotoğraf</span>
                         </button>
-                        <!-- Voice Button -->
-                        <button type="button" class="btn-mic" id="btn-voice-input" title="Sesle Söyle (Türkçe)">
-                            🎙️
+                        <button type="button" class="btn-mic action-btn-extra" id="btn-voice-input" title="Sesle Söyle (Türkçe)">
+                            <span>🎙️</span>
+                            <span>Sesle Söyle</span>
                         </button>
-                        <!-- Submit Button -->
-                        <button type="submit" class="btn btn-primary" id="btn-submit-add">
-                            <span>+</span>
-                            <span>Ekle</span>
+                        <button type="submit" class="btn btn-primary action-btn-submit" id="btn-submit-add">
+                            <span>➕</span>
+                            <span>Eksik Listesine Ekle</span>
                         </button>
                     </div>
                 </form>
-
-                <!-- Hardware Quick Selection Bar -->
-                <div class="hardware-quick-pills" id="hardware-quick-pills">
-                    <span class="quick-pill-label">⚡ Hızlı Seç:</span>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('4x50 Sunta Vidası', '10 kutu')">🔩 4x50 Vida</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Şeffaf Silikon', '1 koli')">🧴 Şeffaf Silikon</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('115mm Taşlama Taşı', '25 adet')">⚙️ Taşlama Taşı</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Teflon Bant', '10 adet')">🩹 Teflon Bant</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Koli Bandı 45x100', '1 koli')">📦 Koli Bandı</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Beyaz Akrilik Mastik', '1 koli')">🧱 Mastik</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('8mm Plastik Dübel', '5 paket')">📍 8mm Dübel</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Poliüretan Köpük 750ml', '1 koli')">🧼 Köpük</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('WD-40 Pas Sökücü 400ml', '6 adet')">🛢️ WD-40</button>
-                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Siyah Elektrik Bandı', '10 adet')">🔌 Elektrik Bandı</button>
-                </div>
 
                 <!-- Selected Photo Preview Strip -->
                 <div id="add-photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
                     <img id="add-photo-preview-img" src="" alt="Önizleme" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2);">
                     <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">Fotoğraf eklendi</span>
                     <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
+                </div>
+
+                <!-- Hardware Quick Selection Bar with Add / Remove Capability -->
+                <div class="quick-pills-section">
+                    <div class="quick-pills-header">
+                        <div class="quick-pills-title">
+                            <span>⚡</span>
+                            <span>Hızlı Seçenekler (Sık Bitenler)</span>
+                        </div>
+                        <div class="quick-pills-controls">
+                            <button type="button" class="btn-pill-action danger" id="btn-toggle-edit-pills" title="Listeden Ürün Çıkar">
+                                <span id="edit-pills-icon">🗑️</span>
+                                <span id="edit-pills-text">Çıkar / Düzenle</span>
+                            </button>
+                            <button type="button" class="btn-pill-action primary" id="btn-open-add-pill" title="Yeni Hızlı Ürün Ekle">
+                                <span>➕</span>
+                                <span>Yeni Ekle</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hardware-quick-pills" id="hardware-quick-pills-container">
+                        <!-- Populated dynamically via JavaScript with LocalStorage -->
+                    </div>
                 </div>
             </section>
 
@@ -386,6 +397,52 @@
                     <input type="password" id="input-new-pwd" required>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;">Şifreyi Güncelle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD QUICK PILL (Hızlı Seçeneklere Ürün Ekle) -->
+    <div class="modal-overlay" id="add-quick-pill-modal">
+        <div class="modal-card" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⚡</span>
+                    <span>Hızlı Seçeneklere Ürün Ekle</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <form id="add-quick-pill-form" style="display: flex; flex-direction: column; gap: 0.95rem; padding: 0.25rem 0;">
+                <div class="form-group-vertical">
+                    <label class="input-label" for="new-pill-name">Ürün Adı ve Ölçüsü</label>
+                    <input type="text" id="new-pill-name" placeholder="Örn: PPRC Boru 20mm, Çelik Dübel 10x80" required autocomplete="off">
+                </div>
+                <div class="form-group-vertical">
+                    <label class="input-label" for="new-pill-qty">Varsayılan Miktar & Birim</label>
+                    <input type="text" id="new-pill-qty" placeholder="Örn: 10 kutu, 5 paket, 2 koli, 20 boy" value="1 kutu">
+                </div>
+                <div class="form-group-vertical">
+                    <label class="input-label">Simge / İkon Seçin</label>
+                    <div class="emoji-picker-grid" id="pill-emoji-grid">
+                        <button type="button" class="emoji-opt-btn active" data-emoji="🔩">🔩</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧴">🧴</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="⚙️">⚙️</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🩹">🩹</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="📦">📦</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧱">🧱</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="📍">📍</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧼">🧼</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🛢️">🛢️</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🔌">🔌</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🪚">🪚</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🔨">🔨</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🎨">🎨</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="⚡">⚡</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 0.6rem; justify-content: center; padding: 0.8rem; font-weight: 700;">
+                    <span>➕</span>
+                    <span>Hızlı Seçeneklere Ekle</span>
+                </button>
             </form>
         </div>
     </div>
