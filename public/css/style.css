@@ -1964,3 +1964,112 @@ select option {
     }
 }
 
+/* ==========================================================================
+   2-Step Confirmation, Çöp Kutusu (Trash) & Undo Toast Styling
+   ========================================================================== */
+.btn-delete-confirm {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #ef4444 !important;
+    min-width: 92px !important;
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.76rem !important;
+    font-weight: 800 !important;
+    border-radius: var(--radius-sm) !important;
+    animation: pulseDeleteBtn 1s infinite alternate;
+}
+
+@keyframes pulseDeleteBtn {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.5); }
+    100% { transform: scale(1.04); box-shadow: 0 0 12px 3px rgba(239, 68, 68, 0.4); }
+}
+
+.trash-banner {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px dashed rgba(239, 68, 68, 0.35);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+}
+
+.trash-banner-info {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.trash-banner-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #f87171;
+}
+
+.trash-banner-desc {
+    font-size: 0.82rem;
+    color: #94a3b8;
+}
+
+.trash-banner-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Floating Toast with Undo Action */
+.toast-undo-container {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #0f131f;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    padding: 0.75rem 1.25rem;
+    border-radius: 9999px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.65), 0 0 15px rgba(99, 102, 241, 0.15);
+    font-size: 0.88rem;
+    font-weight: 600;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    max-width: 90vw;
+    animation: toastSlideUp 0.25s ease-out;
+}
+
+@keyframes toastSlideUp {
+    from { opacity: 0; transform: translate(-50%, 15px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+.toast-undo-btn {
+    background: #3b82f6;
+    color: #ffffff;
+    border: none;
+    border-radius: 9999px;
+    padding: 0.35rem 0.85rem;
+    font-size: 0.8rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+}
+
+.toast-undo-btn:hover {
+    background: #2563eb;
+    transform: scale(1.05);
+}
+.toast-undo-btn:active {
+    transform: scale(0.96);
+}
+
+

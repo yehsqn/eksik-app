@@ -21,6 +21,9 @@ class App {
         this.quickItems = [];
         this.loadQuickPills();
 
+        this.pendingDeleteId = null;
+        this.pendingDeleteTimer = null;
+
         this.init();
     }
 
@@ -401,7 +404,21 @@ class App {
             });
 
             this.socket.on('items:bulk-deleted', () => {
-                this.items = this.items.filter(i => i.status !== 'completed');
+                this.items.forEach(i => {
+                    if (i.status === 'completed') i.status = 'deleted';
+                });
+                this.render();
+            });
+
+            this.socket.on('items:all-restored', () => {
+                this.items.forEach(i => {
+                    if (i.status === 'deleted') i.status = 'pending';
+                });
+                this.render();
+            });
+
+            this.socket.on('items:trash-emptied', () => {
+                this.items = this.items.filter(i => i.status !== 'deleted');
                 this.render();
             });
 
@@ -812,6 +829,14 @@ class App {
             });
         }
 
+        // JSON Full Security Backup
+        const btnBackup = document.getElementById('btn-export-backup');
+        if (btnBackup) {
+            btnBackup.addEventListener('click', () => {
+                this.exportBackupJson();
+            });
+        }
+
         // Clear completed
         const btnClear = document.getElementById('btn-clear-completed');
         if (btnClear) {
@@ -1024,7 +1049,37 @@ class App {
         }
     }
 
-    async deleteItem(id, event) {
+    openConfirmModal({ icon = '⚠️', title = 'Onay Gerekiyor', desc = 'Bu işlemi yapmak istediğinize emin misiniz?', onConfirm }) {
+        const modal = document.getElementById('confirm-dialog-modal');
+        const iconEl = document.getElementById('confirm-modal-icon');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const descEl = document.getElementById('confirm-modal-desc');
+        const btnOk = document.getElementById('confirm-modal-btn-ok');
+        const btnCancel = document.getElementById('confirm-modal-btn-cancel');
+
+        if (iconEl) iconEl.textContent = icon;
+        if (titleEl) titleEl.textContent = title;
+        if (descEl) descEl.textContent = desc;
+
+        const cleanup = () => {
+            this.closeAllModals();
+            if (btnOk) btnOk.onclick = null;
+            if (btnCancel) btnCancel.onclick = null;
+        };
+
+        if (btnCancel) btnCancel.onclick = () => cleanup();
+        if (btnOk) {
+            btnOk.onclick = () => {
+                cleanup();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+        }
+
+        this.openModal('confirm-dialog-modal');
+    }
+
+    // 2-Step Confirmation Delete (No browser confirm() to avoid "uyarıları bastır" blocking)
+    requestDeleteItem(id, event) {
         if (event) {
             try {
                 event.stopPropagation();
@@ -1032,21 +1087,226 @@ class App {
             } catch (e) {}
         }
 
-        const item = this.items.find(i => i.id === id);
-        const itemName = item ? item.name : 'Ürün';
+        const btn = document.getElementById(`delete-btn-${id}`);
+        if (!btn) {
+            return this.executeSoftDelete(id);
+        }
 
-        this.items = this.items.filter(i => i.id !== id);
+        // 2nd CLICK: User already clicked once and now clicks again to confirm!
+        if (btn.classList.contains('btn-delete-confirm')) {
+            this.resetPendingDeleteButtons();
+            this.executeSoftDelete(id);
+            return;
+        }
+
+        // 1st CLICK: Turn button into pulsing "⚠️ Onayla?" state
+        this.resetPendingDeleteButtons();
+
+        this.pendingDeleteId = id;
+        btn.classList.add('btn-delete-confirm');
+        btn.innerHTML = '⚠️ Onayla?';
+
+        // Auto revert back to normal 🗑️ if not confirmed within 4.5 seconds
+        this.pendingDeleteTimer = setTimeout(() => {
+            this.resetPendingDeleteButtons();
+        }, 4500);
+    }
+
+    resetPendingDeleteButtons() {
+        if (this.pendingDeleteTimer) {
+            clearTimeout(this.pendingDeleteTimer);
+            this.pendingDeleteTimer = null;
+        }
+        this.pendingDeleteId = null;
+        document.querySelectorAll('.btn-delete-confirm').forEach(b => {
+            b.classList.remove('btn-delete-confirm');
+            b.innerHTML = '🗑️';
+        });
+    }
+
+    // Alias for compatibility
+    deleteItem(id, event) {
+        return this.requestDeleteItem(id, event);
+    }
+
+    // Soft Delete (Item moves to Çöp Kutusu, NEVER lost)
+    async executeSoftDelete(id) {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        const oldStatus = item.status || 'pending';
+        item.status = 'deleted';
+        item.updatedAt = new Date().toISOString();
+
         if (window.soundManager && window.soundManager.playDelete) {
             window.soundManager.playDelete();
         }
         this.render();
-        this.showToast(`Silindi: ${itemName}`);
+
+        // Show floating Undo toast for 6.5s
+        this.showUndoToast(item, oldStatus);
 
         try {
             await fetch(`/api/items/${id}`, { method: 'DELETE' });
         } catch (e) {
             console.error('Silme hatası:', e);
         }
+    }
+
+    // Floating Undo Toast (1-click restore)
+    showUndoToast(item, previousStatus = 'pending') {
+        document.querySelectorAll('.toast-undo-container').forEach(t => t.remove());
+
+        const toast = document.createElement('div');
+        toast.className = 'toast-undo-container';
+        toast.innerHTML = `
+            <span>🗑️ <strong>${this.escapeHtml(item.name)}</strong> silindi.</span>
+            <button type="button" class="toast-undo-btn" id="btn-undo-delete">↩️ Geri Al</button>
+        `;
+
+        document.body.appendChild(toast);
+
+        const undoBtn = toast.querySelector('#btn-undo-delete');
+        if (undoBtn) {
+            undoBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.remove();
+                this.restoreItem(item.id, previousStatus);
+            };
+        }
+
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.35s ease';
+                setTimeout(() => toast.remove(), 350);
+            }
+        }, 6500);
+    }
+
+    // Restore item from Çöp Kutusu back to active
+    async restoreItem(id, targetStatus = 'pending') {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        item.status = targetStatus || 'pending';
+        item.updatedAt = new Date().toISOString();
+
+        if (window.soundManager && window.soundManager.playCompleted) {
+            window.soundManager.playCompleted();
+        }
+        this.render();
+        this.showToast(`↩️ Geri Yüklendi: ${item.name}`);
+
+        try {
+            await fetch(`/api/items/${id}/restore`, { method: 'POST' });
+        } catch (e) {
+            console.error('Geri yükleme hatası:', e);
+        }
+    }
+
+    // Restore All Deleted Items in 1 click
+    async restoreAllDeleted() {
+        const deletedItems = this.items.filter(i => i.status === 'deleted');
+        if (deletedItems.length === 0) {
+            this.showToast('Çöp kutusunda geri yüklenecek ürün yok.');
+            return;
+        }
+
+        deletedItems.forEach(i => {
+            i.status = 'pending';
+            i.updatedAt = new Date().toISOString();
+        });
+
+        if (window.soundManager && window.soundManager.playCompleted) {
+            window.soundManager.playCompleted();
+        }
+        this.render();
+        this.showToast(`✅ ${deletedItems.length} ürün listeye geri yüklendi!`);
+
+        try {
+            await fetch('/api/items/restore-all', { method: 'POST' });
+        } catch (e) {
+            console.error('Toplu geri yükleme hatası:', e);
+        }
+    }
+
+    // Empty Trash (permanently deletes ONLY soft-deleted items)
+    emptyTrash() {
+        const trashCount = this.items.filter(i => i.status === 'deleted').length;
+        if (trashCount === 0) {
+            this.showToast('Çöp kutusu zaten boş.');
+            return;
+        }
+
+        this.openConfirmModal({
+            icon: '🧹',
+            title: 'Çöp Kutusunu Boşalt',
+            desc: `Çöp kutusundaki ${trashCount} adet ürün kalıcı olarak silinecek. Bu işlem geri alınamaz! Kalıcı olarak silinsin mi?`,
+            onConfirm: async () => {
+                this.items = this.items.filter(i => i.status !== 'deleted');
+                this.render();
+                this.showToast('Çöp kutusu tamamen boşaltıldı.');
+                try {
+                    await fetch('/api/items/trash/empty', { method: 'DELETE' });
+                } catch (e) {
+                    console.error('Çöp boşaltma hatası:', e);
+                }
+            }
+        });
+    }
+
+    // Permanently Delete single item (only when in trash)
+    permanentDeleteItem(id) {
+        const item = this.items.find(i => i.id === id);
+        const name = item ? item.name : 'Ürün';
+
+        this.openConfirmModal({
+            icon: '❌',
+            title: 'Kalıcı Olarak Sil',
+            desc: `"${name}" ürünü veritabanından kalıcı olarak silinecektir. Emin misiniz?`,
+            onConfirm: async () => {
+                this.items = this.items.filter(i => i.id !== id);
+                if (window.soundManager && window.soundManager.playDelete) {
+                    window.soundManager.playDelete();
+                }
+                this.render();
+                this.showToast(`Kalıcı olarak silindi: ${name}`);
+
+                try {
+                    await fetch(`/api/items/${id}?permanent=true`, { method: 'DELETE' });
+                } catch (e) {
+                    console.error('Kalıcı silme hatası:', e);
+                }
+            }
+        });
+    }
+
+    // Full Security Backup (Downloads JSON file containing all items)
+    exportBackupJson() {
+        const data = {
+            exportDate: new Date().toISOString(),
+            app: 'App - Dükkan Eksik Takip',
+            totalItems: this.items.length,
+            activeItems: this.items.filter(i => i.status !== 'deleted').length,
+            deletedItems: this.items.filter(i => i.status === 'deleted').length,
+            suppliers: this.suppliers,
+            items: this.items
+        };
+
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `eksik-app-yedek-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showToast(`💾 ${this.items.length} ürünün tam güvenlik yedeği indirildi!`);
     }
 
     async clearCompletedItems() {
@@ -1056,9 +1316,12 @@ class App {
             return;
         }
 
-        this.items = this.items.filter(i => i.status !== 'completed');
+        // Soft-delete completed items so they are safe in Çöp Kutusu!
+        this.items.forEach(i => {
+            if (i.status === 'completed') i.status = 'deleted';
+        });
         this.render();
-        this.showToast(`${completedCount} tamamlanmış ürün temizlendi.`);
+        this.showToast(`${completedCount} tamamlanmış ürün çöp kutusuna taşındı (güvende).`);
 
         try {
             await fetch('/api/items/clear-completed', { method: 'POST' });
@@ -1143,15 +1406,24 @@ class App {
 
     getFilteredItems() {
         return this.items.filter(item => {
-            if (this.filterStatus !== 'all') {
-                if (this.filterStatus === 'critical') {
-                    if (item.urgency !== 'critical' || item.status === 'completed') return false;
-                } else if (this.filterStatus === 'urgent') {
-                    if (item.urgency !== 'urgent' || item.status === 'completed') return false;
-                } else if (item.status !== this.filterStatus) {
-                    return false;
+            // Trash view shows ONLY deleted items
+            if (this.filterStatus === 'trash') {
+                if (item.status !== 'deleted') return false;
+            } else {
+                // All other views NEVER show deleted items
+                if (item.status === 'deleted') return false;
+
+                if (this.filterStatus !== 'all') {
+                    if (this.filterStatus === 'critical') {
+                        if (item.urgency !== 'critical' || item.status === 'completed') return false;
+                    } else if (this.filterStatus === 'urgent') {
+                        if (item.urgency !== 'urgent' || item.status === 'completed') return false;
+                    } else if (item.status !== this.filterStatus) {
+                        return false;
+                    }
                 }
             }
+
             if (this.activeSupplier !== 'all' && item.supplier !== this.activeSupplier) {
                 return false;
             }
@@ -1169,13 +1441,15 @@ class App {
     }
 
     renderStats() {
-        const total = this.items.length;
-        const pending = this.items.filter(i => i.status === 'pending').length;
-        const urgent = this.items.filter(i => (i.urgency === 'critical' || i.urgency === 'urgent') && i.status !== 'completed').length;
-        const completed = this.items.filter(i => i.status === 'completed').length;
-        const ordered = this.items.filter(i => i.status === 'ordered').length;
-        const critical = this.items.filter(i => i.urgency === 'critical' && i.status !== 'completed').length;
-        const urgentOnly = this.items.filter(i => i.urgency === 'urgent' && i.status !== 'completed').length;
+        const activeItems = this.items.filter(i => i.status !== 'deleted');
+        const total = activeItems.length;
+        const pending = activeItems.filter(i => i.status === 'pending').length;
+        const urgent = activeItems.filter(i => (i.urgency === 'critical' || i.urgency === 'urgent') && i.status !== 'completed').length;
+        const completed = activeItems.filter(i => i.status === 'completed').length;
+        const ordered = activeItems.filter(i => i.status === 'ordered').length;
+        const critical = activeItems.filter(i => i.urgency === 'critical' && i.status !== 'completed').length;
+        const urgentOnly = activeItems.filter(i => i.urgency === 'urgent' && i.status !== 'completed').length;
+        const trashCount = this.items.filter(i => i.status === 'deleted').length;
 
         const statTotal = document.getElementById('stat-total');
         const statPending = document.getElementById('stat-pending');
@@ -1201,6 +1475,7 @@ class App {
         const chipPend = document.getElementById('chip-pending');
         const chipOrd = document.getElementById('chip-ordered');
         const chipComp = document.getElementById('chip-completed');
+        const chipTrash = document.getElementById('chip-trash');
 
         if (chipTotal) chipTotal.textContent = total;
         if (chipCrit) chipCrit.textContent = critical;
@@ -1208,6 +1483,7 @@ class App {
         if (chipPend) chipPend.textContent = pending;
         if (chipOrd) chipOrd.textContent = ordered;
         if (chipComp) chipComp.textContent = completed;
+        if (chipTrash) chipTrash.textContent = trashCount;
     }
 
     render() {
@@ -1218,13 +1494,23 @@ class App {
         const filtered = this.getFilteredItems();
 
         if (filtered.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">✨</div>
-                    <h3 style="font-weight:700; margin-bottom:0.35rem;">Eksik Ürün Bulunamadı</h3>
-                    <p style="font-size:0.875rem;">Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
-                </div>
-            `;
+            if (this.filterStatus === 'trash') {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛡️</div>
+                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Çöp Kutusu Boş</h3>
+                        <p style="font-size:0.875rem;">Silinmiş herhangi bir ürün bulunmuyor. Tüm ürünleriniz ana listede güvende!</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✨</div>
+                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Eksik Ürün Bulunamadı</h3>
+                        <p style="font-size:0.875rem;">Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
+                    </div>
+                `;
+            }
             return;
         }
 
@@ -1236,7 +1522,32 @@ class App {
     }
 
     renderListView(items, container) {
-        container.innerHTML = items.map(item => this.createItemCardHtml(item)).join('');
+        let bannerHtml = '';
+        if (this.filterStatus === 'trash') {
+            const trashCount = items.length;
+            bannerHtml = `
+                <div class="trash-banner">
+                    <div class="trash-banner-info">
+                        <span style="font-size: 1.8rem;">🛡️</span>
+                        <div>
+                            <div class="trash-banner-title">Çöp Kutusu & Geri Dönüşüm (${trashCount} Ürün)</div>
+                            <div class="trash-banner-desc">Sildiğiniz hiçbir ürün kaybolmaz! Dilediğiniz zaman tek tıkla geri yükleyebilirsiniz.</div>
+                        </div>
+                    </div>
+                    <div class="trash-banner-actions">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.app.restoreAllDeleted()" ${trashCount === 0 ? 'disabled' : ''}>
+                            <span>↩️</span>
+                            <span>Tümünü Geri Yükle</span>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="window.app.emptyTrash()" ${trashCount === 0 ? 'disabled' : ''}>
+                            <span>🧹</span>
+                            <span>Çöp Kutusunu Boşalt</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = bannerHtml + items.map(item => this.createItemCardHtml(item)).join('');
     }
 
     renderBySupplier(items, container) {
@@ -1268,10 +1579,43 @@ class App {
     }
 
     createItemCardHtml(item) {
+        // Special Trash Card if item is soft-deleted
+        if (item.status === 'deleted') {
+            return `
+                <div class="item-card" id="card-${item.id}" style="opacity: 0.9; border-color: rgba(239, 68, 68, 0.35);">
+                    <div class="card-body-top">
+                        <div class="item-main-info" style="width: 100%;">
+                            <div class="item-title-row">
+                                <span class="urgency-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🗑️ Çöp Kutusunda</span>
+                                <h3 class="item-title" style="text-decoration: line-through; color: #94a3b8;">${this.escapeHtml(item.name)}</h3>
+                            </div>
+                            <div class="item-meta-row">
+                                <span class="meta-tag quantity">📦 ${this.escapeHtml(item.quantity || '1 adet')}</span>
+                                <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                                <span class="meta-tag time">🕒 ${this.formatTime(item.updatedAt || item.createdAt)}</span>
+                            </div>
+                            ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="card-body-bottom" style="border-top: 1px solid rgba(239, 68, 68, 0.15); padding-top: 0.6rem;">
+                        <span style="font-size: 0.78rem; color: #94a3b8;">🛡️ Veritabanında saklanıyor</span>
+                        <div class="item-actions">
+                            <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-weight: 700;" title="Listeye Geri Yükle" onclick="event.stopPropagation(); window.app.restoreItem('${item.id}')">
+                                ↩️ Geri Yükle
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" style="padding: 0.35rem 0.65rem;" title="Kalıcı Olarak Sil" onclick="event.stopPropagation(); window.app.permanentDeleteItem('${item.id}')">
+                                ❌ Kalıcı Sil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         const urgencyClass = item.urgency === 'critical' ? 'critical' : (item.urgency === 'urgent' ? 'urgent' : 'normal');
         const urgencyLabels = { critical: 'Yok Satıyor', urgent: 'Acil', normal: 'Normal' };
         const isCompleted = item.status === 'completed';
-
         const hasPhoto = !!item.image;
 
         return `
@@ -1315,7 +1659,11 @@ class App {
                         <button type="button" class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="event.stopPropagation(); window.app.triggerCardPhotoUpload('${item.id}')">
                             📷
                         </button>
-                        <button type="button" class="btn btn-danger btn-icon-only" title="Sil" onclick="event.stopPropagation(); window.app.deleteItem('${item.id}', event)">
+                        <button type="button" 
+                                id="delete-btn-${item.id}"
+                                class="btn btn-danger btn-icon-only" 
+                                title="Silmek için tıklayın (2. tıklama onaylar)" 
+                                onclick="event.stopPropagation(); window.app.requestDeleteItem('${item.id}', event)">
                             🗑️
                         </button>
                     </div>
