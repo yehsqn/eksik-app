@@ -70,12 +70,11 @@ class App {
         const logoutBtn = document.getElementById('btn-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                if (confirm('Oturumu kapatmak istediğinize emin misiniz?')) {
-                    localStorage.removeItem('dukkan_token');
-                    localStorage.removeItem('dukkan_username');
-                    this.authToken = null;
-                    this.showLoginScreen();
-                }
+                localStorage.removeItem('dukkan_token');
+                localStorage.removeItem('dukkan_username');
+                this.authToken = null;
+                this.showLoginScreen();
+                this.showToast('Çıkış yapıldı');
             });
         }
 
@@ -552,10 +551,10 @@ class App {
                 this.showToast(`Toptancı Eklendi: ${created.name}`);
             } else {
                 const err = await res.json();
-                alert(err.error || 'Toptancı eklenemedi.');
+                this.showToast(err.error || 'Toptancı eklenemedi.');
             }
         } catch (e) {
-            alert('Sunucu hatası.');
+            this.showToast('Sunucu hatası.');
         }
     }
 
@@ -574,8 +573,6 @@ class App {
     }
 
     async clearAllSuppliers() {
-        if (!confirm('Kayıtlı TÜM toptancıları silmek ve listeyi tamamen boş bırakmak istediğinize emin misiniz?')) return;
-
         this.suppliers = [];
         this.populateSupplierSelects();
         this.renderSuppliersModal();
@@ -998,7 +995,7 @@ class App {
             }
         } catch (e) {
             console.error('Ekleme hatası:', e);
-            alert('Ürün eklenemedi.');
+            this.showToast('Ürün eklenemedi.');
         }
     }
 
@@ -1028,11 +1025,13 @@ class App {
     }
 
     async deleteItem(id) {
-        if (!confirm('Bu ürünü listeden silmek istediğinize emin misiniz?')) return;
+        const item = this.items.find(i => i.id === id);
+        const itemName = item ? item.name : 'Ürün';
 
         this.items = this.items.filter(i => i.id !== id);
         window.soundManager.playDelete();
         this.render();
+        this.showToast(`Silindi: ${itemName}`);
 
         try {
             await fetch(`/api/items/${id}`, { method: 'DELETE' });
@@ -1044,14 +1043,13 @@ class App {
     async clearCompletedItems() {
         const completedCount = this.items.filter(i => i.status === 'completed').length;
         if (completedCount === 0) {
-            alert('Temizlenecek tamamlanmış ürün bulunmuyor.');
+            this.showToast('Temizlenecek tamamlanmış ürün bulunmuyor.');
             return;
         }
 
-        if (!confirm(`${completedCount} adet tamamlanmış ürün listeden kalıcı olarak temizlensin mi?`)) return;
-
         this.items = this.items.filter(i => i.status !== 'completed');
         this.render();
+        this.showToast(`${completedCount} tamamlanmış ürün temizlendi.`);
 
         try {
             await fetch('/api/items/clear-completed', { method: 'POST' });
@@ -1342,7 +1340,7 @@ class App {
     async copyListToClipboard() {
         const pendingItems = this.items.filter(i => i.status !== 'completed');
         if (pendingItems.length === 0) {
-            alert('Kopyalanacak bekleyen eksik ürün bulunmuyor.');
+            this.showToast('Kopyalanacak bekleyen eksik ürün bulunmuyor.');
             return;
         }
 

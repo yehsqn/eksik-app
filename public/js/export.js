@@ -5,7 +5,9 @@ class ExportManager {
         const activeItems = (items || []).filter(i => i.status !== 'completed');
 
         if (activeItems.length === 0) {
-            alert('Yazdırılacak / PDF yapılacak aktif eksik ürün bulunmuyor.');
+            if (window.app && window.app.showToast) {
+                window.app.showToast('Yazdırılacak aktif eksik ürün bulunmuyor.');
+            }
             return;
         }
 
