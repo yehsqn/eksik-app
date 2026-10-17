@@ -419,6 +419,12 @@ class App {
                 this.populateSupplierSelects();
                 this.renderSuppliersModal();
             });
+
+            this.socket.on('supplier:all-deleted', () => {
+                this.suppliers = [];
+                this.populateSupplierSelects();
+                this.renderSuppliersModal();
+            });
         }
     }
 
@@ -500,18 +506,28 @@ class App {
         if (!container) return;
 
         if (this.suppliers.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem;">Kayıtlı toptancı bulunmuyor. Yukarıdan ekleyebilirsiniz.</div>';
+            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.75rem; text-align:center;">Kayıtlı toptancı bulunmuyor. Yukarıdan istediğiniz toptancıyı ekleyebilirsiniz.</div>';
             return;
         }
 
-        container.innerHTML = this.suppliers.map(sup => `
+        const itemsHtml = this.suppliers.map(sup => `
             <div class="supplier-manage-item">
-                <span style="font-weight:600; font-size:0.9rem;">👤 ${this.escapeHtml(sup.name)}</span>
-                <button class="btn btn-danger btn-sm" style="padding:0.25rem 0.5rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
+                <span style="font-weight:600; font-size:0.9rem; color:var(--text-primary);">🏢 ${this.escapeHtml(sup.name)}</span>
+                <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.6rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
                     Sil 🗑️
                 </button>
             </div>
         `).join('');
+
+        const clearAllHtml = `
+            <div style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px dashed rgba(255,255,255,0.12);">
+                <button type="button" class="btn btn-danger btn-sm" style="width: 100%; justify-content: center; padding: 0.55rem;" onclick="window.app.clearAllSuppliers()">
+                    🗑️ Tüm Toptancıları Temizle (Boş Bırak)
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = itemsHtml + clearAllHtml;
     }
 
     async handleAddSupplier(name) {
@@ -544,18 +560,31 @@ class App {
     }
 
     async deleteSupplier(id, name) {
-        if (!confirm(`"${name}" toptancısını silmek istediğinize emin misiniz?`)) return;
+        // Optimistic removal for instant UI feedback
+        this.suppliers = this.suppliers.filter(s => s.id !== id && s.name !== name);
+        this.populateSupplierSelects();
+        this.renderSuppliersModal();
+        this.showToast(`Toptancı Silindi: ${name}`);
 
         try {
-            const res = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                this.suppliers = this.suppliers.filter(s => s.id !== id);
-                this.populateSupplierSelects();
-                this.renderSuppliersModal();
-                this.showToast(`Toptancı Silindi: ${name}`);
-            }
+            await fetch(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' });
         } catch (e) {
-            alert('Silme hatası.');
+            console.error('Silme hatası:', e);
+        }
+    }
+
+    async clearAllSuppliers() {
+        if (!confirm('Kayıtlı TÜM toptancıları silmek ve listeyi tamamen boş bırakmak istediğinize emin misiniz?')) return;
+
+        this.suppliers = [];
+        this.populateSupplierSelects();
+        this.renderSuppliersModal();
+        this.showToast('Tüm toptancılar temizlendi');
+
+        try {
+            await fetch('/api/suppliers', { method: 'DELETE' });
+        } catch (e) {
+            console.error('Temizleme hatası:', e);
         }
     }
 
@@ -1240,45 +1269,49 @@ class App {
 
         return `
             <div class="item-card ${urgencyClass} ${isCompleted ? 'completed' : ''} ${hasPhoto ? 'item-card-with-photo' : ''}" id="card-${item.id}">
-                <button class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
-                    ✓
-                </button>
+                <div class="card-body-top">
+                    <button class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
+                        ✓
+                    </button>
 
-                ${hasPhoto ? `
-                    <img src="${item.image}" class="item-photo-thumb" title="Büyük Fotoğrafı Gör" onclick="window.app.openLightbox('${item.id}')">
-                ` : ''}
+                    ${hasPhoto ? `
+                        <img src="${item.image}" class="item-photo-thumb" title="Büyük Fotoğrafı Gör" onclick="window.app.openLightbox('${item.id}')">
+                    ` : ''}
 
-                <div class="item-main-info">
-                    <div class="item-title-row">
-                        <span class="item-title">${this.escapeHtml(item.name)}</span>
-                        <div class="qty-control-group">
-                            <button type="button" class="btn-qty-step" title="Miktarı 1 Azalt" onclick="window.app.quickAdjustQuantity('${item.id}', -1)">−</button>
-                            <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
-                            <button type="button" class="btn-qty-step" title="Miktarı 1 Artır" onclick="window.app.quickAdjustQuantity('${item.id}', 1)">+</button>
+                    <div class="item-main-info">
+                        <div class="item-title-row">
+                            <span class="item-title">${this.escapeHtml(item.name)}</span>
+                            <div class="qty-control-group">
+                                <button type="button" class="btn-qty-step" title="Miktarı 1 Azalt" onclick="window.app.quickAdjustQuantity('${item.id}', -1)">−</button>
+                                <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
+                                <button type="button" class="btn-qty-step" title="Miktarı 1 Artır" onclick="window.app.quickAdjustQuantity('${item.id}', 1)">+</button>
+                            </div>
+                            <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
                         </div>
-                        <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
+                        <div class="item-meta-row">
+                            <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                            <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
+                            ${item.source === 'phone' ? '<span class="meta-tag" title="Telefondan Eklendi">📱 Mobil</span>' : '<span class="meta-tag" title="Bilgisayardan Eklendi">💻 PC</span>'}
+                        </div>
+                        ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
                     </div>
-                    <div class="item-meta-row">
-                        <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
-                        <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
-                        ${item.source === 'phone' ? '<span class="meta-tag" title="Telefondan Eklendi">📱 Mobil</span>' : '<span class="meta-tag" title="Bilgisayardan Eklendi">💻 PC</span>'}
-                    </div>
-                    ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
                 </div>
 
-                <div class="status-pill-group">
-                    <button class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
-                    <button class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
-                    <button class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
-                </div>
+                <div class="card-body-bottom">
+                    <div class="status-pill-group">
+                        <button class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
+                        <button class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
+                        <button class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
+                    </div>
 
-                <div class="item-actions">
-                    <button class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="window.app.triggerCardPhotoUpload('${item.id}')">
-                        📷
-                    </button>
-                    <button class="btn btn-danger btn-icon-only" title="Sil" onclick="window.app.deleteItem('${item.id}')">
-                        🗑️
-                    </button>
+                    <div class="item-actions">
+                        <button class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="window.app.triggerCardPhotoUpload('${item.id}')">
+                            📷
+                        </button>
+                        <button class="btn btn-danger btn-icon-only" title="Sil" onclick="window.app.deleteItem('${item.id}')">
+                            🗑️
+                        </button>
+                    </div>
                 </div>
             </div>
         `;

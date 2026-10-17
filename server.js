@@ -178,8 +178,8 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute({
-            sql: 'DELETE FROM suppliers WHERE id = ?',
-            args: [id]
+            sql: 'DELETE FROM suppliers WHERE id = ? OR name = ?',
+            args: [id, id]
         });
 
         io.emit('supplier:deleted', { id });
@@ -187,6 +187,17 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     } catch (err) {
         console.error('Delete supplier error:', err);
         res.status(500).json({ error: 'Toptancı silinemedi' });
+    }
+});
+
+app.delete('/api/suppliers', async (req, res) => {
+    try {
+        await db.execute('DELETE FROM suppliers');
+        io.emit('supplier:all-deleted', {});
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Clear suppliers error:', err);
+        res.status(500).json({ error: 'Toptancılar temizlenemedi' });
     }
 });
 

@@ -79,16 +79,11 @@ async function initDb() {
         console.log('👤 Varsayılan kullanıcı: admin / 123');
     }
 
-    // Insert default initial suppliers if empty
-    const sups = await client.execute('SELECT COUNT(*) as count FROM suppliers');
-    if (sups.rows[0].count === 0 || sups.rows[0].count === 0n) {
-        const defaultSups = ['Bizim Toptan', 'Metro Toptan', 'Özlem Gıda', 'Merkez Dağıtım', 'Kırtasiye Toptancısı'];
-        for (const s of defaultSups) {
-            await client.execute({
-                sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
-                args: ['sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4), s, new Date().toISOString()]
-            });
-        }
+    // Delete legacy seeded suppliers as requested by user ("toptancıları kaldır ekleme boş kalsın ben eklerim")
+    try {
+        await client.execute("DELETE FROM suppliers WHERE name IN ('Bizim Toptan', 'Metro Toptan', 'Özlem Gıda', 'Merkez Dağıtım', 'Kırtasiye Toptancısı')");
+    } catch (e) {
+        // ignore
     }
 }
 
