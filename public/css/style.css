@@ -74,16 +74,40 @@
 
 .login-brand {
     text-align: center;
-    margin-bottom: 1.75rem;
+    margin-bottom: 2rem;
 }
+
+.brand-avatar-glow {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 1.25rem auto;
+    border-radius: 20px;
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #06b6d4 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 0 35px rgba(124, 58, 237, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    animation: pulse-glow 3s infinite ease-in-out;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.5), 0 0 35px rgba(124, 58, 237, 0.35); }
+    50% { transform: scale(1.05); box-shadow: 0 14px 30px -4px rgba(99, 102, 241, 0.7), 0 0 50px rgba(6, 182, 212, 0.45); }
+}
+
 .login-brand h2 {
-    font-size: 1.4rem;
+    font-size: 1.75rem;
     font-weight: 800;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
     margin-bottom: 0.35rem;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 .login-brand p {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
 }
 
@@ -107,6 +131,19 @@
     border: 1px solid var(--border-subtle);
     padding: 0.2rem 0.35rem;
     border-radius: var(--radius-md);
+}
+
+.btn-whatsapp {
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%) !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 14px rgba(37, 211, 102, 0.3) !important;
+    transition: var(--transition-normal);
+}
+.btn-whatsapp:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5) !important;
 }
 
 /* Light Mode Overrides (if toggled) */
@@ -385,6 +422,116 @@ body {
 .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #f87171; }
 .stat-icon.amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
 .stat-icon.emerald { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+
+/* ==========================================================================
+   Progress Bar Section
+   ========================================================================== */
+.progress-bar-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 1rem 1.4rem;
+    margin-bottom: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(12px);
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+
+.progress-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.progress-indicator-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 10px #10b981;
+}
+
+.progress-percent {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #38bdf8;
+    font-family: var(--font-mono);
+}
+
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #10b981 50%, #06b6d4 100%);
+    border-radius: var(--radius-full);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+}
+
+/* ==========================================================================
+   Quick Chips Bar (Filter Pills)
+   ========================================================================== */
+.quick-chips-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.4rem;
+    margin-bottom: 1.15rem;
+    scrollbar-width: none;
+}
+.quick-chips-bar::-webkit-scrollbar {
+    display: none;
+}
+.chip-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.4rem 0.85rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+.chip-filter:hover {
+    background: var(--bg-surface-elevated);
+    color: var(--text-primary);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+.chip-filter.active {
+    background: var(--accent-primary);
+    color: #ffffff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.35);
+}
+.chip-badge {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    font-size: 0.72rem;
+    font-family: var(--font-mono);
+}
 
 /* ==========================================================================
    Quick Add Section (The Magic Box)
@@ -744,6 +891,31 @@ input:focus, select:focus, textarea:focus {
     font-weight: 700;
     color: #38bdf8;
     font-family: var(--font-mono);
+}
+
+.qty-control-group {
+    display: inline-flex;
+    align-items: center;
+    background: var(--bg-surface-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.btn-qty-step {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.15rem 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+    transition: var(--transition-fast);
+}
+.btn-qty-step:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #ffffff;
 }
 
 .urgency-badge {

@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Dükkan Eksik Takip</title>
-    <meta name="description" content="Dükkandaki satılan eksikleri anında kaydedin ve takip edin. Turso bulut veritabanı, akıllı benzer ürün uyarısı ve fotoğraf desteği.">
+    <title>App</title>
+    <meta name="description" content="App - Canlı Eksik ve Sipariş Takip Sistemi.">
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#4f46e5">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="/css/style.css">
@@ -26,31 +26,27 @@
     <div id="login-container" class="login-wrapper" style="display: none;">
         <div class="login-card">
             <div class="login-brand">
-                <div class="brand-icon" style="margin: 0 auto 1rem auto; width: 56px; height: 56px; font-size: 2rem;">🛍️</div>
-                <h2>Dükkan Eksik Takip</h2>
-                <p>Eksik listesine erişmek için lütfen giriş yapınız.</p>
+                <div class="brand-avatar-glow">⚡</div>
+                <h2>App</h2>
+                <p>Devam etmek için giriş yapınız</p>
             </div>
 
             <form id="login-form">
                 <div id="login-error" class="login-error-msg" style="display: none;"></div>
 
-                <div class="form-group" style="margin-bottom: 1rem;">
-                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-secondary);">Kullanıcı Adı</label>
-                    <input type="text" id="login-username" value="admin" required autocomplete="username">
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Kullanıcı Adı</label>
+                    <input type="text" id="login-username" placeholder="Kullanıcı adı" required autocomplete="username">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.35rem; color: var(--text-secondary);">Şifre</label>
-                    <input type="password" id="login-password" value="123" required autocomplete="current-password">
+                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Şifre</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.8rem; font-size: 1rem;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md);">
                     Giriş Yap
                 </button>
-
-                <p style="text-align: center; font-size: 0.75rem; color: var(--text-muted); margin-top: 1rem;">
-                    Varsayılan: admin / 123 (İçeriden değiştirebilirsiniz)
-                </p>
             </form>
         </div>
     </div>
@@ -59,7 +55,7 @@
     <div id="main-app-container" style="display: none;">
         <!-- Print Header -->
         <div class="print-only-header">
-            <h1 style="font-size:24px; margin-bottom:4px;">DÜKKAN EKSİK SİPARİŞ LİSTESİ</h1>
+            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;">APP - SİPARİŞ LİSTESİ</h1>
             <p style="font-size:13px; color:#555;">Yazdırma Tarihi: <span id="print-date"></span></p>
         </div>
 
@@ -67,32 +63,40 @@
             <!-- Header -->
             <header class="header">
                 <div class="brand-wrapper">
-                    <div class="brand-icon">🛍️</div>
+                    <div class="brand-icon">⚡</div>
                     <div class="brand-info">
                         <h1>
-                            Dükkan Eksik Takip
+                            App
                             <span class="badge-live" id="connection-badge">
                                 <span class="pulse-dot"></span>
-                                <span id="connection-text">Canlı Bağlı</span>
+                                <span id="connection-text">Canlı</span>
                             </span>
                         </h1>
-                        <p id="header-db-indicator">Turso Bulut Veritabanı</p>
+                        <p id="header-db-indicator">Bulut Veritabanı</p>
                     </div>
                 </div>
 
                 <div class="header-actions">
+                    <button class="btn btn-whatsapp" id="btn-share-whatsapp" title="WhatsApp ile Sipariş Listesini Gönder">
+                        <span>💬</span>
+                        <span>WhatsApp</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-copy-list" title="Tüm Listeyi Panoya Kopyala">
+                        <span>📋</span>
+                        <span>Kopyala</span>
+                    </button>
                     <button class="btn btn-secondary" id="btn-open-suppliers" title="Toptancıları Ekle / Sil / Yönet">
                         <span>🏢</span>
-                        <span>Toptancıları Yönet</span>
+                        <span>Toptancılar</span>
                     </button>
-                    <button class="btn btn-secondary" id="btn-export-pdf" title="Derli Toplu PDF / Yazdır Çıktısı Al">
+                    <button class="btn btn-secondary" id="btn-export-pdf" title="PDF / Yazdır Çıktısı Al">
                         <span>📄</span>
-                        <span>PDF / Yazdır</span>
+                        <span>Yazdır</span>
                     </button>
                     <button class="btn btn-secondary btn-icon-only" id="btn-toggle-sound" title="Ses Bildirimleri">
                         <span>🔔</span>
                     </button>
-                    <button class="btn btn-secondary btn-icon-only" id="theme-toggle-btn" title="Tema">
+                    <button class="btn btn-secondary btn-icon-only" id="theme-toggle-btn" title="Tema Değiştir">
                         <span>☀️</span>
                     </button>
                     <div class="user-menu-pill">
@@ -135,6 +139,20 @@
                         <div class="stat-value" id="stat-completed" style="color: #34d399;">0</div>
                     </div>
                     <div class="stat-icon emerald">✅</div>
+                </div>
+            </section>
+
+            <!-- Progress Bar Card -->
+            <section class="progress-bar-card">
+                <div class="progress-header">
+                    <div class="progress-title">
+                        <span class="progress-indicator-dot"></span>
+                        <span style="font-weight: 700;">Günlük Eksik Tamamlama Oranı</span>
+                    </div>
+                    <span class="progress-percent" id="progress-percent-text">%0 Tamamlandı (0/0)</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-fill-bar" style="width: 0%;"></div>
                 </div>
             </section>
 
@@ -209,6 +227,16 @@
                     <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
                 </div>
             </section>
+
+            <!-- Quick Filter Chips Bar -->
+            <div class="quick-chips-bar">
+                <button class="chip-filter active" data-filter="all">Tümü <span class="chip-badge" id="chip-total">0</span></button>
+                <button class="chip-filter" data-filter="critical">🔴 Yok Satıyor <span class="chip-badge" id="chip-critical">0</span></button>
+                <button class="chip-filter" data-filter="urgent">🚨 Acil <span class="chip-badge" id="chip-urgent">0</span></button>
+                <button class="chip-filter" data-filter="pending">⏳ Bekleyen <span class="chip-badge" id="chip-pending">0</span></button>
+                <button class="chip-filter" data-filter="ordered">🚚 Sipariş Edildi <span class="chip-badge" id="chip-ordered">0</span></button>
+                <button class="chip-filter" data-filter="completed">✅ Alındı <span class="chip-badge" id="chip-completed">0</span></button>
+            </div>
 
             <!-- Toolbar & Filters -->
             <section class="toolbar-bar">

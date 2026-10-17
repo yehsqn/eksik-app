@@ -1,7 +1,7 @@
 {
-  "name": "Dükkan Eksik Takip",
-  "short_name": "Eksik Takip",
-  "description": "Dükkandaki satılan eksikleri telefondan ekle, bilgisayardan anlık takip et.",
+  "name": "App",
+  "short_name": "App",
+  "description": "App - Eksik ve Sipariş Takip Sistemi",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#090d16",

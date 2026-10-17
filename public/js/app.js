@@ -589,11 +589,42 @@ class App {
             });
         });
 
+        // WhatsApp Export
+        const btnWa = document.getElementById('btn-share-whatsapp');
+        if (btnWa) {
+            btnWa.addEventListener('click', () => this.shareViaWhatsApp());
+        }
+
+        // Copy to Clipboard
+        const btnCopy = document.getElementById('btn-copy-list');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', () => this.copyListToClipboard());
+        }
+
+        // Quick Filter Chips
+        document.querySelectorAll('.chip-filter').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                this.filterStatus = chip.dataset.filter;
+                
+                // Sync with dropdown filter if applicable
+                const filterDropdown = document.getElementById('filter-status');
+                if (filterDropdown && ['all', 'pending', 'ordered', 'completed'].includes(this.filterStatus)) {
+                    filterDropdown.value = this.filterStatus;
+                } else if (filterDropdown) {
+                    filterDropdown.value = 'all';
+                }
+
+                this.render();
+            });
+        });
+
         // PDF Export & Print
         const btnPdf = document.getElementById('btn-export-pdf');
         if (btnPdf) {
             btnPdf.addEventListener('click', () => {
-                window.exportManager.printOrderSheet(this.items, 'Dükkan');
+                window.exportManager.printOrderSheet(this.items, 'App');
             });
         }
 
@@ -897,8 +928,14 @@ class App {
 
     getFilteredItems() {
         return this.items.filter(item => {
-            if (this.filterStatus !== 'all' && item.status !== this.filterStatus) {
-                return false;
+            if (this.filterStatus !== 'all') {
+                if (this.filterStatus === 'critical') {
+                    if (item.urgency !== 'critical' || item.status === 'completed') return false;
+                } else if (this.filterStatus === 'urgent') {
+                    if (item.urgency !== 'urgent' || item.status === 'completed') return false;
+                } else if (item.status !== this.filterStatus) {
+                    return false;
+                }
             }
             if (this.activeSupplier !== 'all' && item.supplier !== this.activeSupplier) {
                 return false;
@@ -921,6 +958,9 @@ class App {
         const pending = this.items.filter(i => i.status === 'pending').length;
         const urgent = this.items.filter(i => (i.urgency === 'critical' || i.urgency === 'urgent') && i.status !== 'completed').length;
         const completed = this.items.filter(i => i.status === 'completed').length;
+        const ordered = this.items.filter(i => i.status === 'ordered').length;
+        const critical = this.items.filter(i => i.urgency === 'critical' && i.status !== 'completed').length;
+        const urgentOnly = this.items.filter(i => i.urgency === 'urgent' && i.status !== 'completed').length;
 
         const statTotal = document.getElementById('stat-total');
         const statPending = document.getElementById('stat-pending');
@@ -931,6 +971,28 @@ class App {
         if (statPending) statPending.textContent = pending;
         if (statUrgent) statUrgent.textContent = urgent;
         if (statCompleted) statCompleted.textContent = completed;
+
+        // Progress Bar
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const fillBar = document.getElementById('progress-fill-bar');
+        const percentText = document.getElementById('progress-percent-text');
+        if (fillBar) fillBar.style.width = `${percent}%`;
+        if (percentText) percentText.textContent = `%${percent} Tamamlandı (${completed}/${total})`;
+
+        // Quick Chips Count Badges
+        const chipTotal = document.getElementById('chip-total');
+        const chipCrit = document.getElementById('chip-critical');
+        const chipUrg = document.getElementById('chip-urgent');
+        const chipPend = document.getElementById('chip-pending');
+        const chipOrd = document.getElementById('chip-ordered');
+        const chipComp = document.getElementById('chip-completed');
+
+        if (chipTotal) chipTotal.textContent = total;
+        if (chipCrit) chipCrit.textContent = critical;
+        if (chipUrg) chipUrg.textContent = urgentOnly;
+        if (chipPend) chipPend.textContent = pending;
+        if (chipOrd) chipOrd.textContent = ordered;
+        if (chipComp) chipComp.textContent = completed;
     }
 
     render() {
@@ -1010,7 +1072,11 @@ class App {
                 <div class="item-main-info">
                     <div class="item-title-row">
                         <span class="item-title">${this.escapeHtml(item.name)}</span>
-                        <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
+                        <div class="qty-control-group">
+                            <button type="button" class="btn-qty-step" title="Miktarı 1 Azalt" onclick="window.app.quickAdjustQuantity('${item.id}', -1)">−</button>
+                            <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
+                            <button type="button" class="btn-qty-step" title="Miktarı 1 Artır" onclick="window.app.quickAdjustQuantity('${item.id}', 1)">+</button>
+                        </div>
                         <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
                     </div>
                     <div class="item-meta-row">
@@ -1037,6 +1103,102 @@ class App {
                 </div>
             </div>
         `;
+    }
+
+    async quickAdjustQuantity(id, delta) {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        const currQty = item.quantity || '1 adet';
+        const match = currQty.match(/^(\d+)(.*)$/);
+
+        let newQty = currQty;
+        if (match) {
+            const num = parseInt(match[1], 10);
+            const unit = match[2];
+            const nextNum = Math.max(1, num + delta);
+            newQty = `${nextNum}${unit}`;
+        } else {
+            newQty = delta > 0 ? `${currQty} + 1` : currQty;
+        }
+
+        await this.updateItemDetails(id, { quantity: newQty });
+        this.showToast(`${item.name}: ${currQty} ➔ ${newQty}`);
+        window.soundManager.playNewItem();
+    }
+
+    shareViaWhatsApp() {
+        const pendingItems = this.items.filter(i => i.status !== 'completed');
+        if (pendingItems.length === 0) {
+            alert('Paylaşılacak bekleyen eksik ürün bulunmuyor.');
+            return;
+        }
+
+        const dateStr = new Date().toLocaleDateString('tr-TR');
+        let text = `📦 *APP - EKSİK & SİPARİŞ LİSTESİ*\n📅 Tarih: ${dateStr}\n\n`;
+
+        const criticalItems = pendingItems.filter(i => i.urgency === 'critical');
+        const urgentItems = pendingItems.filter(i => i.urgency === 'urgent');
+        const normalItems = pendingItems.filter(i => i.urgency === 'normal');
+
+        if (criticalItems.length > 0) {
+            text += `🔴 *YOK SATANLAR (KRİTİK):*\n`;
+            criticalItems.forEach((item, idx) => {
+                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
+            });
+            text += `\n`;
+        }
+
+        if (urgentItems.length > 0) {
+            text += `🚨 *ACİL EKSİKLER:*\n`;
+            urgentItems.forEach((item, idx) => {
+                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
+            });
+            text += `\n`;
+        }
+
+        if (normalItems.length > 0) {
+            text += `📋 *DİĞER EKSİKLER:*\n`;
+            normalItems.forEach((item, idx) => {
+                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
+            });
+            text += `\n`;
+        }
+
+        text += `_Toplam: ${pendingItems.length} çeşit eksik._`;
+
+        const encoded = encodeURIComponent(text);
+        window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    }
+
+    async copyListToClipboard() {
+        const pendingItems = this.items.filter(i => i.status !== 'completed');
+        if (pendingItems.length === 0) {
+            alert('Kopyalanacak bekleyen eksik ürün bulunmuyor.');
+            return;
+        }
+
+        const dateStr = new Date().toLocaleDateString('tr-TR');
+        let text = `📦 APP - EKSİK & SİPARİŞ LİSTESİ (${dateStr})\n\n`;
+
+        pendingItems.forEach((item, idx) => {
+            const urgTag = item.urgency === 'critical' ? ' [YOK SATAN]' : (item.urgency === 'urgent' ? ' [ACİL]' : '');
+            text += `${idx + 1}. ${item.name} - ${item.quantity}${urgTag}${item.supplier && item.supplier !== 'Belirtilmedi' ? ' (' + item.supplier + ')' : ''}\n`;
+        });
+
+        try {
+            await navigator.clipboard.writeText(text);
+            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+            window.soundManager.playCompleted();
+        } catch (e) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+        }
     }
 
     formatTime(isoString) {
