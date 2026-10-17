@@ -589,12 +589,6 @@ class App {
             });
         });
 
-        // WhatsApp Export
-        const btnWa = document.getElementById('btn-share-whatsapp');
-        if (btnWa) {
-            btnWa.addEventListener('click', () => this.shareViaWhatsApp());
-        }
-
         // Copy to Clipboard
         const btnCopy = document.getElementById('btn-copy-list');
         if (btnCopy) {
@@ -1125,50 +1119,6 @@ class App {
         await this.updateItemDetails(id, { quantity: newQty });
         this.showToast(`${item.name}: ${currQty} ➔ ${newQty}`);
         window.soundManager.playNewItem();
-    }
-
-    shareViaWhatsApp() {
-        const pendingItems = this.items.filter(i => i.status !== 'completed');
-        if (pendingItems.length === 0) {
-            alert('Paylaşılacak bekleyen eksik ürün bulunmuyor.');
-            return;
-        }
-
-        const dateStr = new Date().toLocaleDateString('tr-TR');
-        let text = `📦 *APP - EKSİK & SİPARİŞ LİSTESİ*\n📅 Tarih: ${dateStr}\n\n`;
-
-        const criticalItems = pendingItems.filter(i => i.urgency === 'critical');
-        const urgentItems = pendingItems.filter(i => i.urgency === 'urgent');
-        const normalItems = pendingItems.filter(i => i.urgency === 'normal');
-
-        if (criticalItems.length > 0) {
-            text += `🔴 *YOK SATANLAR (KRİTİK):*\n`;
-            criticalItems.forEach((item, idx) => {
-                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
-            });
-            text += `\n`;
-        }
-
-        if (urgentItems.length > 0) {
-            text += `🚨 *ACİL EKSİKLER:*\n`;
-            urgentItems.forEach((item, idx) => {
-                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
-            });
-            text += `\n`;
-        }
-
-        if (normalItems.length > 0) {
-            text += `📋 *DİĞER EKSİKLER:*\n`;
-            normalItems.forEach((item, idx) => {
-                text += `${idx + 1}. ${item.name} (${item.quantity})${item.supplier && item.supplier !== 'Belirtilmedi' ? ' - ' + item.supplier : ''}\n`;
-            });
-            text += `\n`;
-        }
-
-        text += `_Toplam: ${pendingItems.length} çeşit eksik._`;
-
-        const encoded = encodeURIComponent(text);
-        window.open(`https://wa.me/?text=${encoded}`, '_blank');
     }
 
     async copyListToClipboard() {
