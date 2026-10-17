@@ -92,9 +92,6 @@
                     <button class="btn btn-secondary btn-icon-only" id="btn-toggle-sound" title="Ses Bildirimleri">
                         <span>🔔</span>
                     </button>
-                    <button class="btn btn-secondary btn-icon-only" id="theme-toggle-btn" title="Tema Değiştir">
-                        <span>☀️</span>
-                    </button>
                     <div class="user-menu-pill">
                         <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Şifre Değiştir">
                             👤 <span id="display-username">admin</span>
@@ -170,13 +167,13 @@
                     <div class="form-group flex-2">
                         <div class="input-icon-wrapper">
                             <span class="input-icon">🔍</span>
-                            <input type="text" id="input-name" placeholder="Ürün adı yazın (Örn: Defter, Çaykur Çay)" required autocomplete="off">
+                            <input type="text" id="input-name" placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)" required autocomplete="off">
                         </div>
                     </div>
 
                     <!-- Quantity -->
                     <div class="form-group flex-1">
-                        <input type="text" id="input-quantity" placeholder="Miktar (örn: 2 koli)" value="1 adet">
+                        <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)" value="1 kutu">
                     </div>
 
                     <!-- Supplier Selector (Dynamic from DB) -->
@@ -215,6 +212,21 @@
                         </button>
                     </div>
                 </form>
+
+                <!-- Hardware Quick Selection Bar -->
+                <div class="hardware-quick-pills" id="hardware-quick-pills">
+                    <span class="quick-pill-label">⚡ Hızlı Seç:</span>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('4x50 Sunta Vidası', '10 kutu')">🔩 4x50 Vida</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Şeffaf Silikon', '1 koli')">🧴 Şeffaf Silikon</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('115mm Taşlama Taşı', '25 adet')">⚙️ Taşlama Taşı</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Teflon Bant', '10 adet')">🩹 Teflon Bant</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Koli Bandı 45x100', '1 koli')">📦 Koli Bandı</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Beyaz Akrilik Mastik', '1 koli')">🧱 Mastik</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('8mm Plastik Dübel', '5 paket')">📍 8mm Dübel</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Poliüretan Köpük 750ml', '1 koli')">🧼 Köpük</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('WD-40 Pas Sökücü 400ml', '6 adet')">🛢️ WD-40</button>
+                    <button type="button" class="quick-pill-btn" onclick="window.app.fillQuickItem('Siyah Elektrik Bandı', '10 adet')">🔌 Elektrik Bandı</button>
+                </div>
 
                 <!-- Selected Photo Preview Strip -->
                 <div id="add-photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
@@ -396,7 +408,7 @@
                     Sizi dinliyorum... Lütfen konuşun.
                 </div>
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.5rem;">
-                    Örnek: "12 li defter", "5 koli süt acil", "2 paket makarna"
+                    Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli bandı"
                 </div>
             </div>
         </div>

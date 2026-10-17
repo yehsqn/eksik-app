@@ -168,20 +168,21 @@ class App {
     }
 
     initTheme() {
-        const savedTheme = localStorage.getItem('theme_mode') || 'dark';
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-theme');
-            const themeBtn = document.getElementById('theme-toggle-btn');
-            if (themeBtn) themeBtn.textContent = '🌙';
-        }
+        localStorage.setItem('theme_mode', 'dark');
+        document.body.classList.remove('light-theme');
     }
 
-    toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('theme_mode', isLight ? 'light' : 'dark');
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        if (themeBtn) themeBtn.textContent = isLight ? '🌙' : '☀️';
+    fillQuickItem(name, qty) {
+        const nameInput = document.getElementById('input-name');
+        const qtyInput = document.getElementById('input-quantity');
+        if (nameInput) {
+            nameInput.value = name;
+            nameInput.focus();
+        }
+        if (qtyInput) {
+            qtyInput.value = qty || '1 kutu';
+        }
+        this.showToast(`Seçildi: ${name} (${qty || '1 kutu'})`);
     }
 
     // Socket.IO
@@ -850,7 +851,7 @@ class App {
         const voiceModal = document.getElementById('voice-modal');
         const voiceText = document.getElementById('voice-transcript-text');
         this.openModal('voice-modal');
-        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "12 li defter")';
+        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "10 kutu sunta vidası")';
 
         const micBtn = document.getElementById('btn-voice-input');
         if (micBtn) micBtn.classList.add('listening');

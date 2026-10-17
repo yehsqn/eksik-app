@@ -3,6 +3,7 @@
    ========================================================================== */
 
 :root {
+    color-scheme: dark !important;
     /* Obsidian & Cyber-Glass Minimalist Palette (Linear / Apple Dark) */
     --bg-base: #08090d;
     --bg-surface: rgba(14, 16, 25, 0.75);
@@ -1076,7 +1077,7 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ==========================================================================
-   Modals (QR Code, Voice Modal, Cloud Settings, Barcode)
+   Modals & Popups (100% Dark Obsidian Glass - Never White)
    ========================================================================== */
 .modal-overlay {
     position: fixed;
@@ -1084,35 +1085,64 @@ input:focus, select:focus, textarea:focus {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
+    background: rgba(3, 4, 7, 0.92) !important;
+    backdrop-filter: blur(28px) !important;
+    -webkit-backdrop-filter: blur(28px) !important;
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 100;
-    padding: 1rem;
+    z-index: 999;
+    padding: 1.25rem;
+    color-scheme: dark !important;
 }
 .modal-overlay.active {
     display: flex;
-    animation: fadeIn 0.2s ease;
+    animation: fadeInModal 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: scale(0.96); }
-    to { opacity: 1; transform: scale(1); }
+@keyframes fadeInModal {
+    from { opacity: 0; transform: scale(0.95) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
 }
 
 .modal-card {
-    background: var(--bg-surface);
-    border: 1px solid var(--border-subtle);
+    background: #090b12 !important;
+    background-color: #090b12 !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
     border-radius: var(--radius-lg);
     max-width: 500px;
     width: 100%;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-lg);
+    padding: 1.75rem;
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.95), inset 0 1px 0 0 rgba(255, 255, 255, 0.12) !important;
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
+    color: #f8fafc !important;
+    color-scheme: dark !important;
+    backdrop-filter: blur(32px);
+    -webkit-backdrop-filter: blur(32px);
+}
+
+.modal-card * {
+    color-scheme: dark;
+}
+
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+    background: #141724 !important;
+    background-color: #141724 !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: #f8fafc !important;
+    color-scheme: dark !important;
+}
+
+.modal-card input:focus,
+.modal-card select:focus,
+.modal-card textarea:focus {
+    background: #1a1e30 !important;
+    border-color: #6366f1 !important;
+    color: #ffffff !important;
 }
 
 .modal-header {
@@ -1120,29 +1150,96 @@ input:focus, select:focus, textarea:focus {
     align-items: center;
     justify-content: space-between;
     margin-bottom: 1.25rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .modal-title {
-    font-size: 1.15rem;
-    font-weight: 700;
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #ffffff;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    letter-spacing: -0.02em;
 }
 
 .btn-close {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.5rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: var(--text-secondary);
+    font-size: 1.25rem;
     cursor: pointer;
-    padding: 0.25rem 0.5rem;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
+    transition: var(--transition-fast);
 }
 .btn-close:hover {
-    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    transform: scale(1.05);
+}
+
+/* Ensure Dropdown options in Select boxes are always dark obsidian, NEVER white */
+select {
+    background-color: #121522 !important;
+    color: #f8fafc !important;
+    color-scheme: dark !important;
+    cursor: pointer;
+}
+
+select option {
+    background-color: #090b12 !important;
+    color: #f8fafc !important;
+    color-scheme: dark !important;
+    padding: 0.65rem;
+}
+
+/* Hardware Store Quick Favorites Bar */
+.hardware-quick-pills {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    overflow-x: auto;
+    padding: 0.75rem 0 0.25rem 0;
+    margin-top: 0.65rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    scrollbar-width: none;
+}
+.hardware-quick-pills::-webkit-scrollbar {
+    display: none;
+}
+.quick-pill-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #38bdf8;
+    white-space: nowrap;
+    margin-right: 0.2rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.quick-pill-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: var(--radius-full);
+    color: var(--text-secondary);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: var(--transition-fast);
+}
+.quick-pill-btn:hover {
+    background: rgba(99, 102, 241, 0.18);
+    border-color: rgba(99, 102, 241, 0.45);
+    color: #ffffff;
+    transform: translateY(-1px);
 }
 
 /* QR Code Modal Content */
