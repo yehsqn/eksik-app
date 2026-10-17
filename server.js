@@ -21,6 +21,28 @@ app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
+// GitHub veya Render'a zip olarak yüklendiyse public.zip'i otomatik çıkart
+const zipPath = path.join(__dirname, 'public.zip');
+const stylePath = path.join(__dirname, 'public', 'css', 'style.css');
+
+if (!fs.existsSync(stylePath) && fs.existsSync(zipPath)) {
+    console.log('📦 public.zip bulundu, dosyalar çıkartılıyor...');
+    try {
+        const AdmZip = require('adm-zip');
+        const zip = new AdmZip(zipPath);
+        zip.extractAllTo(__dirname, true);
+        console.log('✅ adm-zip ile public klasörü başarıyla açıldı.');
+    } catch (e) {
+        try {
+            const { execSync } = require('child_process');
+            execSync(`unzip -o "${zipPath}" -d "${__dirname}"`, { stdio: 'inherit' });
+            console.log('✅ unzip komutu ile public klasörü açıldı.');
+        } catch (err2) {
+            console.error('public.zip çıkartma hatası:', err2.message);
+        }
+    }
+}
+
 // Support both public/ directory and root directory if uploaded without public folder
 if (fs.existsSync(path.join(__dirname, 'public'))) {
     app.use(express.static(path.join(__dirname, 'public')));

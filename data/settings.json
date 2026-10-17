@@ -1,0 +1,23 @@
+{
+  "shopName": "Dükkanım",
+  "categories": [
+    "Gıda",
+    "Temizlik",
+    "İçecek",
+    "Şarküteri",
+    "Manav",
+    "Kırtasiye",
+    "Sigara/Tütün",
+    "Kişisel Bakım",
+    "Genel"
+  ],
+  "suppliers": [
+    "Metro Toptan",
+    "Bizim Toptan",
+    "Özlem Gıda",
+    "Özgür Meşrubat",
+    "Merkez Dağıtım",
+    "Hal / Sebze",
+    "Doğrudan Firma"
+  ]
+}

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "item_1792245741130_uzvffi",
+    "name": "asd",
+    "quantity": "1 adet",
+    "category": "Şarküteri",
+    "supplier": "Bizim Toptan",
+    "urgency": "critical",
+    "status": "pending",
+    "notes": "",
+    "barcode": "",
+    "createdAt": "2026-10-17T14:02:21.130Z",
+    "updatedAt": "2026-10-17T14:02:21.130Z",
+    "source": "pc"
+  },
+  {
+    "id": "item_1792245729107_qqdudn",
+    "name": "asd",
+    "quantity": "1 adet",
+    "category": "Şarküteri",
+    "supplier": "Bizim Toptan",
+    "urgency": "critical",
+    "status": "pending",
+    "notes": "",
+    "barcode": "",
+    "createdAt": "2026-10-17T14:02:09.107Z",
+    "updatedAt": "2026-10-17T14:02:09.107Z",
+    "source": "pc"
+  }
+]
