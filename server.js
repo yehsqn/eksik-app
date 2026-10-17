@@ -14,11 +14,30 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3000;
 
+const fs = require('fs');
+
 app.use(cors());
 // 15MB limit for photo uploads directly to SQLite / Turso
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+// Support both public/ directory and root directory if uploaded without public folder
+if (fs.existsSync(path.join(__dirname, 'public'))) {
+    app.use(express.static(path.join(__dirname, 'public')));
+}
+app.use(express.static(__dirname));
+
+app.get('/', (req, res) => {
+    const publicIndex = path.join(__dirname, 'public', 'index.html');
+    if (fs.existsSync(publicIndex)) {
+        return res.sendFile(publicIndex);
+    }
+    const rootIndex = path.join(__dirname, 'index.html');
+    if (fs.existsSync(rootIndex)) {
+        return res.sendFile(rootIndex);
+    }
+    res.send('Dükkan Eksik Takip: index.html bulunamadı.');
+});
 
 // Authentication Helper
 async function verifyUser(username, password) {
