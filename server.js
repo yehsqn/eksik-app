@@ -28,23 +28,82 @@ app.use((req, res, next) => {
     next();
 });
 
-// Support both public/ directory and root directory if uploaded without public folder
+// Helper to find the newest existing file among candidate paths
+function findBestFile(filePaths) {
+    let bestPath = null;
+    let bestMtime = -1;
+    for (const p of filePaths) {
+        try {
+            if (fs.existsSync(p)) {
+                const stat = fs.statSync(p);
+                if (stat.isFile() && stat.mtimeMs > bestMtime) {
+                    bestMtime = stat.mtimeMs;
+                    bestPath = p;
+                }
+            }
+        } catch (e) {}
+    }
+    return bestPath;
+}
+
+// Explicit routes: whether files were uploaded directly to root or in public/
+app.get(['/', '/index.html'], (req, res) => {
+    const file = findBestFile([
+        path.join(__dirname, 'public', 'index.html'),
+        path.join(__dirname, 'index.html')
+    ]);
+    if (file) return res.sendFile(file);
+    res.send('Dükkan Eksik Takip: index.html bulunamadı.');
+});
+
+app.get(['/js/app.js', '/app.js'], (req, res) => {
+    const file = findBestFile([
+        path.join(__dirname, 'public', 'js', 'app.js'),
+        path.join(__dirname, 'js', 'app.js'),
+        path.join(__dirname, 'app.js')
+    ]);
+    if (file) {
+        res.setHeader('Content-Type', 'application/javascript');
+        return res.sendFile(file);
+    }
+    res.status(404).send('app.js not found');
+});
+
+app.get(['/css/style.css', '/style.css'], (req, res) => {
+    const file = findBestFile([
+        path.join(__dirname, 'public', 'css', 'style.css'),
+        path.join(__dirname, 'css', 'style.css'),
+        path.join(__dirname, 'style.css')
+    ]);
+    if (file) {
+        res.setHeader('Content-Type', 'text/css');
+        return res.sendFile(file);
+    }
+    res.status(404).send('style.css not found');
+});
+
+['duplicate-detector.js', 'audio.js', 'speech.js', 'export.js', 'sw.js', 'manifest.json'].forEach(filename => {
+    app.get([`/js/${filename}`, `/${filename}`], (req, res) => {
+        const file = findBestFile([
+            path.join(__dirname, 'public', 'js', filename),
+            path.join(__dirname, 'public', filename),
+            path.join(__dirname, 'js', filename),
+            path.join(__dirname, filename)
+        ]);
+        if (file) {
+            if (filename.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
+            if (filename.endsWith('.json')) res.setHeader('Content-Type', 'application/json');
+            return res.sendFile(file);
+        }
+        res.status(404).send(`${filename} not found`);
+    });
+});
+
+// Support both public/ directory and root directory for any assets
 if (fs.existsSync(path.join(__dirname, 'public'))) {
     app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 }
 app.use(express.static(__dirname, { etag: false, maxAge: 0 }));
-
-app.get('/', (req, res) => {
-    const publicIndex = path.join(__dirname, 'public', 'index.html');
-    if (fs.existsSync(publicIndex)) {
-        return res.sendFile(publicIndex);
-    }
-    const rootIndex = path.join(__dirname, 'index.html');
-    if (fs.existsSync(rootIndex)) {
-        return res.sendFile(rootIndex);
-    }
-    res.send('Dükkan Eksik Takip: index.html bulunamadı.');
-});
 
 // Authentication Helper
 async function verifyUser(username, password) {
