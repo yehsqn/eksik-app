@@ -16,6 +16,145 @@ const PORT = process.env.PORT || 3000;
 
 const fs = require('fs');
 
+// Auto Backup Directory & Engine Setup
+const BACKUP_DIR = path.join(__dirname, 'data', 'backups');
+if (!fs.existsSync(BACKUP_DIR)) {
+    try {
+        fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    } catch (e) {
+        console.error('Failed to create backup dir:', e);
+    }
+}
+
+let lastBackupInfo = null;
+
+function formatBackupReason(reason) {
+    const map = {
+        'startup': 'Sistem Başlangıcı',
+        'hourly': 'Saatlik Otomatik',
+        'change': 'Otomatik (Değişiklik)',
+        'manual': 'Manuel Yedek',
+        'pre-import': 'İçe Aktarma Öncesi Güvenlik',
+        'pre-restore': 'Geri Yükleme Öncesi Güvenlik',
+        'item-add': 'Ürün Eklendi',
+        'item-update': 'Ürün Güncellendi',
+        'item-delete': 'Ürün Silindi',
+        'item-restore': 'Ürün Geri Alındı',
+        'item-restore-all': 'Tümü Geri Alındı',
+        'trash-empty': 'Çöp Temizlendi',
+        'clear-completed': 'Tamamlananlar Arşivlendi',
+        'supplier-add': 'Toptancı Eklendi',
+        'supplier-update': 'Toptancı Güncellendi',
+        'supplier-delete': 'Toptancı Silindi',
+        'post-import': 'Yedek Yüklendi'
+    };
+    return map[reason] || reason;
+}
+
+function cleanOldBackups(maxKeep = 35) {
+    try {
+        if (!fs.existsSync(BACKUP_DIR)) return;
+        const files = fs.readdirSync(BACKUP_DIR);
+        const backupFiles = files
+            .filter(f => f.startsWith('backup-') && f.endsWith('.json'))
+            .map(f => {
+                const p = path.join(BACKUP_DIR, f);
+                const stat = fs.statSync(p);
+                return { filename: f, path: p, mtimeMs: stat.mtimeMs };
+            })
+            .sort((a, b) => b.mtimeMs - a.mtimeMs);
+
+        if (backupFiles.length > maxKeep) {
+            const toDelete = backupFiles.slice(maxKeep);
+            toDelete.forEach(f => {
+                try { fs.unlinkSync(f.path); } catch (e) {}
+            });
+        }
+    } catch (e) {
+        console.error('Clean backups error:', e);
+    }
+}
+
+async function createServerBackup(reason = 'auto') {
+    try {
+        const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
+        const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
+        const settingsRes = await db.execute('SELECT * FROM settings');
+        
+        const settingsMap = {};
+        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+
+        const items = itemsRes.rows || [];
+        const suppliers = supsRes.rows || [];
+
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        const filename = `backup-${dateStr}-${reason}.json`;
+        const filePath = path.join(BACKUP_DIR, filename);
+
+        const payload = {
+            version: 1,
+            app: 'Dükkan Eksik Takip',
+            createdAt: now.toISOString(),
+            dateFormatted: now.toLocaleString('tr-TR'),
+            reason: reason,
+            reasonLabel: formatBackupReason(reason),
+            totalItems: items.length,
+            activeItems: items.filter(i => i.status !== 'deleted').length,
+            deletedItems: items.filter(i => i.status === 'deleted').length,
+            suppliersCount: suppliers.length,
+            suppliers: suppliers,
+            settings: settingsMap,
+            items: items
+        };
+
+        const jsonStr = JSON.stringify(payload, null, 2);
+        fs.writeFileSync(filePath, jsonStr, 'utf8');
+
+        // Always save latest snapshot for rapid restore
+        const latestPath = path.join(BACKUP_DIR, 'auto-backup-latest.json');
+        fs.writeFileSync(latestPath, jsonStr, 'utf8');
+
+        lastBackupInfo = {
+            filename,
+            createdAt: payload.createdAt,
+            dateFormatted: payload.dateFormatted,
+            reason: reason,
+            reasonLabel: payload.reasonLabel,
+            totalItems: payload.totalItems,
+            activeItems: payload.activeItems,
+            deletedItems: payload.deletedItems,
+            suppliersCount: payload.suppliersCount,
+            size: Buffer.byteLength(jsonStr, 'utf8')
+        };
+
+        cleanOldBackups(35);
+
+        if (io) {
+            io.emit('backup:created', lastBackupInfo);
+        }
+        console.log(`🛡️ [Yedek] Otomatik yedek alındı (${formatBackupReason(reason)}): ${filename} (${items.length} ürün)`);
+
+        return lastBackupInfo;
+    } catch (err) {
+        console.error('Server backup error:', err);
+        return null;
+    }
+}
+
+let autoBackupDebounceTimer = null;
+function scheduleAutoBackup(reason = 'change') {
+    if (autoBackupDebounceTimer) clearTimeout(autoBackupDebounceTimer);
+    autoBackupDebounceTimer = setTimeout(async () => {
+        try {
+            await createServerBackup(reason);
+        } catch (e) {
+            console.error('Scheduled auto backup failed:', e);
+        }
+    }, 3500);
+}
+
 app.use(cors());
 // 15MB limit for photo uploads directly to SQLite / Turso
 app.use(express.json({ limit: '15mb' }));
@@ -27,6 +166,7 @@ app.use((req, res, next) => {
     res.setHeader('Expires', '0');
     next();
 });
+
 
 // Helper to find the newest existing file among candidate paths
 function findBestFile(filePaths) {
@@ -211,6 +351,7 @@ app.post('/api/suppliers', async (req, res) => {
         });
 
         io.emit('supplier:added', newSupplier);
+        scheduleAutoBackup('supplier-add');
         res.status(201).json(newSupplier);
     } catch (err) {
         console.error('Add supplier error:', err);
@@ -254,6 +395,7 @@ app.put('/api/suppliers/:id', async (req, res) => {
 
         const updated = { id, name: newName, oldName };
         io.emit('supplier:updated', updated);
+        scheduleAutoBackup('supplier-update');
         res.json(updated);
     } catch (err) {
         console.error('Update supplier error:', err);
@@ -270,12 +412,14 @@ app.delete('/api/suppliers/:id', async (req, res) => {
         });
 
         io.emit('supplier:deleted', { id });
+        scheduleAutoBackup('supplier-delete');
         res.json({ success: true, deletedId: id });
     } catch (err) {
         console.error('Delete supplier error:', err);
         res.status(500).json({ error: 'Toptancı silinemedi' });
     }
 });
+
 
 // Settings Endpoints (App icon, customization, etc.)
 app.get('/api/settings', async (req, res) => {
@@ -365,6 +509,7 @@ app.post('/api/items', async (req, res) => {
         });
 
         io.emit('item:added', newItem);
+        scheduleAutoBackup('item-add');
         res.status(201).json(newItem);
     } catch (err) {
         console.error('Insert item error:', err);
@@ -416,6 +561,7 @@ app.put('/api/items/:id', async (req, res) => {
         });
 
         io.emit('item:updated', updated);
+        scheduleAutoBackup('item-update');
         res.json(updated);
     } catch (err) {
         console.error('Update item error:', err);
@@ -436,6 +582,7 @@ app.delete('/api/items/:id', async (req, res) => {
                 args: [id]
             });
             io.emit('item:deleted', { id, permanent: true });
+            scheduleAutoBackup('item-delete');
             return res.json({ success: true, deletedId: id, permanent: true });
         }
 
@@ -454,6 +601,7 @@ app.delete('/api/items/:id', async (req, res) => {
 
         io.emit('item:updated', updatedItem);
         io.emit('item:soft-deleted', { id, item: updatedItem });
+        scheduleAutoBackup('item-delete');
         return res.json({ success: true, item: updatedItem, softDeleted: true });
     } catch (err) {
         console.error('Delete item error:', err);
@@ -480,6 +628,7 @@ app.post('/api/items/:id/restore', async (req, res) => {
         const updatedItem = updatedRes.rows[0];
 
         io.emit('item:updated', updatedItem);
+        scheduleAutoBackup('item-restore');
         res.json({ success: true, item: updatedItem });
     } catch (err) {
         console.error('Restore item error:', err);
@@ -496,6 +645,7 @@ app.post('/api/items/restore-all', async (req, res) => {
             args: [now]
         });
         io.emit('items:all-restored', {});
+        scheduleAutoBackup('item-restore-all');
         res.json({ success: true });
     } catch (err) {
         console.error('Restore all error:', err);
@@ -508,6 +658,7 @@ app.delete('/api/items/trash/empty', async (req, res) => {
     try {
         await db.execute('DELETE FROM items WHERE status = "deleted"');
         io.emit('items:trash-emptied', {});
+        scheduleAutoBackup('trash-empty');
         res.json({ success: true });
     } catch (err) {
         console.error('Empty trash error:', err);
@@ -524,10 +675,245 @@ app.post('/api/items/clear-completed', async (req, res) => {
             args: [now]
         });
         io.emit('items:bulk-deleted', {});
+        scheduleAutoBackup('clear-completed');
         res.json({ success: true });
     } catch (err) {
         console.error('Clear completed error:', err);
         res.status(500).json({ error: 'Temizleme başarısız' });
+    }
+});
+
+// ==========================================
+// AUTO BACKUP & RESTORE ENDPOINTS
+// ==========================================
+
+// Get list of all available backups
+app.get('/api/backups', async (req, res) => {
+    try {
+        if (!fs.existsSync(BACKUP_DIR)) {
+            return res.json({ lastBackup: lastBackupInfo, backups: [] });
+        }
+        const files = fs.readdirSync(BACKUP_DIR);
+        const backupList = [];
+
+        for (const file of files) {
+            if (file.startsWith('backup-') && file.endsWith('.json')) {
+                const fullPath = path.join(BACKUP_DIR, file);
+                try {
+                    const stat = fs.statSync(fullPath);
+                    const raw = fs.readFileSync(fullPath, 'utf8');
+                    const content = JSON.parse(raw);
+                    backupList.push({
+                        filename: file,
+                        size: stat.size,
+                        createdAt: content.createdAt || stat.birthtime.toISOString(),
+                        dateFormatted: content.dateFormatted || new Date(stat.mtimeMs).toLocaleString('tr-TR'),
+                        reason: content.reason || 'auto',
+                        reasonLabel: content.reasonLabel || formatBackupReason(content.reason || 'auto'),
+                        totalItems: content.totalItems !== undefined ? content.totalItems : (content.items ? content.items.length : 0),
+                        activeItems: content.activeItems !== undefined ? content.activeItems : 0,
+                        deletedItems: content.deletedItems !== undefined ? content.deletedItems : 0,
+                        suppliersCount: content.suppliersCount !== undefined ? content.suppliersCount : (content.suppliers ? content.suppliers.length : 0)
+                    });
+                } catch (e) {
+                    // skip corrupted file
+                }
+            }
+        }
+
+        backupList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        res.json({
+            lastBackup: lastBackupInfo,
+            backups: backupList
+        });
+    } catch (err) {
+        console.error('Get backups error:', err);
+        res.status(500).json({ error: 'Yedekler listelenemedi' });
+    }
+});
+
+// Trigger instant manual backup
+app.post('/api/backups/create', async (req, res) => {
+    try {
+        const backup = await createServerBackup('manual');
+        res.json({ success: true, backup });
+    } catch (err) {
+        console.error('Create manual backup error:', err);
+        res.status(500).json({ error: 'Yedek alınamadı' });
+    }
+});
+
+// Download a specific backup file
+app.get('/api/backups/download/:filename', (req, res) => {
+    const rawFilename = path.basename(req.params.filename);
+    const filePath = path.join(BACKUP_DIR, rawFilename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).send('Yedek dosyası bulunamadı');
+    }
+
+    res.download(filePath, rawFilename);
+});
+
+// Restore database from selected server backup file
+app.post('/api/backups/:filename/restore', async (req, res) => {
+    const rawFilename = path.basename(req.params.filename);
+    const filePath = path.join(BACKUP_DIR, rawFilename);
+
+    if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ error: 'Yedek dosyası bulunamadı' });
+    }
+
+    try {
+        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        const items = content.items || [];
+        const suppliers = content.suppliers || [];
+        const settings = content.settings || {};
+
+        // Safety backup of current state before restoring
+        await createServerBackup('pre-restore');
+
+        // Replace all items
+        await db.execute('DELETE FROM items');
+        for (const item of items) {
+            await db.execute({
+                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [
+                    item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+                    item.name,
+                    item.quantity || '1 adet',
+                    item.category || 'Genel',
+                    item.supplier || 'Belirtilmedi',
+                    item.urgency || 'normal',
+                    item.status || 'pending',
+                    item.notes || '',
+                    item.image || '',
+                    item.barcode || '',
+                    item.createdAt || new Date().toISOString(),
+                    item.updatedAt || new Date().toISOString(),
+                    item.source || 'backup-restore'
+                ]
+            });
+        }
+
+        // Restore suppliers
+        if (Array.isArray(suppliers) && suppliers.length > 0) {
+            for (const s of suppliers) {
+                if (s && s.name) {
+                    await db.execute({
+                        sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
+                        args: [s.id || ('sup_' + Date.now()), s.name.trim(), s.createdAt || new Date().toISOString()]
+                    });
+                }
+            }
+        }
+
+        // Restore settings if present
+        if (settings && typeof settings === 'object') {
+            for (const [k, v] of Object.entries(settings)) {
+                await db.execute({
+                    sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+                    args: [String(k), String(v || '')]
+                });
+            }
+        }
+
+        const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
+        const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
+        const settingsRes = await db.execute('SELECT * FROM settings');
+        const settingsMap = {};
+        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+
+        io.emit('init', {
+            items: itemsRes.rows,
+            suppliers: supsRes.rows,
+            settings: settingsMap
+        });
+
+        res.json({
+            success: true,
+            message: `${items.length} ürün ve ${suppliers.length} toptancı başarıyla geri yüklendi`,
+            totalItems: items.length
+        });
+    } catch (err) {
+        console.error('Backup restore error:', err);
+        res.status(500).json({ error: 'Geri yükleme sırasında hata oluştu: ' + err.message });
+    }
+});
+
+// Import from uploaded file/JSON (Browser manual upload)
+app.post('/api/backup/import', async (req, res) => {
+    try {
+        const { items = [], suppliers = [], mode = 'merge' } = req.body;
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Yedek dosyasında ürün bulunamadı' });
+        }
+
+        // Safety backup of current state before importing
+        await createServerBackup('pre-import');
+
+        if (mode === 'replace') {
+            await db.execute('DELETE FROM items');
+        }
+
+        for (const item of items) {
+            await db.execute({
+                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [
+                    item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
+                    item.name,
+                    item.quantity || '1 adet',
+                    item.category || 'Genel',
+                    item.supplier || 'Belirtilmedi',
+                    item.urgency || 'normal',
+                    item.status || 'pending',
+                    item.notes || '',
+                    item.image || '',
+                    item.barcode || '',
+                    item.createdAt || new Date().toISOString(),
+                    item.updatedAt || new Date().toISOString(),
+                    item.source || 'backup-import'
+                ]
+            });
+        }
+
+        if (Array.isArray(suppliers) && suppliers.length > 0) {
+            for (const s of suppliers) {
+                if (s && s.name) {
+                    await db.execute({
+                        sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
+                        args: [s.id || ('sup_' + Date.now()), s.name.trim(), s.createdAt || new Date().toISOString()]
+                    });
+                }
+            }
+        }
+
+        scheduleAutoBackup('post-import');
+
+        const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
+        const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
+        const settingsRes = await db.execute('SELECT * FROM settings');
+        const settingsMap = {};
+        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+
+        io.emit('init', {
+            items: itemsRes.rows,
+            suppliers: supsRes.rows,
+            settings: settingsMap
+        });
+
+        res.json({
+            success: true,
+            importedItemsCount: items.length,
+            suppliersCount: suppliers.length
+        });
+    } catch (err) {
+        console.error('Backup import error:', err);
+        res.status(500).json({ error: 'Yedek yükleme hatası: ' + err.message });
     }
 });
 
@@ -542,7 +928,8 @@ io.on('connection', async (socket) => {
         socket.emit('init', {
             items: itemsRes.rows,
             suppliers: supsRes.rows,
-            settings: settingsMap
+            settings: settingsMap,
+            lastBackup: lastBackupInfo
         });
     } catch (e) {
         socket.emit('init', { items: [], suppliers: [], settings: {} });
@@ -553,15 +940,36 @@ io.on('connection', async (socket) => {
 (async () => {
     try {
         await initDb();
+
+        // Automatic initial backup on startup
+        setTimeout(async () => {
+            try {
+                await createServerBackup('startup');
+            } catch (e) {
+                console.error('Startup auto backup notice:', e.message);
+            }
+        }, 1500);
+
+        // Hourly auto backup (every 60 minutes)
+        setInterval(async () => {
+            try {
+                await createServerBackup('hourly');
+            } catch (e) {
+                console.error('Hourly auto backup notice:', e.message);
+            }
+        }, 60 * 60 * 1000);
+
         server.listen(PORT, async () => {
             console.log('====================================================');
             console.log('🛍️  DÜKKAN EKSİK TAKİP - WEB & TURSO HAZIR');
             console.log('====================================================');
             console.log(`🚀 Port: ${PORT}`);
             console.log(`🔐 Giriş: admin / 123`);
+            console.log(`🛡️ Otomatik Yedekleme (Auto-Backup): 7/24 AKTİF`);
             console.log('====================================================\n');
         });
     } catch (err) {
         console.error('Sunucu başlatma hatası:', err);
     }
 })();
+

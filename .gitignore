@@ -3,4 +3,5 @@ data/*.db
 data/*.db-journal
 .env
 .DS_Store
-Thumbs.db
+data/backups/
+*.bak

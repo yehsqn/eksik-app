@@ -509,22 +509,6 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
-                            <span class="tool-icon">💾</span>
-                            <div class="tool-text">
-                                <strong>Yedek Al</strong>
-                                <small>JSON dosyası indir</small>
-                            </div>
-                        </button>
-
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
-                            <span class="tool-icon">📥</span>
-                            <div class="tool-text">
-                                <strong>Yedek Yükle</strong>
-                                <small>JSON geri yükle</small>
-                            </div>
-                        </button>
-
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-toggle-sound" title="Ses Bildirimleri">
                             <span class="tool-icon" id="sound-tool-icon">🔔</span>
                             <div class="tool-text">
@@ -533,10 +517,66 @@
                             </div>
                         </button>
                     </div>
+                </div>
+
+                <!-- 3. Otomatik Yedekleme & Güvenlik (Auto-Backup) -->
+                <div class="admin-section-box">
+                    <div class="admin-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>🛡️</span>
+                            <span>Otomatik Yedekleme (Auto-Backup)</span>
+                        </div>
+                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
+                            🟢 7/24 Aktif
+                        </span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
+                        Dükkanınızda yapılan her ürün ekleme, düzenleme veya silme işleminde ve saat başı sunucuya <strong>otomatik güvenlik yedeği</strong> alınır. Ürünleriniz hiçbir zaman kaybolmaz.
+                    </div>
+                    
+                    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+                        <span style="color: var(--text-muted);">Son Otomatik Yedek:</span>
+                        <strong id="admin-last-backup-badge" style="color: #38bdf8;">Kontrol ediliyor...</strong>
+                    </div>
+
+                    <div class="admin-tools-grid">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-trigger-instant-backup" title="Sunucuya Anında Yeni Yedek Kaydet">
+                            <span class="tool-icon">💾</span>
+                            <div class="tool-text">
+                                <strong>Şimdi Yedek Al</strong>
+                                <small>Anlık güvenli snapshot</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-server-backups" title="Tüm Geçmiş Yedekleri Gör ve Geri Yükle">
+                            <span class="tool-icon">🕒</span>
+                            <div class="tool-text">
+                                <strong>Geçmiş Yedekler</strong>
+                                <small>Listele & Geri Yükle</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
+                            <span class="tool-icon">📤</span>
+                            <div class="tool-text">
+                                <strong>Yedeği İndir</strong>
+                                <small>JSON dosyası indir</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
+                            <span class="tool-icon">📥</span>
+                            <div class="tool-text">
+                                <strong>Dosyadan Yükle</strong>
+                                <small>JSON dosyasını yükle</small>
+                            </div>
+                        </button>
+                    </div>
                     <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
                 </div>
 
-                <!-- 3. Şifre Değiştir -->
+                <!-- 4. Şifre Değiştir -->
+
                 <div class="admin-section-box">
                     <div class="admin-section-title">
                         <span>🔐</span>
@@ -763,6 +803,47 @@
                 <button type="button" class="btn btn-primary" id="btn-confirm-import-backup" style="padding: 0.65rem 1.35rem; font-weight: 800;">
                     <span>📥</span>
                     <span>Yedeği Şimdi Yükle</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Geçmiş Otomatik Yedekler ve Geri Yükleme -->
+    <div class="modal-overlay" id="server-backups-modal">
+        <div class="modal-card" style="max-width: 650px; width: 95%;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🛡️</span>
+                    <span>Otomatik Güvenlik Yedekleri</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            
+            <div style="margin-bottom: 0.85rem;">
+                <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.45;">
+                    Sistem tarafından dükkanınız için otomatik alınan son 35 güvenlik yedeği aşağıdadır. İstediğiniz yedeği indirebilir veya <strong>"Geri Yükle"</strong> butonuna tıklayarak ürünlerinizi o tarihteki haline tek tıkla döndürebilirsiniz.
+                </p>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:0.6rem 0.85rem; margin-bottom:0.75rem;">
+                    <span style="font-size:0.8rem; color:#94a3b8;">Otomatik Koruma: <strong style="color:#10b981;">🟢 7/24 Aktif</strong></span>
+                    <button type="button" class="btn btn-secondary" id="btn-refresh-backups-list" style="padding:0.35rem 0.65rem; font-size:0.78rem;">
+                        🔄 Yenile
+                    </button>
+                </div>
+            </div>
+
+            <!-- Backups List Container -->
+            <div id="server-backups-list" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-right: 0.25rem;">
+                <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.88rem;">
+                    ⏳ Yedekler listeleniyor...
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                <button type="button" class="btn btn-primary" id="btn-modal-instant-backup" style="padding: 0.6rem 1rem; font-size: 0.85rem;">
+                    <span>💾</span><span>Şimdi Yeni Yedek Al</span>
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.6rem 1.2rem;">
+                    Kapat
                 </button>
             </div>
         </div>

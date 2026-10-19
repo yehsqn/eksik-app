@@ -404,6 +404,11 @@ class App {
                 if (data.settings && data.settings.app_name) {
                     this.handleReceivedNameSetting(data.settings.app_name);
                 }
+                if (data.lastBackup) {
+                    this.updateLastBackupDisplay(data.lastBackup);
+                } else {
+                    this.fetchAndDisplayLastBackup();
+                }
             });
 
             this.socket.on('setting:updated', (data) => {
@@ -412,6 +417,14 @@ class App {
                 }
                 if (data.key === 'app_name') {
                     this.handleReceivedNameSetting(data.value);
+                }
+            });
+
+            this.socket.on('backup:created', (data) => {
+                this.updateLastBackupDisplay(data);
+                const listModal = document.getElementById('server-backups-modal');
+                if (listModal && listModal.classList.contains('active')) {
+                    this.renderServerBackups();
                 }
             });
 
@@ -1019,6 +1032,28 @@ class App {
             btnConfirmImport.addEventListener('click', () => {
                 this.executeBackupImport();
             });
+        }
+
+        // Instant Server Backup Trigger (Admin modal & Backups modal)
+        const btnInstant1 = document.getElementById('btn-trigger-instant-backup');
+        if (btnInstant1) {
+            btnInstant1.addEventListener('click', () => this.triggerInstantBackup());
+        }
+        const btnInstant2 = document.getElementById('btn-modal-instant-backup');
+        if (btnInstant2) {
+            btnInstant2.addEventListener('click', () => this.triggerInstantBackup());
+        }
+
+        // Open Server Backups Modal
+        const btnOpenBackups = document.getElementById('btn-open-server-backups');
+        if (btnOpenBackups) {
+            btnOpenBackups.addEventListener('click', () => this.openServerBackupsModal());
+        }
+
+        // Refresh Backups List Button
+        const btnRefreshBackups = document.getElementById('btn-refresh-backups-list');
+        if (btnRefreshBackups) {
+            btnRefreshBackups.addEventListener('click', () => this.renderServerBackups());
         }
 
         // Clear completed
@@ -1727,7 +1762,217 @@ class App {
         }
     }
 
+    // Update last backup display badge in Admin modal
+    updateLastBackupDisplay(backup) {
+        const badge = document.getElementById('admin-last-backup-badge');
+        if (!badge) return;
+        if (!backup) {
+            badge.textContent = 'Henüz yedek yok';
+            return;
+        }
+
+        const dateStr = backup.dateFormatted || (backup.createdAt ? new Date(backup.createdAt).toLocaleString('tr-TR') : 'Bilinmiyor');
+        const reason = backup.reasonLabel || backup.reason || 'Otomatik';
+        badge.textContent = `${dateStr} (${reason} - ${backup.totalItems || 0} ürün)`;
+    }
+
+    async fetchAndDisplayLastBackup() {
+        try {
+            const res = await fetch('/api/backups');
+            if (res.ok) {
+                const data = await res.json();
+                if (data.lastBackup) {
+                    this.updateLastBackupDisplay(data.lastBackup);
+                } else if (data.backups && data.backups.length > 0) {
+                    this.updateLastBackupDisplay(data.backups[0]);
+                }
+            }
+        } catch (e) {}
+    }
+
+    // Trigger instant server-side snapshot
+    async triggerInstantBackup() {
+        const btn1 = document.getElementById('btn-trigger-instant-backup');
+        const btn2 = document.getElementById('btn-modal-instant-backup');
+        
+        const setButtons = (loading) => {
+            [btn1, btn2].forEach(btn => {
+                if (btn) {
+                    btn.disabled = loading;
+                    btn.innerHTML = loading
+                        ? '<span>⏳</span><span>Yedekleniyor...</span>'
+                        : '<span>💾</span><span>Şimdi Yedek Al</span>';
+                }
+            });
+        };
+
+        setButtons(true);
+        try {
+            const res = await fetch('/api/backups/create', { method: 'POST' });
+            if (res.ok) {
+                const data = await res.json();
+                this.showToast(`🛡️ ${data.backup ? data.backup.totalItems : this.items.length} ürünün anlık yedeği sunucuya başarıyla kaydedildi!`);
+                if (data.backup) {
+                    this.updateLastBackupDisplay(data.backup);
+                }
+                const modal = document.getElementById('server-backups-modal');
+                if (modal && modal.classList.contains('active')) {
+                    this.renderServerBackups();
+                }
+            } else {
+                this.showToast('Yedek alınamadı.');
+            }
+        } catch (e) {
+            console.error('Manual backup error:', e);
+            this.showToast('Sunucu bağlantı hatası.');
+        } finally {
+            setButtons(false);
+        }
+    }
+
+    openServerBackupsModal() {
+        this.openModal('server-backups-modal');
+        this.renderServerBackups();
+    }
+
+    async renderServerBackups() {
+        const container = document.getElementById('server-backups-list');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.88rem;">
+                ⏳ Yedekler sunucudan çekiliyor...
+            </div>
+        `;
+
+        try {
+            const res = await fetch('/api/backups');
+            if (!res.ok) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: #f87171; font-size: 0.88rem;">
+                        ⚠️ Yedekler yüklenemedi.
+                    </div>
+                `;
+                return;
+            }
+
+            const data = await res.json();
+            const backups = data.backups || [];
+
+            if (data.lastBackup) {
+                this.updateLastBackupDisplay(data.lastBackup);
+            }
+
+            if (backups.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🛡️</div>
+                        <div style="font-weight: 700; color: #f8fafc; margin-bottom: 0.35rem;">Henüz Yedek Kaydı Yok</div>
+                        <div style="font-size: 0.82rem;">"Şimdi Yeni Yedek Al" butonuna basarak ilk güvenli yedeğinizi hemen alabilirsiniz.</div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            backups.forEach((b, idx) => {
+                const isLatest = idx === 0;
+                const formattedSize = b.size > 1024 ? `${(b.size / 1024).toFixed(1)} KB` : `${b.size} B`;
+                const dateDisplay = b.dateFormatted || (b.createdAt ? new Date(b.createdAt).toLocaleString('tr-TR') : b.filename);
+                const reasonBadge = b.reasonLabel || b.reason;
+
+                html += `
+                    <div style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.9rem; background: ${isLatest ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isLatest ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-radius: var(--radius-sm); transition: all 0.2s ease;">
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
+                                    <strong style="font-size: 0.9rem; color: #f8fafc;">📅 ${dateDisplay}</strong>
+                                    ${isLatest ? '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 800;">EN SON YEDEK</span>' : ''}
+                                    <span style="background: rgba(255, 255, 255, 0.08); color: #cbd5e1; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 4px;">${this.escapeHtml(reasonBadge)}</span>
+                                </div>
+                                <div style="display: flex; gap: 0.6rem; margin-top: 0.3rem; font-size: 0.78rem; color: #94a3b8; flex-wrap: wrap;">
+                                    <span>📦 <strong>${b.totalItems}</strong> Ürün</span>
+                                    <span>🏢 <strong>${b.suppliersCount || 0}</strong> Toptancı</span>
+                                    <span>💾 ${formattedSize}</span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 0.45rem; align-items: center; flex-shrink: 0;">
+                                <a href="/api/backups/download/${encodeURIComponent(b.filename)}" download class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; text-decoration: none;" title="JSON Dosyasını Bilgisayara İndir">
+                                    📥 İndir
+                                </a>
+                                <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #7c3aed);" title="Dükkan Verilerini Bu Tarihe Geri Döndür" onclick="window.app.confirmRestoreServerBackup('${this.escapeHtml(b.filename)}', '${this.escapeHtml(dateDisplay)}', ${b.totalItems})">
+                                    🔄 Geri Yükle
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        } catch (e) {
+            console.error('Render backups error:', e);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem; color: #f87171; font-size: 0.88rem;">
+                    ⚠️ Yedekler listelenirken hata oluştu.
+                </div>
+            `;
+        }
+    }
+
+    confirmRestoreServerBackup(filename, dateDisplay, totalItems) {
+        this.openConfirmModal({
+            icon: '🔄',
+            title: 'Yedekten Geri Yükle',
+            desc: `⚠️ DİKKAT: Dükkan verileriniz "${dateDisplay}" tarihindeki yedek durumuna döndürülecektir (${totalItems} adet ürün).\n\nMevcut listenizin güvenlik yedeği otomatik olarak alınacaktır. Geri yüklemeyi onaylıyor musunuz?`,
+            onConfirm: () => {
+                this.executeRestoreServerBackup(filename);
+            }
+        });
+    }
+
+    async executeRestoreServerBackup(filename) {
+        this.showToast('⏳ Yedek geri yükleniyor...');
+        try {
+            const res = await fetch(`/api/backups/${encodeURIComponent(filename)}/restore`, {
+                method: 'POST'
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.closeAllModals();
+                this.showToast(`✅ ${data.totalItems} ürün başarıyla geri yüklendi!`);
+                if (window.soundManager && window.soundManager.playCompleted) {
+                    window.soundManager.playCompleted();
+                }
+                await this.loadInitialData();
+                await this.loadSuppliers();
+            } else {
+                this.showToast(data.error || 'Geri yükleme başarısız oldu.');
+            }
+        } catch (e) {
+            console.error('Execute restore error:', e);
+            this.showToast('Geri yükleme sırasında hata oluştu.');
+        }
+    }
+
+    // Client-side emergency snapshot in LocalStorage
+    saveOfflineBackup() {
+        try {
+            if (this.items && this.items.length > 0) {
+                localStorage.setItem('eksik_offline_auto_backup', JSON.stringify({
+                    date: new Date().toISOString(),
+                    itemsCount: this.items.length,
+                    items: this.items,
+                    suppliers: this.suppliers
+                }));
+            }
+        } catch (e) {}
+    }
+
     async clearCompletedItems() {
+
         const completedCount = this.items.filter(i => i.status === 'completed').length;
         if (completedCount === 0) {
             this.showToast('Temizlenecek tamamlanmış ürün bulunmuyor.');
@@ -1800,8 +2045,10 @@ class App {
         const nameInput = document.getElementById('input-app-name');
         if (nameInput) nameInput.value = this.appName || 'App';
         this.updateSoundButtonUI();
+        this.fetchAndDisplayLastBackup();
         this.openModal('password-modal');
     }
+
 
     closeAllModals() {
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
@@ -1917,6 +2164,7 @@ class App {
     }
 
     render() {
+        this.saveOfflineBackup();
         this.renderStats();
         const container = document.getElementById('items-container');
         if (!container) return;
