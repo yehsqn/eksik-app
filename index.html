@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -11,7 +12,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Styles -->
     <link rel="stylesheet" href="/css/style.css?v=20261019_icon">
@@ -19,6 +22,7 @@
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
 </head>
+
 <body>
     <div class="ambient-glow"></div>
 
@@ -27,7 +31,7 @@
         <div class="login-card">
             <div class="login-brand">
                 <div class="brand-avatar-glow" id="login-brand-icon" title="Uygulama İkonu">⚡</div>
-                <h2 id="login-title-text">App</h2>
+                <h2 id="login-title-text">Eksik</h2>
                 <p>Devam etmek için giriş yapınız</p>
             </div>
 
@@ -35,16 +39,21 @@
                 <div id="login-error" class="login-error-msg" style="display: none;"></div>
 
                 <div class="form-group" style="margin-bottom: 1.1rem;">
-                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Kullanıcı Adı</label>
+                    <label
+                        style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Kullanıcı
+                        Adı</label>
                     <input type="text" id="login-username" placeholder="Kullanıcı adı" required autocomplete="username">
                 </div>
 
                 <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Şifre</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                    <label
+                        style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Şifre</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required
+                        autocomplete="current-password">
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md);">
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md);">
                     Giriş Yap
                 </button>
             </form>
@@ -55,7 +64,8 @@
     <div id="main-app-container" style="display: none;">
         <!-- Print Header -->
         <div class="print-only-header">
-            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;" id="print-app-title">APP - SİPARİŞ LİSTESİ</h1>
+            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;" id="print-app-title">APP - SİPARİŞ LİSTESİ
+            </h1>
             <p style="font-size:13px; color:#555;">Yazdırma Tarihi: <span id="print-date"></span></p>
         </div>
 
@@ -153,7 +163,9 @@
                         <label class="input-label" for="input-name">Ürün Adı ve Modeli</label>
                         <div class="input-icon-wrapper">
                             <span class="input-icon">🔍</span>
-                            <input type="text" id="input-name" placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)" required autocomplete="off">
+                            <input type="text" id="input-name"
+                                placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)"
+                                required autocomplete="off">
                         </div>
                     </div>
 
@@ -161,7 +173,8 @@
                     <div class="form-row-responsive">
                         <div class="form-group-vertical">
                             <label class="input-label" for="input-quantity">Miktar & Birim</label>
-                            <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)" value="1 kutu">
+                            <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)"
+                                value="1 kutu">
                         </div>
 
                         <div class="form-group-vertical">
@@ -186,11 +199,13 @@
 
                     <!-- Row 3: Action Buttons -->
                     <div class="form-actions-vertical">
-                        <button type="button" class="btn btn-secondary action-btn-extra" id="btn-trigger-photo" title="Fotoğraf Çek / Yükle">
+                        <button type="button" class="btn btn-secondary action-btn-extra" id="btn-trigger-photo"
+                            title="Fotoğraf Çek / Yükle">
                             <span>📷</span>
                             <span id="photo-btn-text">Fotoğraf</span>
                         </button>
-                        <button type="button" class="btn-mic action-btn-extra" id="btn-voice-input" title="Sesle Söyle (Türkçe)">
+                        <button type="button" class="btn-mic action-btn-extra" id="btn-voice-input"
+                            title="Sesle Söyle (Türkçe)">
                             <span>🎙️</span>
                             <span>Sesle Söyle</span>
                         </button>
@@ -202,10 +217,13 @@
                 </form>
 
                 <!-- Selected Photo Preview Strip -->
-                <div id="add-photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
-                    <img id="add-photo-preview-img" src="" alt="Önizleme" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2);">
+                <div id="add-photo-preview-container"
+                    style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
+                    <img id="add-photo-preview-img" src="" alt="Önizleme"
+                        style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2);">
                     <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">Fotoğraf eklendi</span>
-                    <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
+                    <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm"
+                        style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
                 </div>
 
                 <!-- Hardware Quick Selection Bar with Add / Remove Capability -->
@@ -216,11 +234,13 @@
                             <span>Hızlı Seçenekler (Sık Bitenler)</span>
                         </div>
                         <div class="quick-pills-controls">
-                            <button type="button" class="btn-pill-action danger" id="btn-toggle-edit-pills" title="Listeden Ürün Çıkar">
+                            <button type="button" class="btn-pill-action danger" id="btn-toggle-edit-pills"
+                                title="Listeden Ürün Çıkar">
                                 <span id="edit-pills-icon">🗑️</span>
                                 <span id="edit-pills-text">Çıkar / Düzenle</span>
                             </button>
-                            <button type="button" class="btn-pill-action primary" id="btn-open-add-pill" title="Yeni Hızlı Ürün Ekle">
+                            <button type="button" class="btn-pill-action primary" id="btn-open-add-pill"
+                                title="Yeni Hızlı Ürün Ekle">
                                 <span>➕</span>
                                 <span>Yeni Ekle</span>
                             </button>
@@ -234,13 +254,22 @@
 
             <!-- Quick Filter Chips Bar -->
             <div class="quick-chips-bar">
-                <button class="chip-filter active" data-filter="all">Tümü <span class="chip-badge" id="chip-total">0</span></button>
-                <button class="chip-filter" data-filter="critical">🔴 Yok Satıyor <span class="chip-badge" id="chip-critical">0</span></button>
-                <button class="chip-filter" data-filter="urgent">🚨 Acil <span class="chip-badge" id="chip-urgent">0</span></button>
-                <button class="chip-filter" data-filter="pending">⏳ Bekleyen <span class="chip-badge" id="chip-pending">0</span></button>
-                <button class="chip-filter" data-filter="ordered">🚚 Sipariş Edildi <span class="chip-badge" id="chip-ordered">0</span></button>
-                <button class="chip-filter" data-filter="completed">✅ Alındı <span class="chip-badge" id="chip-completed">0</span></button>
-                <button class="chip-filter chip-trash" data-filter="trash" style="border-color: rgba(239, 68, 68, 0.35); color: #f87171;">🗑️ Silinenler <span class="chip-badge" id="chip-trash" style="background: rgba(239, 68, 68, 0.25); color: #fca5a5;">0</span></button>
+                <button class="chip-filter active" data-filter="all">Tümü <span class="chip-badge"
+                        id="chip-total">0</span></button>
+                <button class="chip-filter" data-filter="critical">🔴 Yok Satıyor <span class="chip-badge"
+                        id="chip-critical">0</span></button>
+                <button class="chip-filter" data-filter="urgent">🚨 Acil <span class="chip-badge"
+                        id="chip-urgent">0</span></button>
+                <button class="chip-filter" data-filter="pending">⏳ Bekleyen <span class="chip-badge"
+                        id="chip-pending">0</span></button>
+                <button class="chip-filter" data-filter="ordered">🚚 Sipariş Edildi <span class="chip-badge"
+                        id="chip-ordered">0</span></button>
+                <button class="chip-filter" data-filter="completed">✅ Alındı <span class="chip-badge"
+                        id="chip-completed">0</span></button>
+                <button class="chip-filter chip-trash" data-filter="trash"
+                    style="border-color: rgba(239, 68, 68, 0.35); color: #f87171;">🗑️ Silinenler <span
+                        class="chip-badge" id="chip-trash"
+                        style="background: rgba(239, 68, 68, 0.25); color: #fca5a5;">0</span></button>
             </div>
 
             <!-- Toolbar & Filters -->
@@ -297,25 +326,32 @@
             </div>
             <div style="padding: 0.5rem 0;">
                 <p style="font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-primary);">
-                    Yazmak istediğiniz <strong id="dup-new-name" style="color:#60a5fa;"></strong> ürünü, listedeki mevcut ürünle aynı veya çok benzer görünüyor:
+                    Yazmak istediğiniz <strong id="dup-new-name" style="color:#60a5fa;"></strong> ürünü, listedeki
+                    mevcut ürünle aynı veya çok benzer görünüyor:
                 </p>
 
-                <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem;">
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">LİSTEDEKİ MEVCUT ÜRÜN:</div>
+                <div
+                    style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">LİSTEDEKİ MEVCUT
+                        ÜRÜN:</div>
                     <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc;" id="dup-existing-name">-</div>
                     <div style="font-size: 0.85rem; color: #38bdf8; margin-top: 0.25rem;">
-                        Mevcut Miktar: <strong id="dup-existing-qty">-</strong> | Durum: <span id="dup-existing-status">-</span>
+                        Mevcut Miktar: <strong id="dup-existing-qty">-</strong> | Durum: <span
+                            id="dup-existing-status">-</span>
                     </div>
                 </div>
 
                 <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                    <button class="btn btn-primary" id="btn-dup-update-qty" style="padding: 0.75rem 1rem; justify-content: center; font-weight: 700;">
+                    <button class="btn btn-primary" id="btn-dup-update-qty"
+                        style="padding: 0.75rem 1rem; justify-content: center; font-weight: 700;">
                         ➕ Mevcut Ürünün Miktarını Güncelle / Artır
                     </button>
-                    <button class="btn btn-secondary" id="btn-dup-force-add" style="padding: 0.65rem 1rem; justify-content: center;">
+                    <button class="btn btn-secondary" id="btn-dup-force-add"
+                        style="padding: 0.65rem 1rem; justify-content: center;">
                         Farklı Ürün, Yine de Ayrı Olarak Ekle
                     </button>
-                    <button class="btn btn-secondary" id="btn-dup-cancel" style="padding: 0.6rem 1rem; justify-content: center; color: var(--text-muted);">
+                    <button class="btn btn-secondary" id="btn-dup-cancel"
+                        style="padding: 0.6rem 1rem; justify-content: center; color: var(--text-muted);">
                         Vazgeç / İptal Et
                     </button>
                 </div>
@@ -331,7 +367,9 @@
                     <span>🏢</span>
                     <span>Toptancıları Yönet</span>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.app.openAdminModal()" style="margin-left: auto; margin-right: 0.5rem; padding: 0.25rem 0.65rem; font-size: 0.8rem;" title="Yönetim Paneline Geri Dön">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.app.openAdminModal()"
+                    style="margin-left: auto; margin-right: 0.5rem; padding: 0.25rem 0.65rem; font-size: 0.8rem;"
+                    title="Yönetim Paneline Geri Dön">
                     ← Yönetim Paneli
                 </button>
                 <button class="btn-close">&times;</button>
@@ -339,13 +377,16 @@
             <div style="padding: 0.5rem 0;">
                 <!-- Add New Supplier Form -->
                 <form id="add-supplier-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-                    <input type="text" id="new-supplier-name" placeholder="Yeni toptancı adı yazın..." required style="flex:1;">
+                    <input type="text" id="new-supplier-name" placeholder="Yeni toptancı adı yazın..." required
+                        style="flex:1;">
                     <button type="submit" class="btn btn-primary">+ Ekle</button>
                 </form>
 
                 <!-- Current Suppliers List -->
-                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">KAYITLI TOPTANCILARINIZ:</div>
-                <div id="suppliers-list-container" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 280px; overflow-y: auto;">
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">
+                    KAYITLI TOPTANCILARINIZ:</div>
+                <div id="suppliers-list-container"
+                    style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 280px; overflow-y: auto;">
                     <!-- Injected via JS -->
                 </div>
             </div>
@@ -364,7 +405,7 @@
             </div>
             <form id="edit-item-form" style="display: flex; flex-direction: column; gap: 0.9rem; padding: 0.25rem 0;">
                 <input type="hidden" id="edit-item-id">
-                
+
                 <div class="form-group-vertical">
                     <label class="input-label" for="edit-item-name">Ürün Adı ve Modeli</label>
                     <input type="text" id="edit-item-name" placeholder="Ürün adı" required autocomplete="off">
@@ -406,23 +447,30 @@
 
                 <div class="form-group-vertical">
                     <label class="input-label" for="edit-item-notes">Not / Açıklama (Opsiyonel)</label>
-                    <input type="text" id="edit-item-notes" placeholder="Örn: 2. raf, yarın gelecek..." autocomplete="off">
+                    <input type="text" id="edit-item-notes" placeholder="Örn: 2. raf, yarın gelecek..."
+                        autocomplete="off">
                 </div>
 
                 <!-- Photo preview & controls within edit modal -->
                 <div class="form-group-vertical">
                     <label class="input-label">Ürün Fotoğrafı</label>
-                    <div id="edit-photo-container" style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-surface-elevated); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                        <img id="edit-photo-preview" src="" alt="Fotoğraf" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); display: none;">
-                        <span id="edit-photo-text" style="font-size: 0.85rem; color: var(--text-secondary); flex: 1;">Fotoğraf yok</span>
-                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo" style="padding: 0.35rem 0.7rem;">📷 Fotoğraf Ekle / Değiştir</button>
-                        <button type="button" class="btn btn-danger btn-sm" id="btn-edit-remove-photo" style="display: none; padding: 0.35rem 0.6rem;" title="Fotoğrafı Kaldır">✕</button>
+                    <div id="edit-photo-container"
+                        style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-surface-elevated); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <img id="edit-photo-preview" src="" alt="Fotoğraf"
+                            style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); display: none;">
+                        <span id="edit-photo-text"
+                            style="font-size: 0.85rem; color: var(--text-secondary); flex: 1;">Fotoğraf yok</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo"
+                            style="padding: 0.35rem 0.7rem;">📷 Fotoğraf Ekle / Değiştir</button>
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-edit-remove-photo"
+                            style="display: none; padding: 0.35rem 0.6rem;" title="Fotoğrafı Kaldır">✕</button>
                         <input type="file" id="edit-photo-file-input" accept="image/*" style="display: none;">
                     </div>
                 </div>
 
                 <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
+                        style="padding: 0.65rem 1.25rem;">Vazgeç</button>
                     <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
                         <span>💾</span>
                         <span>Değişiklikleri Kaydet</span>
@@ -439,7 +487,8 @@
                 <span id="lightbox-title" style="font-size: 0.95rem; font-weight: 600; color: #fff;"></span>
                 <button class="btn-close" style="color: #fff;">&times;</button>
             </div>
-            <img id="lightbox-img" src="" alt="Ürün Fotoğrafı" style="max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: var(--radius-md);">
+            <img id="lightbox-img" src="" alt="Ürün Fotoğrafı"
+                style="max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: var(--radius-md);">
         </div>
     </div>
 
@@ -466,13 +515,16 @@
                         <span>Uygulama Adı & Özelleştirme</span>
                     </div>
                     <form id="form-change-app-name" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
-                        <input type="text" id="input-app-name" placeholder="Uygulama Adı yazın..." required style="flex: 1;" autocomplete="off">
-                        <button type="submit" class="btn btn-primary" id="btn-save-app-name" style="white-space: nowrap; padding: 0.6rem 1rem;">
+                        <input type="text" id="input-app-name" placeholder="Uygulama Adı yazın..." required
+                            style="flex: 1;" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="btn-save-app-name"
+                            style="white-space: nowrap; padding: 0.6rem 1rem;">
                             <span>💾</span>
                             <span>Adı Kaydet</span>
                         </button>
                     </form>
-                    <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings" style="width: 100%; justify-content: center;">
+                    <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings"
+                        style="width: 100%; justify-content: center;">
                         <span>🎨</span>
                         <span>Uygulama İkonunu Değiştir</span>
                     </button>
@@ -485,7 +537,8 @@
                         <span>İşlemler ve Araçlar</span>
                     </div>
                     <div class="admin-tools-grid">
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-copy-list" title="Tüm Listeyi Panoya Kopyala">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-copy-list"
+                            title="Tüm Listeyi Panoya Kopyala">
                             <span class="tool-icon">📋</span>
                             <div class="tool-text">
                                 <strong>Listeyi Kopyala</strong>
@@ -493,7 +546,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-suppliers" title="Toptancıları Ekle / Sil / Yönet">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-suppliers"
+                            title="Toptancıları Ekle / Sil / Yönet">
                             <span class="tool-icon">🏢</span>
                             <div class="tool-text">
                                 <strong>Toptancılar</strong>
@@ -501,7 +555,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-pdf" title="PDF / Yazdır Çıktısı Al">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-pdf"
+                            title="PDF / Yazdır Çıktısı Al">
                             <span class="tool-icon">📄</span>
                             <div class="tool-text">
                                 <strong>Yazdır / PDF</strong>
@@ -509,7 +564,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-toggle-sound" title="Ses Bildirimleri">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-toggle-sound"
+                            title="Ses Bildirimleri">
                             <span class="tool-icon" id="sound-tool-icon">🔔</span>
                             <div class="tool-text">
                                 <strong id="sound-tool-title">Ses Bildirimleri</strong>
@@ -521,26 +577,32 @@
 
                 <!-- 3. Otomatik Yedekleme & Güvenlik (Auto-Backup) -->
                 <div class="admin-section-box">
-                    <div class="admin-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div class="admin-section-title"
+                        style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
                             <span>🛡️</span>
                             <span>Otomatik Yedekleme (Auto-Backup)</span>
                         </div>
-                        <span style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
+                        <span
+                            style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
                             🟢 7/24 Aktif
                         </span>
                     </div>
-                    <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
-                        Dükkanınızda yapılan her ürün ekleme, düzenleme veya silme işleminde ve saat başı sunucuya <strong>otomatik güvenlik yedeği</strong> alınır. Ürünleriniz hiçbir zaman kaybolmaz.
+                    <div
+                        style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
+                        Dükkanınızda yapılan her ürün ekleme, düzenleme veya silme işleminde ve saat başı sunucuya
+                        <strong>otomatik güvenlik yedeği</strong> alınır. Ürünleriniz hiçbir zaman kaybolmaz.
                     </div>
-                    
-                    <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
+
+                    <div
+                        style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
                         <span style="color: var(--text-muted);">Son Otomatik Yedek:</span>
                         <strong id="admin-last-backup-badge" style="color: #38bdf8;">Kontrol ediliyor...</strong>
                     </div>
 
                     <div class="admin-tools-grid">
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-trigger-instant-backup" title="Sunucuya Anında Yeni Yedek Kaydet">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-trigger-instant-backup"
+                            title="Sunucuya Anında Yeni Yedek Kaydet">
                             <span class="tool-icon">💾</span>
                             <div class="tool-text">
                                 <strong>Şimdi Yedek Al</strong>
@@ -548,7 +610,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-server-backups" title="Tüm Geçmiş Yedekleri Gör ve Geri Yükle">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-server-backups"
+                            title="Tüm Geçmiş Yedekleri Gör ve Geri Yükle">
                             <span class="tool-icon">🕒</span>
                             <div class="tool-text">
                                 <strong>Geçmiş Yedekler</strong>
@@ -556,7 +619,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup"
+                            title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
                             <span class="tool-icon">📤</span>
                             <div class="tool-text">
                                 <strong>Yedeği İndir</strong>
@@ -564,7 +628,8 @@
                             </div>
                         </button>
 
-                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger"
+                            title="Yedek Dosyasını Geri Yükle (JSON)">
                             <span class="tool-icon">📥</span>
                             <div class="tool-text">
                                 <strong>Dosyadan Yükle</strong>
@@ -583,18 +648,25 @@
                         <span>Şifre Değiştir</span>
                     </div>
                     <form id="change-password-form">
-                        <div id="pwd-change-msg" style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:0.75rem;"></div>
+                        <div id="pwd-change-msg"
+                            style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:0.75rem;">
+                        </div>
                         <div class="form-row-responsive" style="margin-bottom: 0.75rem;">
                             <div class="form-group-vertical">
-                                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut Şifre</label>
+                                <label
+                                    style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut
+                                    Şifre</label>
                                 <input type="password" id="input-curr-pwd" placeholder="Mevcut şifreniz" required>
                             </div>
                             <div class="form-group-vertical">
-                                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni Şifre</label>
+                                <label
+                                    style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni
+                                    Şifre</label>
                                 <input type="password" id="input-new-pwd" placeholder="Yeni şifreniz" required>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding: 0.65rem;">Şifreyi Güncelle</button>
+                        <button type="submit" class="btn btn-primary"
+                            style="width:100%; justify-content:center; padding: 0.65rem;">Şifreyi Güncelle</button>
                     </form>
                 </div>
 
@@ -614,18 +686,23 @@
             </div>
             <div style="display: flex; flex-direction: column; gap: 1.1rem; padding: 0.35rem 0;">
                 <!-- Live Preview Block -->
-                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
-                    <div id="icon-preview-box" class="brand-icon" style="width: 56px; height: 56px; font-size: 2rem; cursor: default;">⚡</div>
+                <div
+                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
+                    <div id="icon-preview-box" class="brand-icon"
+                        style="width: 56px; height: 56px; font-size: 2rem; cursor: default;">⚡</div>
                     <div>
-                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;" id="icon-preview-app-title">App</div>
-                        <div style="font-size: 0.8rem; color: #38bdf8;" id="icon-preview-caption">Canlı Görünüm Önizlemesi</div>
+                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;" id="icon-preview-app-title">App
+                        </div>
+                        <div style="font-size: 0.8rem; color: #38bdf8;" id="icon-preview-caption">Canlı Görünüm
+                            Önizlemesi</div>
                     </div>
                 </div>
 
                 <!-- Preset Emoji Grid -->
                 <div class="form-group-vertical">
                     <label class="input-label">Popüler İkon Seçin</label>
-                    <div class="emoji-picker-grid" id="app-preset-icons-grid" style="grid-template-columns: repeat(6, 1fr); gap: 0.45rem;">
+                    <div class="emoji-picker-grid" id="app-preset-icons-grid"
+                        style="grid-template-columns: repeat(6, 1fr); gap: 0.45rem;">
                         <button type="button" class="emoji-opt-btn" data-icon="⚡">⚡</button>
                         <button type="button" class="emoji-opt-btn" data-icon="🛍️">🛍️</button>
                         <button type="button" class="emoji-opt-btn" data-icon="🏬">🏬</button>
@@ -650,18 +727,21 @@
                 <!-- Custom Emoji or Text input -->
                 <div class="form-group-vertical">
                     <label class="input-label" for="custom-icon-text-input">Veya Özel Emoji / Harf Yazın</label>
-                    <input type="text" id="custom-icon-text-input" placeholder="Örn: 🛒, 🌟, AK, HK" maxlength="4" style="text-align: center; font-size: 1.1rem; font-weight: 700;">
+                    <input type="text" id="custom-icon-text-input" placeholder="Örn: 🛒, 🌟, AK, HK" maxlength="4"
+                        style="text-align: center; font-size: 1.1rem; font-weight: 700;">
                 </div>
 
                 <!-- Custom Image Upload Option -->
                 <div class="form-group-vertical">
                     <label class="input-label">Veya Kendi Logonuzu / Fotoğrafınızı Yükleyin</label>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <button type="button" class="btn btn-secondary" id="btn-upload-custom-logo" style="flex: 1; padding: 0.6rem;">
+                        <button type="button" class="btn btn-secondary" id="btn-upload-custom-logo"
+                            style="flex: 1; padding: 0.6rem;">
                             <span>📁</span>
                             <span>Cihazdan Logo / Fotoğraf Seç</span>
                         </button>
-                        <button type="button" class="btn btn-danger btn-sm" id="btn-clear-custom-logo" style="display: none; padding: 0.6rem;" title="Fotoğrafı Kaldır">
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-clear-custom-logo"
+                            style="display: none; padding: 0.6rem;" title="Fotoğrafı Kaldır">
                             ✕ Kaldır
                         </button>
                         <input type="file" id="custom-logo-file-input" accept="image/*" style="display: none;">
@@ -670,8 +750,10 @@
 
                 <!-- Action buttons -->
                 <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                    <button type="button" class="btn btn-primary" id="btn-save-app-icon" style="padding: 0.65rem 1.5rem; font-weight: 700;">
+                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
+                        style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-app-icon"
+                        style="padding: 0.65rem 1.5rem; font-weight: 700;">
                         <span>💾</span>
                         <span>İkonu Kaydet</span>
                     </button>
@@ -690,14 +772,17 @@
                 </div>
                 <button class="btn-close">&times;</button>
             </div>
-            <form id="add-quick-pill-form" style="display: flex; flex-direction: column; gap: 0.95rem; padding: 0.25rem 0;">
+            <form id="add-quick-pill-form"
+                style="display: flex; flex-direction: column; gap: 0.95rem; padding: 0.25rem 0;">
                 <div class="form-group-vertical">
                     <label class="input-label" for="new-pill-name">Ürün Adı ve Ölçüsü</label>
-                    <input type="text" id="new-pill-name" placeholder="Örn: PPRC Boru 20mm, Çelik Dübel 10x80" required autocomplete="off">
+                    <input type="text" id="new-pill-name" placeholder="Örn: PPRC Boru 20mm, Çelik Dübel 10x80" required
+                        autocomplete="off">
                 </div>
                 <div class="form-group-vertical">
                     <label class="input-label" for="new-pill-qty">Varsayılan Miktar & Birim</label>
-                    <input type="text" id="new-pill-qty" placeholder="Örn: 10 kutu, 5 paket, 2 koli, 20 boy" value="1 kutu">
+                    <input type="text" id="new-pill-qty" placeholder="Örn: 10 kutu, 5 paket, 2 koli, 20 boy"
+                        value="1 kutu">
                 </div>
                 <div class="form-group-vertical">
                     <label class="input-label">Simge / İkon Seçin</label>
@@ -718,7 +803,8 @@
                         <button type="button" class="emoji-opt-btn" data-emoji="⚡">⚡</button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary" style="margin-top: 0.6rem; justify-content: center; padding: 0.8rem; font-weight: 700;">
+                <button type="submit" class="btn btn-primary"
+                    style="margin-top: 0.6rem; justify-content: center; padding: 0.8rem; font-weight: 700;">
                     <span>➕</span>
                     <span>Hızlı Seçeneklere Ekle</span>
                 </button>
@@ -744,7 +830,8 @@
                     Sizi dinliyorum... Lütfen konuşun.
                 </div>
                 <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.5rem;">
-                    Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli bandı"
+                    Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli
+                    bandı"
                 </div>
             </div>
         </div>
@@ -754,11 +841,16 @@
     <div class="modal-overlay" id="confirm-dialog-modal">
         <div class="modal-card" style="max-width: 420px; text-align: center;">
             <div style="font-size: 2.8rem; margin-bottom: 0.75rem;" id="confirm-modal-icon">⚠️</div>
-            <h3 id="confirm-modal-title" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Onay Gerekiyor</h3>
-            <p id="confirm-modal-desc" style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1.35rem;">Bu işlemi yapmak istediğinize emin misiniz?</p>
+            <h3 id="confirm-modal-title"
+                style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Onay Gerekiyor</h3>
+            <p id="confirm-modal-desc"
+                style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1.35rem;">Bu işlemi yapmak
+                istediğinize emin misiniz?</p>
             <div style="display: flex; gap: 0.75rem; justify-content: center;">
-                <button type="button" class="btn btn-secondary" id="confirm-modal-btn-cancel" style="flex: 1; padding: 0.75rem; font-weight: 700;">Vazgeç</button>
-                <button type="button" class="btn btn-danger" id="confirm-modal-btn-ok" style="flex: 1; padding: 0.75rem; font-weight: 700;">Evet, Devam Et</button>
+                <button type="button" class="btn btn-secondary" id="confirm-modal-btn-cancel"
+                    style="flex: 1; padding: 0.75rem; font-weight: 700;">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="confirm-modal-btn-ok"
+                    style="flex: 1; padding: 0.75rem; font-weight: 700;">Evet, Devam Et</button>
             </div>
         </div>
     </div>
@@ -774,33 +866,45 @@
                 <button class="btn-close">&times;</button>
             </div>
             <div style="margin-bottom: 1.25rem;">
-                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.9rem; margin-bottom: 1rem;">
-                    <div style="font-size: 0.8rem; color: #a5b4fc; margin-bottom: 0.35rem;" id="import-file-name">📁 dosya.json</div>
-                    <div style="font-size: 0.98rem; font-weight: 800; color: #fff;" id="import-summary-text">Yedek dosyası inceleniyor...</div>
+                <div
+                    style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.9rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #a5b4fc; margin-bottom: 0.35rem;" id="import-file-name">📁
+                        dosya.json</div>
+                    <div style="font-size: 0.98rem; font-weight: 800; color: #fff;" id="import-summary-text">Yedek
+                        dosyası inceleniyor...</div>
                 </div>
 
-                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.6rem;">Yükleme Yöntemini Seçin:</div>
-                
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); margin-bottom: 0.6rem; cursor: pointer;">
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.6rem;">Yükleme
+                    Yöntemini Seçin:</div>
+
+                <label
+                    style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); margin-bottom: 0.6rem; cursor: pointer;">
                     <input type="radio" name="import-mode" value="merge" checked style="margin-top: 0.25rem;">
                     <div>
-                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">🔄 Mevcut Listeyle Birleştir (Tavsiye Edilen)</div>
-                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Şu anki dükkan ürünleriniz silinmez, yedekteki ürünler listenize eklenir / güncellenir.</div>
+                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">🔄 Mevcut Listeyle Birleştir
+                            (Tavsiye Edilen)</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Şu anki dükkan ürünleriniz
+                            silinmez, yedekteki ürünler listenize eklenir / güncellenir.</div>
                     </div>
                 </label>
 
-                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); cursor: pointer;">
+                <label
+                    style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); cursor: pointer;">
                     <input type="radio" name="import-mode" value="replace" style="margin-top: 0.25rem;">
                     <div>
-                        <div style="font-weight: 700; color: #f87171; font-size: 0.88rem;">⚠️ Listeyi Temizle ve Sıfırdan Yükle</div>
-                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Mevcut ürünler temizlenir, sadece yedek dosyasındaki ürünler yüklenir.</div>
+                        <div style="font-weight: 700; color: #f87171; font-size: 0.88rem;">⚠️ Listeyi Temizle ve
+                            Sıfırdan Yükle</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Mevcut ürünler temizlenir,
+                            sadece yedek dosyasındaki ürünler yüklenir.</div>
                     </div>
                 </label>
             </div>
 
             <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup" style="padding: 0.65rem 1.35rem; font-weight: 800;">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
+                    style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup"
+                    style="padding: 0.65rem 1.35rem; font-weight: 800;">
                     <span>📥</span>
                     <span>Yedeği Şimdi Yükle</span>
                 </button>
@@ -818,31 +922,40 @@
                 </div>
                 <button class="btn-close">&times;</button>
             </div>
-            
+
             <div style="margin-bottom: 0.85rem;">
                 <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.45;">
-                    Sistem tarafından dükkanınız için otomatik alınan son 35 güvenlik yedeği aşağıdadır. İstediğiniz yedeği indirebilir veya <strong>"Geri Yükle"</strong> butonuna tıklayarak ürünlerinizi o tarihteki haline tek tıkla döndürebilirsiniz.
+                    Sistem tarafından dükkanınız için otomatik alınan son 35 güvenlik yedeği aşağıdadır. İstediğiniz
+                    yedeği indirebilir veya <strong>"Geri Yükle"</strong> butonuna tıklayarak ürünlerinizi o tarihteki
+                    haline tek tıkla döndürebilirsiniz.
                 </p>
-                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:0.6rem 0.85rem; margin-bottom:0.75rem;">
-                    <span style="font-size:0.8rem; color:#94a3b8;">Otomatik Koruma: <strong style="color:#10b981;">🟢 7/24 Aktif</strong></span>
-                    <button type="button" class="btn btn-secondary" id="btn-refresh-backups-list" style="padding:0.35rem 0.65rem; font-size:0.78rem;">
+                <div
+                    style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:0.6rem 0.85rem; margin-bottom:0.75rem;">
+                    <span style="font-size:0.8rem; color:#94a3b8;">Otomatik Koruma: <strong style="color:#10b981;">🟢
+                            7/24 Aktif</strong></span>
+                    <button type="button" class="btn btn-secondary" id="btn-refresh-backups-list"
+                        style="padding:0.35rem 0.65rem; font-size:0.78rem;">
                         🔄 Yenile
                     </button>
                 </div>
             </div>
 
             <!-- Backups List Container -->
-            <div id="server-backups-list" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-right: 0.25rem;">
+            <div id="server-backups-list"
+                style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-right: 0.25rem;">
                 <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.88rem;">
                     ⏳ Yedekler listeleniyor...
                 </div>
             </div>
 
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                <button type="button" class="btn btn-primary" id="btn-modal-instant-backup" style="padding: 0.6rem 1rem; font-size: 0.85rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+                <button type="button" class="btn btn-primary" id="btn-modal-instant-backup"
+                    style="padding: 0.6rem 1rem; font-size: 0.85rem;">
                     <span>💾</span><span>Şimdi Yeni Yedek Al</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.6rem 1.2rem;">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
+                    style="padding: 0.6rem 1.2rem;">
                     Kapat
                 </button>
             </div>
@@ -852,12 +965,12 @@
     <script>
         // Force unregister all old service workers and purge caches
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(regs) {
+            navigator.serviceWorker.getRegistrations().then(function (regs) {
                 for (let r of regs) r.unregister();
             });
         }
         if ('caches' in window) {
-            caches.keys().then(function(keys) {
+            caches.keys().then(function (keys) {
                 for (let k of keys) caches.delete(k);
             });
         }
@@ -873,4 +986,5 @@
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>
 </body>
+
 </html>

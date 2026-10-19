@@ -76,6 +76,22 @@ async function initDb() {
         )
     `);
 
+    await client.execute(`
+        CREATE TABLE IF NOT EXISTS backups (
+            id TEXT PRIMARY KEY,
+            filename TEXT NOT NULL,
+            reason TEXT NOT NULL,
+            reasonLabel TEXT DEFAULT '',
+            totalItems INTEGER DEFAULT 0,
+            activeItems INTEGER DEFAULT 0,
+            deletedItems INTEGER DEFAULT 0,
+            suppliersCount INTEGER DEFAULT 0,
+            size INTEGER DEFAULT 0,
+            data TEXT NOT NULL,
+            createdAt TEXT NOT NULL
+        )
+    `);
+
     // Insert default admin user if none exists
     const users = await client.execute('SELECT * FROM users LIMIT 1');
     if (users.rows.length === 0) {

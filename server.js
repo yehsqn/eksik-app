@@ -110,11 +110,52 @@ async function createServerBackup(reason = 'auto') {
         };
 
         const jsonStr = JSON.stringify(payload, null, 2);
-        fs.writeFileSync(filePath, jsonStr, 'utf8');
+        
+        // 1. Save to Disk (if writable)
+        try {
+            if (!fs.existsSync(BACKUP_DIR)) {
+                fs.mkdirSync(BACKUP_DIR, { recursive: true });
+            }
+            fs.writeFileSync(filePath, jsonStr, 'utf8');
+            const latestPath = path.join(BACKUP_DIR, 'auto-backup-latest.json');
+            fs.writeFileSync(latestPath, jsonStr, 'utf8');
+            cleanOldBackups(35);
+        } catch (fsErr) {
+            console.warn('Disk backup write notice:', fsErr.message);
+        }
 
-        // Always save latest snapshot for rapid restore
-        const latestPath = path.join(BACKUP_DIR, 'auto-backup-latest.json');
-        fs.writeFileSync(latestPath, jsonStr, 'utf8');
+        const backupSize = Buffer.byteLength(jsonStr, 'utf8');
+
+        // 2. Save to Turso Cloud Database (backups table) - Survives any cloud container restart!
+        try {
+            const backupId = 'bak_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
+            await db.execute({
+                sql: `INSERT INTO backups (id, filename, reason, reasonLabel, totalItems, activeItems, deletedItems, suppliersCount, size, data, createdAt)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                args: [
+                    backupId,
+                    filename,
+                    reason,
+                    payload.reasonLabel,
+                    payload.totalItems,
+                    payload.activeItems,
+                    payload.deletedItems,
+                    payload.suppliersCount,
+                    backupSize,
+                    jsonStr,
+                    payload.createdAt
+                ]
+            });
+
+            // Keep latest 35 backups in Turso DB
+            await db.execute(`
+                DELETE FROM backups WHERE id NOT IN (
+                    SELECT id FROM backups ORDER BY createdAt DESC LIMIT 35
+                )
+            `);
+        } catch (dbErr) {
+            console.error('Turso cloud backup write error:', dbErr);
+        }
 
         lastBackupInfo = {
             filename,
@@ -126,10 +167,8 @@ async function createServerBackup(reason = 'auto') {
             activeItems: payload.activeItems,
             deletedItems: payload.deletedItems,
             suppliersCount: payload.suppliersCount,
-            size: Buffer.byteLength(jsonStr, 'utf8')
+            size: backupSize
         };
-
-        cleanOldBackups(35);
 
         if (io) {
             io.emit('backup:created', lastBackupInfo);
@@ -142,6 +181,7 @@ async function createServerBackup(reason = 'auto') {
         return null;
     }
 }
+
 
 let autoBackupDebounceTimer = null;
 function scheduleAutoBackup(reason = 'change') {
@@ -687,41 +727,61 @@ app.post('/api/items/clear-completed', async (req, res) => {
 // AUTO BACKUP & RESTORE ENDPOINTS
 // ==========================================
 
-// Get list of all available backups
+// Get list of all available backups (from Turso Cloud DB + Disk fallback)
 app.get('/api/backups', async (req, res) => {
     try {
-        if (!fs.existsSync(BACKUP_DIR)) {
-            return res.json({ lastBackup: lastBackupInfo, backups: [] });
-        }
-        const files = fs.readdirSync(BACKUP_DIR);
-        const backupList = [];
+        let backupList = [];
 
-        for (const file of files) {
-            if (file.startsWith('backup-') && file.endsWith('.json')) {
-                const fullPath = path.join(BACKUP_DIR, file);
-                try {
-                    const stat = fs.statSync(fullPath);
-                    const raw = fs.readFileSync(fullPath, 'utf8');
-                    const content = JSON.parse(raw);
-                    backupList.push({
-                        filename: file,
-                        size: stat.size,
-                        createdAt: content.createdAt || stat.birthtime.toISOString(),
-                        dateFormatted: content.dateFormatted || new Date(stat.mtimeMs).toLocaleString('tr-TR'),
-                        reason: content.reason || 'auto',
-                        reasonLabel: content.reasonLabel || formatBackupReason(content.reason || 'auto'),
-                        totalItems: content.totalItems !== undefined ? content.totalItems : (content.items ? content.items.length : 0),
-                        activeItems: content.activeItems !== undefined ? content.activeItems : 0,
-                        deletedItems: content.deletedItems !== undefined ? content.deletedItems : 0,
-                        suppliersCount: content.suppliersCount !== undefined ? content.suppliersCount : (content.suppliers ? content.suppliers.length : 0)
-                    });
-                } catch (e) {
-                    // skip corrupted file
+        // 1. Check Turso Cloud Database
+        try {
+            const dbRes = await db.execute('SELECT id, filename, reason, reasonLabel, totalItems, activeItems, deletedItems, suppliersCount, size, createdAt FROM backups ORDER BY createdAt DESC LIMIT 35');
+            if (dbRes.rows && dbRes.rows.length > 0) {
+                backupList = dbRes.rows.map(r => ({
+                    filename: r.filename,
+                    size: Number(r.size || 0),
+                    createdAt: r.createdAt,
+                    dateFormatted: new Date(r.createdAt).toLocaleString('tr-TR'),
+                    reason: r.reason || 'auto',
+                    reasonLabel: r.reasonLabel || formatBackupReason(r.reason || 'auto'),
+                    totalItems: Number(r.totalItems || 0),
+                    activeItems: Number(r.activeItems || 0),
+                    deletedItems: Number(r.deletedItems || 0),
+                    suppliersCount: Number(r.suppliersCount || 0)
+                }));
+            }
+        } catch (dbErr) {
+            console.warn('Turso backups query notice:', dbErr.message);
+        }
+
+        // 2. If Turso DB had no backups yet, check disk
+        if (backupList.length === 0 && fs.existsSync(BACKUP_DIR)) {
+            const files = fs.readdirSync(BACKUP_DIR);
+            for (const file of files) {
+                if (file.startsWith('backup-') && file.endsWith('.json')) {
+                    const fullPath = path.join(BACKUP_DIR, file);
+                    try {
+                        const stat = fs.statSync(fullPath);
+                        const raw = fs.readFileSync(fullPath, 'utf8');
+                        const content = JSON.parse(raw);
+                        backupList.push({
+                            filename: file,
+                            size: stat.size,
+                            createdAt: content.createdAt || stat.birthtime.toISOString(),
+                            dateFormatted: content.dateFormatted || new Date(stat.mtimeMs).toLocaleString('tr-TR'),
+                            reason: content.reason || 'auto',
+                            reasonLabel: content.reasonLabel || formatBackupReason(content.reason || 'auto'),
+                            totalItems: content.totalItems !== undefined ? content.totalItems : (content.items ? content.items.length : 0),
+                            activeItems: content.activeItems !== undefined ? content.activeItems : 0,
+                            deletedItems: content.deletedItems !== undefined ? content.deletedItems : 0,
+                            suppliersCount: content.suppliersCount !== undefined ? content.suppliersCount : (content.suppliers ? content.suppliers.length : 0)
+                        });
+                    } catch (e) {
+                        // skip corrupted file
+                    }
                 }
             }
+            backupList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         }
-
-        backupList.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         res.json({
             lastBackup: lastBackupInfo,
@@ -744,35 +804,71 @@ app.post('/api/backups/create', async (req, res) => {
     }
 });
 
-// Download a specific backup file
-app.get('/api/backups/download/:filename', (req, res) => {
+// Download a specific backup file (Disk + Turso Cloud fallback)
+app.get('/api/backups/download/:filename', async (req, res) => {
     const rawFilename = path.basename(req.params.filename);
     const filePath = path.join(BACKUP_DIR, rawFilename);
 
-    if (!fs.existsSync(filePath)) {
-        return res.status(404).send('Yedek dosyası bulunamadı');
+    // 1. Try disk first
+    if (fs.existsSync(filePath)) {
+        return res.download(filePath, rawFilename);
     }
 
-    res.download(filePath, rawFilename);
+    // 2. If not on disk (e.g. cloud host ephemeral disk), retrieve from Turso Cloud
+    try {
+        const dbRes = await db.execute({
+            sql: 'SELECT data FROM backups WHERE filename = ? LIMIT 1',
+            args: [rawFilename]
+        });
+
+        if (dbRes.rows && dbRes.rows.length > 0 && dbRes.rows[0].data) {
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', `attachment; filename="${rawFilename}"`);
+            return res.send(dbRes.rows[0].data);
+        }
+    } catch (e) {
+        console.error('Turso backup download error:', e);
+    }
+
+    res.status(404).send('Yedek dosyası bulunamadı');
 });
 
-// Restore database from selected server backup file
+// Restore database from selected server backup file (Disk + Turso Cloud fallback)
 app.post('/api/backups/:filename/restore', async (req, res) => {
     const rawFilename = path.basename(req.params.filename);
     const filePath = path.join(BACKUP_DIR, rawFilename);
+    let content = null;
 
-    if (!fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath)) {
+        try {
+            content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (e) {}
+    }
+
+    if (!content) {
+        try {
+            const dbRes = await db.execute({
+                sql: 'SELECT data FROM backups WHERE filename = ? LIMIT 1',
+                args: [rawFilename]
+            });
+            if (dbRes.rows && dbRes.rows.length > 0 && dbRes.rows[0].data) {
+                content = JSON.parse(dbRes.rows[0].data);
+            }
+        } catch (e) {}
+    }
+
+    if (!content) {
         return res.status(404).json({ error: 'Yedek dosyası bulunamadı' });
     }
 
     try {
-        const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
         const items = content.items || [];
         const suppliers = content.suppliers || [];
         const settings = content.settings || {};
 
         // Safety backup of current state before restoring
         await createServerBackup('pre-restore');
+
 
         // Replace all items
         await db.execute('DELETE FROM items');
