@@ -83,8 +83,8 @@ class SpeechManager {
             cleanText = cleanText.replace(/\b(acil|çabuk|lazım)\b/gi, '').trim();
         }
 
-        // Match Turkish numbers & units: e.g. "10 kutu", "2 koli", "5 paket", "1 top", "3 boy", "2 teneke"
-        const unitRegex = /^(\d+|bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on|on beş|yirmi|elli|yüz)\s*(kutu|paket|koli|adet|tane|top|metre|boy|teneke|kova|çift|takım|çuval|kg|kilo|şişe|litre|bağ)\b/i;
+        // Match Turkish numbers & units: e.g. "3 koli", "5 paket", "10 adet", "2 kasa", "1 çuval", "4 şişe"
+        const unitRegex = /^(\d+|bir|iki|üç|dört|beş|altı|yedi|sekiz|dokuz|on|on beş|yirmi|elli|yüz)\s*(koli|paket|adet|tane|kasa|çuval|şişe|kutu|kg|kilo|litre|bağ)\b/i;
         const match = cleanText.match(unitRegex);
 
         if (match) {
@@ -102,8 +102,8 @@ class SpeechManager {
             quantity = `${num} ${unit}`;
             cleanText = cleanText.slice(match[0].length).trim();
         } else {
-            // Check trailing quantity: e.g. "sunta vidası 10 kutu", "silikon 2 koli"
-            const trailRegex = /\b(\d+)\s*(kutu|paket|koli|adet|tane|top|metre|boy|teneke|kova|çift|takım|çuval|kg|kilo|şişe|litre)\b/i;
+            // Check trailing quantity: e.g. "süt 3 koli"
+            const trailRegex = /\b(\d+)\s*(koli|paket|adet|tane|kasa|çuval|şişe|kutu|kg|kilo|litre)\b/i;
             const trailMatch = cleanText.match(trailRegex);
             if (trailMatch) {
                 quantity = `${trailMatch[1]} ${trailMatch[2].toLowerCase()}`;

@@ -14,7 +14,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css?v=20261017_2339">
+    <link rel="stylesheet" href="/css/style.css?v=20261019_icon">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -26,7 +26,7 @@
     <div id="login-container" class="login-wrapper" style="display: none;">
         <div class="login-card">
             <div class="login-brand">
-                <div class="brand-avatar-glow">⚡</div>
+                <div class="brand-avatar-glow" id="login-brand-icon" title="Uygulama İkonu">⚡</div>
                 <h2>App</h2>
                 <p>Devam etmek için giriş yapınız</p>
             </div>
@@ -63,7 +63,7 @@
             <!-- Header -->
             <header class="header">
                 <div class="brand-wrapper">
-                    <div class="brand-icon">⚡</div>
+                    <div class="brand-icon" id="app-brand-icon" title="Uygulama İkonunu Değiştir (Tıklayın)">⚡</div>
                     <div class="brand-info">
                         <h1>
                             App
@@ -373,6 +373,86 @@
         </div>
     </div>
 
+    <!-- MODAL: EDIT ITEM (Eklenen Ürünü Düzenle) -->
+    <div class="modal-overlay" id="edit-item-modal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>✏️</span>
+                    <span>Ürünü Düzenle</span>
+                </div>
+                <button class="btn-close" type="button">&times;</button>
+            </div>
+            <form id="edit-item-form" style="display: flex; flex-direction: column; gap: 0.9rem; padding: 0.25rem 0;">
+                <input type="hidden" id="edit-item-id">
+                
+                <div class="form-group-vertical">
+                    <label class="input-label" for="edit-item-name">Ürün Adı ve Modeli</label>
+                    <input type="text" id="edit-item-name" placeholder="Ürün adı" required autocomplete="off">
+                </div>
+
+                <div class="form-row-responsive">
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-quantity">Miktar & Birim</label>
+                        <input type="text" id="edit-item-quantity" placeholder="Miktar (örn: 10 kutu)" required>
+                    </div>
+
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-supplier">Toptancı</label>
+                        <select id="edit-item-supplier">
+                            <option value="Belirtilmedi">Belirtilmedi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-responsive">
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-urgency">Aciliyet Durumu</label>
+                        <select id="edit-item-urgency">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">🚨 Acil</option>
+                            <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-status">Sipariş Durumu</label>
+                        <select id="edit-item-status">
+                            <option value="pending">⏳ Bekliyor</option>
+                            <option value="ordered">🚚 Sipariş Edildi</option>
+                            <option value="completed">✅ Alındı</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group-vertical">
+                    <label class="input-label" for="edit-item-notes">Not / Açıklama (Opsiyonel)</label>
+                    <input type="text" id="edit-item-notes" placeholder="Örn: 2. raf, yarın gelecek..." autocomplete="off">
+                </div>
+
+                <!-- Photo preview & controls within edit modal -->
+                <div class="form-group-vertical">
+                    <label class="input-label">Ürün Fotoğrafı</label>
+                    <div id="edit-photo-container" style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-surface-elevated); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <img id="edit-photo-preview" src="" alt="Fotoğraf" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); display: none;">
+                        <span id="edit-photo-text" style="font-size: 0.85rem; color: var(--text-secondary); flex: 1;">Fotoğraf yok</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo" style="padding: 0.35rem 0.7rem;">📷 Fotoğraf Ekle / Değiştir</button>
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-edit-remove-photo" style="display: none; padding: 0.35rem 0.6rem;" title="Fotoğrafı Kaldır">✕</button>
+                        <input type="file" id="edit-photo-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
+                        <span>💾</span>
+                        <span>Değişiklikleri Kaydet</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL: IMAGE LIGHTBOX (Büyük Fotoğraf Görüntüleyici) -->
     <div class="modal-overlay" id="image-lightbox-modal">
         <div class="modal-card" style="max-width: 600px; padding: 1rem; background: #000; text-align: center;">
@@ -409,6 +489,89 @@
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%;">Şifreyi Güncelle</button>
             </form>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+                <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings" style="width:100%; justify-content:center;">
+                    🎨 Uygulama İkonunu Değiştir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: APP ICON (Uygulama İkonunu Değiştir) -->
+    <div class="modal-overlay" id="app-icon-modal">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🎨</span>
+                    <span>Uygulama İkonunu Değiştir</span>
+                </div>
+                <button class="btn-close" type="button">&times;</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1.1rem; padding: 0.35rem 0;">
+                <!-- Live Preview Block -->
+                <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
+                    <div id="icon-preview-box" class="brand-icon" style="width: 56px; height: 56px; font-size: 2rem; cursor: default;">⚡</div>
+                    <div>
+                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;">App</div>
+                        <div style="font-size: 0.8rem; color: #38bdf8;" id="icon-preview-caption">Canlı Görünüm Önizlemesi</div>
+                    </div>
+                </div>
+
+                <!-- Preset Emoji Grid -->
+                <div class="form-group-vertical">
+                    <label class="input-label">Popüler İkon Seçin</label>
+                    <div class="emoji-picker-grid" id="app-preset-icons-grid" style="grid-template-columns: repeat(6, 1fr); gap: 0.45rem;">
+                        <button type="button" class="emoji-opt-btn" data-icon="⚡">⚡</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🛍️">🛍️</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🏬">🏬</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🛒">🛒</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="📦">📦</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🏷️">🏷️</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🔩">🔩</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🔧">🔧</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🔨">🔨</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🧰">🧰</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🏭">🏭</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🏪">🏪</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🍞">🍞</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="☕">☕</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🍔">🍔</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🚀">🚀</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="💎">💎</button>
+                        <button type="button" class="emoji-opt-btn" data-icon="🔥">🔥</button>
+                    </div>
+                </div>
+
+                <!-- Custom Emoji or Text input -->
+                <div class="form-group-vertical">
+                    <label class="input-label" for="custom-icon-text-input">Veya Özel Emoji / Harf Yazın</label>
+                    <input type="text" id="custom-icon-text-input" placeholder="Örn: 🛒, 🌟, AK, HK" maxlength="4" style="text-align: center; font-size: 1.1rem; font-weight: 700;">
+                </div>
+
+                <!-- Custom Image Upload Option -->
+                <div class="form-group-vertical">
+                    <label class="input-label">Veya Kendi Logonuzu / Fotoğrafınızı Yükleyin</label>
+                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                        <button type="button" class="btn btn-secondary" id="btn-upload-custom-logo" style="flex: 1; padding: 0.6rem;">
+                            <span>📁</span>
+                            <span>Cihazdan Logo / Fotoğraf Seç</span>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-clear-custom-logo" style="display: none; padding: 0.6rem;" title="Fotoğrafı Kaldır">
+                            ✕ Kaldır
+                        </button>
+                        <input type="file" id="custom-logo-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Action buttons -->
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-app-icon" style="padding: 0.65rem 1.5rem; font-weight: 700;">
+                        <span>💾</span>
+                        <span>İkonu Kaydet</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -559,7 +722,7 @@
     <script src="/js/audio.js?v=20261017_2358"></script>
     <script src="/js/speech.js?v=20261017_2358"></script>
     <script src="/js/export.js?v=20261017_2358"></script>
-    <script src="/js/app.js?v=20261017_2358"></script>
+    <script src="/js/app.js?v=20261019_icon"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>
