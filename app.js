@@ -506,6 +506,21 @@ class App {
                 this.renderSuppliersModal();
             });
 
+            this.socket.on('supplier:updated', (data) => {
+                const sup = this.suppliers.find(s => s.id === data.id);
+                if (sup) {
+                    sup.name = data.name;
+                }
+                if (data.oldName && data.name) {
+                    this.items.forEach(i => {
+                        if (i.supplier === data.oldName) i.supplier = data.name;
+                    });
+                }
+                this.populateSupplierSelects();
+                this.renderSuppliersModal();
+                this.render();
+            });
+
             this.socket.on('supplier:all-deleted', () => {
                 this.suppliers = [];
                 this.populateSupplierSelects();
@@ -597,11 +612,16 @@ class App {
         }
 
         const itemsHtml = this.suppliers.map(sup => `
-            <div class="supplier-manage-item">
-                <span style="font-weight:600; font-size:0.9rem; color:var(--text-primary);">🏢 ${this.escapeHtml(sup.name)}</span>
-                <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.6rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
-                    Sil 🗑️
-                </button>
+            <div class="supplier-manage-item" id="sup-row-${sup.id}">
+                <span class="sup-name" id="sup-name-${sup.id}" style="font-weight:600; font-size:0.9rem; color:var(--text-primary); flex:1; overflow:hidden; text-overflow:ellipsis; margin-right:0.5rem;">🏢 ${this.escapeHtml(sup.name)}</span>
+                <div class="sup-actions" id="sup-actions-${sup.id}" style="display:flex; gap:0.4rem; align-items:center; flex-shrink:0;">
+                    <button type="button" class="btn btn-secondary btn-sm" style="padding:0.25rem 0.6rem; font-size:0.8rem;" title="Toptancı Adını Güncelle" onclick="window.app.startEditSupplier('${sup.id}')">
+                        ✏️ Düzenle
+                    </button>
+                    <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.6rem; font-size:0.8rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
+                        Sil 🗑️
+                    </button>
+                </div>
             </div>
         `).join('');
 
@@ -614,6 +634,72 @@ class App {
         `;
 
         container.innerHTML = itemsHtml + clearAllHtml;
+    }
+
+    startEditSupplier(id) {
+        const sup = this.suppliers.find(s => s.id === id);
+        if (!sup) return;
+
+        const row = document.getElementById(`sup-row-${id}`);
+        if (!row) return;
+
+        row.innerHTML = `
+            <form onsubmit="event.preventDefault(); window.app.saveEditSupplier('${id}');" style="display:flex; gap:0.4rem; width:100%; align-items:center;">
+                <input type="text" id="sup-edit-input-${id}" value="${this.escapeHtml(sup.name)}" required style="flex:1; padding:0.35rem 0.65rem; font-size:0.85rem;" autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-sm" style="padding:0.35rem 0.65rem; font-size:0.8rem; font-weight:700;">💾 Kaydet</button>
+                <button type="button" class="btn btn-secondary btn-sm" style="padding:0.35rem 0.55rem; font-size:0.8rem;" onclick="window.app.renderSuppliersModal()">✕</button>
+            </form>
+        `;
+
+        const input = document.getElementById(`sup-edit-input-${id}`);
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }
+
+    async saveEditSupplier(id) {
+        const input = document.getElementById(`sup-edit-input-${id}`);
+        if (!input) return;
+        const newName = input.value.trim();
+        if (!newName) return;
+
+        const sup = this.suppliers.find(s => s.id === id);
+        if (!sup) return;
+
+        const oldName = sup.name;
+        if (oldName === newName) {
+            this.renderSuppliersModal();
+            return;
+        }
+
+        // Optimistic UI update
+        sup.name = newName;
+        if (oldName) {
+            this.items.forEach(i => {
+                if (i.supplier === oldName) i.supplier = newName;
+            });
+        }
+        this.populateSupplierSelects();
+        this.renderSuppliersModal();
+        this.render();
+        this.showToast(`✅ Toptancı güncellendi: ${newName}`);
+
+        try {
+            const res = await fetch(`/api/suppliers/${encodeURIComponent(id)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+
+            if (!res.ok) {
+                const err = await res.json();
+                this.showToast(err.error || 'Güncelleme başarısız');
+            }
+        } catch (e) {
+            console.error('Toptancı güncelleme hatası:', e);
+            this.showToast('Bağlantı hatası');
+        }
     }
 
     async handleAddSupplier(name) {
@@ -1701,8 +1787,20 @@ class App {
     }
 
     openModal(modalId) {
+        document.querySelectorAll('.modal-overlay').forEach(m => {
+            if (m.id !== modalId && m.id !== 'confirm-dialog-modal') {
+                m.classList.remove('active');
+            }
+        });
         const modal = document.getElementById(modalId);
         if (modal) modal.classList.add('active');
+    }
+
+    openAdminModal() {
+        const nameInput = document.getElementById('input-app-name');
+        if (nameInput) nameInput.value = this.appName || 'App';
+        this.updateSoundButtonUI();
+        this.openModal('password-modal');
     }
 
     closeAllModals() {

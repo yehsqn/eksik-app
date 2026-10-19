@@ -218,6 +218,49 @@ app.post('/api/suppliers', async (req, res) => {
     }
 });
 
+app.put('/api/suppliers/:id', async (req, res) => {
+    const { id } = req.params;
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+        return res.status(400).json({ error: 'Toptancı adı zorunludur' });
+    }
+
+    const newName = name.trim();
+
+    try {
+        const existing = await db.execute({
+            sql: 'SELECT * FROM suppliers WHERE id = ? LIMIT 1',
+            args: [id]
+        });
+
+        if (existing.rows.length === 0) {
+            return res.status(404).json({ error: 'Toptancı bulunamadı' });
+        }
+
+        const oldName = existing.rows[0].name;
+
+        await db.execute({
+            sql: 'UPDATE suppliers SET name = ? WHERE id = ?',
+            args: [newName, id]
+        });
+
+        // Also update any items assigned to the old supplier name
+        if (oldName && oldName !== newName) {
+            await db.execute({
+                sql: 'UPDATE items SET supplier = ? WHERE supplier = ?',
+                args: [newName, oldName]
+            });
+        }
+
+        const updated = { id, name: newName, oldName };
+        io.emit('supplier:updated', updated);
+        res.json(updated);
+    } catch (err) {
+        console.error('Update supplier error:', err);
+        res.status(500).json({ error: 'Toptancı adı güncellenemedi' });
+    }
+});
+
 app.delete('/api/suppliers/:id', async (req, res) => {
     const { id } = req.params;
     try {

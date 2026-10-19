@@ -2160,6 +2160,10 @@ select option {
 
 
 
+#confirm-dialog-modal {
+    z-index: 1100 !important;
+}
+
 /* App Icon & Avatar Customizations */
 .brand-icon:hover {
     transform: scale(1.06);
