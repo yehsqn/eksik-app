@@ -1,4 +1,4 @@
-﻿// Main Application Logic - Turso / LibSQL, Suppliers Management & Photo Support
+// Main Application Logic - Turso / LibSQL, Suppliers Management & Photo Support
 class App {
     constructor() {
         this.items = [];
@@ -411,13 +411,30 @@ class App {
                 const idx = this.items.findIndex(i => i.id === updatedItem.id);
                 if (idx !== -1) {
                     this.items[idx] = updatedItem;
+                } else {
+                    this.items.unshift(updatedItem);
+                }
+                this.render();
+            });
+
+            this.socket.on('item:soft-deleted', (data) => {
+                const targetId = data.id || (data.item && data.item.id);
+                const idx = this.items.findIndex(i => i.id === targetId);
+                if (idx !== -1) {
+                    this.items[idx].status = 'deleted';
+                    if (data.item) {
+                        this.items[idx] = { ...this.items[idx], ...data.item };
+                    }
                     this.render();
                 }
             });
 
             this.socket.on('item:deleted', (data) => {
-                this.items = this.items.filter(i => i.id !== data.id);
-                window.soundManager.playDelete();
+                const targetId = typeof data === 'object' ? data.id : data;
+                this.items = this.items.filter(i => i.id !== targetId);
+                if (window.soundManager && window.soundManager.playDelete) {
+                    window.soundManager.playDelete();
+                }
                 this.render();
             });
 
@@ -805,6 +822,9 @@ class App {
         if (statusFilter) {
             statusFilter.addEventListener('change', (e) => {
                 this.filterStatus = e.target.value;
+                document.querySelectorAll('.chip-filter').forEach(c => {
+                    c.classList.toggle('active', c.dataset.filter === this.filterStatus);
+                });
                 this.render();
             });
         }
@@ -842,7 +862,7 @@ class App {
                 
                 // Sync with dropdown filter if applicable
                 const filterDropdown = document.getElementById('filter-status');
-                if (filterDropdown && ['all', 'pending', 'ordered', 'completed'].includes(this.filterStatus)) {
+                if (filterDropdown && ['all', 'pending', 'ordered', 'completed', 'trash'].includes(this.filterStatus)) {
                     filterDropdown.value = this.filterStatus;
                 } else if (filterDropdown) {
                     filterDropdown.value = 'all';
@@ -1106,8 +1126,22 @@ class App {
             if (modalExist) modalExist.textContent = duplicateMatch.item.name;
             if (modalQty) modalQty.textContent = duplicateMatch.item.quantity;
             if (modalStatus) {
-                const statusMap = { pending: 'Bekliyor', ordered: 'Sipariş Edildi', completed: 'Alındı' };
+                const statusMap = { 
+                    pending: 'Bekliyor', 
+                    ordered: 'Sipariş Edildi', 
+                    completed: 'Alındı',
+                    deleted: '🗑️ Silinenler (Çöp Kutusu)'
+                };
                 modalStatus.textContent = statusMap[duplicateMatch.item.status] || duplicateMatch.item.status;
+            }
+
+            const btnUpdateQty = document.getElementById('btn-dup-update-qty');
+            if (btnUpdateQty) {
+                if (duplicateMatch.item.status === 'deleted') {
+                    btnUpdateQty.innerHTML = '<span>↩️</span> <span>Silinenlerden Geri Yükle ve Listeye Ekle</span>';
+                } else {
+                    btnUpdateQty.innerHTML = '<span>➕</span> <span>Mevcut Ürünün Miktarını Güncelle / Artır</span>';
+                }
             }
 
             window.soundManager.playUrgent();
@@ -1123,7 +1157,8 @@ class App {
         if (!this.pendingDuplicateItem) return;
         const { candidate, existing } = this.pendingDuplicateItem;
 
-        const updatedQty = `${existing.quantity} + ${candidate.quantity}`;
+        const isDeleted = existing.status === 'deleted';
+        const updatedQty = isDeleted ? (candidate.quantity || existing.quantity) : `${existing.quantity} + ${candidate.quantity}`;
 
         this.closeAllModals();
         this.pendingDuplicateItem = null;
@@ -1131,6 +1166,7 @@ class App {
 
         const updates = {
             quantity: updatedQty,
+            status: 'pending', // Re-activate back to list
             notes: (existing.notes ? existing.notes + ' | ' : '') + `Eklenen: ${candidate.quantity}`
         };
 
@@ -1140,7 +1176,7 @@ class App {
         }
 
         await this.updateItemDetails(existing.id, updates);
-        this.showToast(`Miktar Güncellendi: ${existing.name} -> ${updatedQty}`);
+        this.showToast(isDeleted ? `↩️ Silinenlerden Geri Yüklendi: ${existing.name}` : `Miktar Güncellendi: ${existing.name} -> ${updatedQty}`);
         window.soundManager.playCompleted();
 
         const card = document.getElementById(`card-${existing.id}`);
@@ -1772,7 +1808,7 @@ class App {
                 container.innerHTML = `
                     <div class="empty-state">
                         <div class="empty-icon">🛡️</div>
-                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Çöp Kutusu Boş</h3>
+                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Silinen Ürün Yok</h3>
                         <p style="font-size:0.875rem;">Silinmiş herhangi bir ürün bulunmuyor. Tüm ürünleriniz ana listede güvende!</p>
                     </div>
                 `;
@@ -1804,8 +1840,8 @@ class App {
                     <div class="trash-banner-info">
                         <span style="font-size: 1.8rem;">🛡️</span>
                         <div>
-                            <div class="trash-banner-title">Çöp Kutusu & Geri Dönüşüm (${trashCount} Ürün)</div>
-                            <div class="trash-banner-desc">Sildiğiniz hiçbir ürün kaybolmaz! Dilediğiniz zaman tek tıkla geri yükleyebilirsiniz.</div>
+                            <div class="trash-banner-title">Silinenler & Çöp Kutusu (${trashCount} Ürün)</div>
+                            <div class="trash-banner-desc">Sildiğiniz hiçbir ürün kaybolmaz! Buradan dilediğiniz zaman tek tıkla geri yükleyebilir veya kalıcı olarak silebilirsiniz.</div>
                         </div>
                     </div>
                     <div class="trash-banner-actions">
@@ -1815,7 +1851,7 @@ class App {
                         </button>
                         <button type="button" class="btn btn-danger btn-sm" onclick="window.app.emptyTrash()" ${trashCount === 0 ? 'disabled' : ''}>
                             <span>🧹</span>
-                            <span>Çöp Kutusunu Boşalt</span>
+                            <span>Silinenleri Kalıcı Temizle</span>
                         </button>
                     </div>
                 </div>
@@ -1860,7 +1896,7 @@ class App {
                     <div class="card-body-top">
                         <div class="item-main-info" style="width: 100%;">
                             <div class="item-title-row">
-                                <span class="urgency-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🗑️ Çöp Kutusunda</span>
+                                <span class="urgency-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🗑️ Silinenlerde</span>
                                 <h3 class="item-title" style="text-decoration: line-through; color: #94a3b8;">${this.escapeHtml(item.name)}</h3>
                             </div>
                             <div class="item-meta-row">
@@ -1873,7 +1909,7 @@ class App {
                     </div>
 
                     <div class="card-body-bottom" style="border-top: 1px solid rgba(239, 68, 68, 0.15); padding-top: 0.6rem;">
-                        <span style="font-size: 0.78rem; color: #94a3b8;">🛡️ Veritabanında saklanıyor</span>
+                        <span style="font-size: 0.78rem; color: #94a3b8;">🛡️ Silinenler listesinde güvende</span>
                         <div class="item-actions">
                             <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-weight: 700;" title="Listeye Geri Yükle" onclick="event.stopPropagation(); window.app.restoreItem('${item.id}')">
                                 ↩️ Geri Yükle

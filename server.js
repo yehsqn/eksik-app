@@ -41,7 +41,7 @@ function findBestFile(filePaths) {
                     bestPath = p;
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
     }
     return bestPath;
 }
@@ -167,7 +167,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 // App Info
 app.get('/api/info', async (req, res) => {
     try {
-        const countRes = await db.execute('SELECT COUNT(*) as total, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending FROM items');
+        const countRes = await db.execute('SELECT COUNT(*) as total, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending FROM items WHERE status != "deleted"');
         const row = countRes.rows[0] || {};
 
         res.json({
@@ -380,24 +380,106 @@ app.put('/api/items/:id', async (req, res) => {
     }
 });
 
+// Items Delete Endpoint (Supports Soft Delete to 'Silinenler' and Permanent Delete)
 app.delete('/api/items/:id', async (req, res) => {
     const { id } = req.params;
+    const isPermanent = req.query.permanent === 'true';
+
     try {
+        if (isPermanent) {
+            // Kalıcı olarak veritabanından sil
+            await db.execute({
+                sql: 'DELETE FROM items WHERE id = ?',
+                args: [id]
+            });
+            io.emit('item:deleted', { id, permanent: true });
+            return res.json({ success: true, deletedId: id, permanent: true });
+        }
+
+        // Silinenler / Çöp Kutusuna taşı (Soft Delete)
+        const now = new Date().toISOString();
         await db.execute({
-            sql: 'DELETE FROM items WHERE id = ?',
+            sql: 'UPDATE items SET status = "deleted", updatedAt = ? WHERE id = ?',
+            args: [now, id]
+        });
+
+        const updatedRes = await db.execute({
+            sql: 'SELECT * FROM items WHERE id = ? LIMIT 1',
             args: [id]
         });
-        io.emit('item:deleted', { id });
-        res.json({ success: true, deletedId: id });
+        const updatedItem = updatedRes.rows[0];
+
+        io.emit('item:updated', updatedItem);
+        io.emit('item:soft-deleted', { id, item: updatedItem });
+        return res.json({ success: true, item: updatedItem, softDeleted: true });
     } catch (err) {
         console.error('Delete item error:', err);
         res.status(500).json({ error: 'Silme işlemi başarısız' });
     }
 });
 
-app.post('/api/items/clear-completed', async (req, res) => {
+// Restore single item from Silinenler back to active
+app.post('/api/items/:id/restore', async (req, res) => {
+    const { id } = req.params;
+    const targetStatus = (req.body && req.body.status) || 'pending';
+    const now = new Date().toISOString();
+
     try {
-        await db.execute('DELETE FROM items WHERE status = "completed"');
+        await db.execute({
+            sql: 'UPDATE items SET status = ?, updatedAt = ? WHERE id = ?',
+            args: [targetStatus, now, id]
+        });
+
+        const updatedRes = await db.execute({
+            sql: 'SELECT * FROM items WHERE id = ? LIMIT 1',
+            args: [id]
+        });
+        const updatedItem = updatedRes.rows[0];
+
+        io.emit('item:updated', updatedItem);
+        res.json({ success: true, item: updatedItem });
+    } catch (err) {
+        console.error('Restore item error:', err);
+        res.status(500).json({ error: 'Geri yükleme başarısız' });
+    }
+});
+
+// Restore all items from Silinenler back to active
+app.post('/api/items/restore-all', async (req, res) => {
+    const now = new Date().toISOString();
+    try {
+        await db.execute({
+            sql: 'UPDATE items SET status = "pending", updatedAt = ? WHERE status = "deleted"',
+            args: [now]
+        });
+        io.emit('items:all-restored', {});
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Restore all error:', err);
+        res.status(500).json({ error: 'Tümünü geri yükleme başarısız' });
+    }
+});
+
+// Empty trash (Silinenleri kalıcı olarak temizle)
+app.delete('/api/items/trash/empty', async (req, res) => {
+    try {
+        await db.execute('DELETE FROM items WHERE status = "deleted"');
+        io.emit('items:trash-emptied', {});
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Empty trash error:', err);
+        res.status(500).json({ error: 'Çöp kutusu boşaltılamadı' });
+    }
+});
+
+// Clear completed items (moves them to Silinenler safely)
+app.post('/api/items/clear-completed', async (req, res) => {
+    const now = new Date().toISOString();
+    try {
+        await db.execute({
+            sql: 'UPDATE items SET status = "deleted", updatedAt = ? WHERE status = "completed"',
+            args: [now]
+        });
         io.emit('items:bulk-deleted', {});
         res.json({ success: true });
     } catch (err) {
