@@ -17,31 +17,9 @@ const PORT = process.env.PORT || 3000;
 const fs = require('fs');
 
 app.use(cors());
-// 50MB limit for photo uploads and full backup imports directly to SQLite / Turso
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ extended: true, limit: '50mb' }));
-
-// GitHub veya Render'a zip olarak yüklendiyse public.zip'i otomatik çıkart
-const zipPath = path.join(__dirname, 'public.zip');
-const stylePath = path.join(__dirname, 'public', 'css', 'style.css');
-
-if (!fs.existsSync(stylePath) && fs.existsSync(zipPath)) {
-    console.log('📦 public.zip bulundu, dosyalar çıkartılıyor...');
-    try {
-        const AdmZip = require('adm-zip');
-        const zip = new AdmZip(zipPath);
-        zip.extractAllTo(__dirname, true);
-        console.log('✅ adm-zip ile public klasörü başarıyla açıldı.');
-    } catch (e) {
-        try {
-            const { execSync } = require('child_process');
-            execSync(`unzip -o "${zipPath}" -d "${__dirname}"`, { stdio: 'inherit' });
-            console.log('✅ unzip komutu ile public klasörü açıldı.');
-        } catch (err2) {
-            console.error('public.zip çıkartma hatası:', err2.message);
-        }
-    }
-}
+// 15MB limit for photo uploads directly to SQLite / Turso
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 // Support both public/ directory and root directory if uploaded without public folder
 if (fs.existsSync(path.join(__dirname, 'public'))) {
@@ -123,7 +101,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 // App Info
 app.get('/api/info', async (req, res) => {
     try {
-        const countRes = await db.execute('SELECT COUNT(*) as total, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending FROM items WHERE status != "deleted"');
+        const countRes = await db.execute('SELECT COUNT(*) as total, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending FROM items');
         const row = countRes.rows[0] || {};
 
         res.json({
@@ -178,8 +156,8 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute({
-            sql: 'DELETE FROM suppliers WHERE id = ? OR name = ?',
-            args: [id, id]
+            sql: 'DELETE FROM suppliers WHERE id = ?',
+            args: [id]
         });
 
         io.emit('supplier:deleted', { id });
@@ -187,17 +165,6 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     } catch (err) {
         console.error('Delete supplier error:', err);
         res.status(500).json({ error: 'Toptancı silinemedi' });
-    }
-});
-
-app.delete('/api/suppliers', async (req, res) => {
-    try {
-        await db.execute('DELETE FROM suppliers');
-        io.emit('supplier:all-deleted', {});
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Clear suppliers error:', err);
-        res.status(500).json({ error: 'Toptancılar temizlenemedi' });
     }
 });
 
@@ -265,7 +232,7 @@ app.post('/api/items', async (req, res) => {
 
 app.put('/api/items/:id', async (req, res) => {
     const { id } = req.params;
-    const { status, quantity, notes, urgency, supplier, image } = req.body;
+    const { name, status, quantity, notes, urgency, supplier, image } = req.body;
 
     try {
         const existing = await db.execute({
@@ -280,6 +247,7 @@ app.put('/api/items/:id', async (req, res) => {
         const current = existing.rows[0];
         const updated = {
             ...current,
+            name: (name !== undefined && name.trim()) ? name.trim() : current.name,
             status: status !== undefined ? status : current.status,
             quantity: quantity !== undefined ? quantity : current.quantity,
             notes: notes !== undefined ? notes : current.notes,
@@ -291,8 +259,9 @@ app.put('/api/items/:id', async (req, res) => {
         };
 
         await db.execute({
-            sql: `UPDATE items SET status = ?, quantity = ?, notes = ?, urgency = ?, supplier = ?, image = ?, updatedAt = ? WHERE id = ?`,
+            sql: `UPDATE items SET name = ?, status = ?, quantity = ?, notes = ?, urgency = ?, supplier = ?, image = ?, updatedAt = ? WHERE id = ?`,
             args: [
+                updated.name,
                 updated.status,
                 updated.quantity,
                 updated.notes,
@@ -314,178 +283,27 @@ app.put('/api/items/:id', async (req, res) => {
 
 app.delete('/api/items/:id', async (req, res) => {
     const { id } = req.params;
-    const { permanent } = req.query;
     try {
-        if (permanent === 'true') {
-            await db.execute({
-                sql: 'DELETE FROM items WHERE id = ?',
-                args: [id]
-            });
-            io.emit('item:deleted', { id, permanent: true });
-            return res.json({ success: true, deletedId: id, permanent: true });
-        } else {
-            const now = new Date().toISOString();
-            await db.execute({
-                sql: 'UPDATE items SET status = "deleted", updatedAt = ? WHERE id = ?',
-                args: [now, id]
-            });
-            const updatedRes = await db.execute({
-                sql: 'SELECT * FROM items WHERE id = ? LIMIT 1',
-                args: [id]
-            });
-            const updatedItem = updatedRes.rows[0] || { id, status: 'deleted', updatedAt: now };
-            io.emit('item:updated', updatedItem);
-            return res.json({ success: true, item: updatedItem });
-        }
+        await db.execute({
+            sql: 'DELETE FROM items WHERE id = ?',
+            args: [id]
+        });
+        io.emit('item:deleted', { id });
+        res.json({ success: true, deletedId: id });
     } catch (err) {
         console.error('Delete item error:', err);
         res.status(500).json({ error: 'Silme işlemi başarısız' });
     }
 });
 
-app.post('/api/items/:id/restore', async (req, res) => {
-    const { id } = req.params;
-    try {
-        const now = new Date().toISOString();
-        await db.execute({
-            sql: 'UPDATE items SET status = "pending", updatedAt = ? WHERE id = ?',
-            args: [now, id]
-        });
-        const updatedRes = await db.execute({
-            sql: 'SELECT * FROM items WHERE id = ? LIMIT 1',
-            args: [id]
-        });
-        const updatedItem = updatedRes.rows[0];
-        io.emit('item:updated', updatedItem);
-        res.json({ success: true, item: updatedItem });
-    } catch (err) {
-        console.error('Restore item error:', err);
-        res.status(500).json({ error: 'Geri yükleme başarısız' });
-    }
-});
-
-app.post('/api/items/restore-all', async (req, res) => {
-    try {
-        const now = new Date().toISOString();
-        await db.execute({
-            sql: 'UPDATE items SET status = "pending", updatedAt = ? WHERE status = "deleted"',
-            args: [now]
-        });
-        io.emit('items:all-restored', {});
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Restore all error:', err);
-        res.status(500).json({ error: 'Toplu geri yükleme başarısız' });
-    }
-});
-
-app.delete('/api/items/trash/empty', async (req, res) => {
-    try {
-        await db.execute('DELETE FROM items WHERE status = "deleted"');
-        io.emit('items:trash-emptied', {});
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Empty trash error:', err);
-        res.status(500).json({ error: 'Çöp kutusu boşaltılamadı' });
-    }
-});
-
 app.post('/api/items/clear-completed', async (req, res) => {
     try {
-        const now = new Date().toISOString();
-        await db.execute({
-            sql: 'UPDATE items SET status = "deleted", updatedAt = ? WHERE status = "completed"',
-            args: [now]
-        });
+        await db.execute('DELETE FROM items WHERE status = "completed"');
         io.emit('items:bulk-deleted', {});
         res.json({ success: true });
     } catch (err) {
         console.error('Clear completed error:', err);
         res.status(500).json({ error: 'Temizleme başarısız' });
-    }
-});
-
-// Backup Import API Endpoint
-app.post('/api/backup/import', async (req, res) => {
-    let { items, suppliers, mode } = req.body;
-
-    if (Array.isArray(req.body)) {
-        items = req.body;
-        suppliers = [];
-    }
-
-    if (!Array.isArray(items) || items.length === 0) {
-        return res.status(400).json({ error: 'Yedek dosyasında içe aktarılacak ürün bulunamadı' });
-    }
-
-    try {
-        if (mode === 'replace') {
-            await db.execute('DELETE FROM items');
-        }
-
-        let importedItemsCount = 0;
-        let importedSuppliersCount = 0;
-
-        // Import suppliers if provided
-        if (Array.isArray(suppliers) && suppliers.length > 0) {
-            for (const s of suppliers) {
-                if (!s || !s.name || !s.name.trim()) continue;
-                const supId = s.id || ('sup_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5));
-                const supName = s.name.trim();
-                const supCreated = s.createdAt || new Date().toISOString();
-                try {
-                    await db.execute({
-                        sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
-                        args: [supId, supName, supCreated]
-                    });
-                    importedSuppliersCount++;
-                } catch (e) {}
-            }
-        }
-
-        // Import items
-        for (const item of items) {
-            if (!item || !item.name || !item.name.trim()) continue;
-
-            const id = item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6));
-            const name = item.name.trim();
-            const quantity = (item.quantity || '1 adet').trim();
-            const category = item.category || 'Genel';
-            const supplier = item.supplier || 'Belirtilmedi';
-            const urgency = item.urgency || 'normal';
-            const status = item.status || 'pending';
-            const notes = (item.notes || '').trim();
-            const image = item.image || '';
-            const barcode = item.barcode || '';
-            const createdAt = item.createdAt || new Date().toISOString();
-            const updatedAt = item.updatedAt || new Date().toISOString();
-            const source = item.source || 'backup';
-
-            await db.execute({
-                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                args: [id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source]
-            });
-            importedItemsCount++;
-        }
-
-        const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
-        const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
-
-        io.emit('backup:imported', {
-            items: itemsRes.rows,
-            suppliers: supsRes.rows
-        });
-
-        res.json({
-            success: true,
-            importedItemsCount,
-            importedSuppliersCount,
-            totalItems: itemsRes.rows.length
-        });
-    } catch (err) {
-        console.error('Import backup error:', err);
-        res.status(500).json({ error: 'Yedek içe aktarma işlemi sırasında sunucu hatası oluştu' });
     }
 });
 

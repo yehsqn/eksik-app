@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>App</title>
+    <meta name="description" content="App - Canlı Eksik ve Sipariş Takip Sistemi.">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="/css/style.css?v=20261019_edit">
+
+    <!-- Socket.io -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-container" class="login-wrapper" style="display: none;">
+        <div class="login-card">
+            <div class="login-brand">
+                <div class="brand-avatar-glow">⚡</div>
+                <h2>App</h2>
+                <p>Devam etmek için giriş yapınız</p>
+            </div>
+
+            <form id="login-form">
+                <div id="login-error" class="login-error-msg" style="display: none;"></div>
+
+                <div class="form-group" style="margin-bottom: 1.1rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Kullanıcı Adı</label>
+                    <input type="text" id="login-username" placeholder="Kullanıcı adı" required autocomplete="username">
+                </div>
+
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Şifre</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md);">
+                    Giriş Yap
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="main-app-container" style="display: none;">
+        <!-- Print Header -->
+        <div class="print-only-header">
+            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;">APP - SİPARİŞ LİSTESİ</h1>
+            <p style="font-size:13px; color:#555;">Yazdırma Tarihi: <span id="print-date"></span></p>
+        </div>
+
+        <div class="app-container">
+            <!-- Header -->
+            <header class="header">
+                <div class="brand-wrapper">
+                    <div class="brand-icon">⚡</div>
+                    <div class="brand-info">
+                        <h1>
+                            App
+                            <span class="badge-live" id="connection-badge">
+                                <span class="pulse-dot"></span>
+                                <span id="connection-text">Canlı</span>
+                            </span>
+                        </h1>
+                        <p id="header-db-indicator">Bulut Veritabanı</p>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="btn btn-secondary" id="btn-copy-list" title="Tüm Listeyi Panoya Kopyala">
+                        <span>📋</span>
+                        <span>Listeyi Kopyala</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-open-suppliers" title="Toptancıları Ekle / Sil / Yönet">
+                        <span>🏢</span>
+                        <span>Toptancılar</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-export-pdf" title="PDF / Yazdır Çıktısı Al">
+                        <span>📄</span>
+                        <span>Yazdır</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
+                        <span>💾</span>
+                        <span>Yedek Al</span>
+                    </button>
+                    <button class="btn btn-secondary" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
+                        <span>📥</span>
+                        <span>Yedek Yükle</span>
+                    </button>
+                    <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
+                    <button class="btn btn-secondary btn-icon-only" id="btn-toggle-sound" title="Ses Bildirimleri">
+                        <span>🔔</span>
+                    </button>
+                    <div class="user-menu-pill">
+                        <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Şifre Değiştir">
+                            👤 <span id="display-username">admin</span>
+                        </button>
+                        <button class="btn btn-danger btn-sm" id="btn-logout" title="Çıkış Yap">
+                            Çıkış
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Stats -->
+            <section class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-label">Toplam Eksik</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-icon blue">📦</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-label">Bekleyen</div>
+                        <div class="stat-value" id="stat-pending">0</div>
+                    </div>
+                    <div class="stat-icon amber">⏳</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-label">Acil / Yok Satıyor</div>
+                        <div class="stat-value" id="stat-urgent" style="color: #f87171;">0</div>
+                    </div>
+                    <div class="stat-icon red">🚨</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-content">
+                        <div class="stat-label">Temin Edilen</div>
+                        <div class="stat-value" id="stat-completed" style="color: #34d399;">0</div>
+                    </div>
+                    <div class="stat-icon emerald">✅</div>
+                </div>
+            </section>
+
+            <!-- Progress Bar Card -->
+            <section class="progress-bar-card">
+                <div class="progress-header">
+                    <div class="progress-title">
+                        <span class="progress-indicator-dot"></span>
+                        <span style="font-weight: 700;">Günlük Eksik Tamamlama Oranı</span>
+                    </div>
+                    <span class="progress-percent" id="progress-percent-text">%0 Tamamlandı (0/0)</span>
+                </div>
+                <div class="progress-track">
+                    <div class="progress-fill" id="progress-fill-bar" style="width: 0%;"></div>
+                </div>
+            </section>
+
+            <!-- Quick Add Card -->
+            <section class="quick-add-card">
+                <div class="quick-add-header">
+                    <div class="quick-add-title">
+                        <span>✨</span>
+                        <span>Hızlı Eksik Ekle</span>
+                    </div>
+                    <span class="voice-status-pill" id="voice-indicator">
+                        <span class="pulse-dot" style="background:#ef4444;"></span>
+                        Dinleniyor...
+                    </span>
+                </div>
+
+                <form id="quick-add-form" class="quick-add-form-vertical">
+                    <!-- Row 1: Product Name -->
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="input-name">Ürün Adı ve Modeli</label>
+                        <div class="input-icon-wrapper">
+                            <span class="input-icon">🔍</span>
+                            <input type="text" id="input-name" placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)" required autocomplete="off">
+                        </div>
+                    </div>
+
+                    <!-- Row 2: Responsive 3-box Grid -->
+                    <div class="form-row-responsive">
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-quantity">Miktar & Birim</label>
+                            <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)" value="1 kutu">
+                        </div>
+
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-supplier">Toptancı (Opsiyonel)</label>
+                            <select id="input-supplier">
+                                <option value="Belirtilmedi">Toptancı Seçiniz</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group-vertical">
+                            <label class="input-label" for="input-urgency">Aciliyet Durumu</label>
+                            <select id="input-urgency">
+                                <option value="normal">Normal</option>
+                                <option value="urgent">🚨 Acil</option>
+                                <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Hidden file input for Photo -->
+                    <input type="file" id="input-photo" accept="image/*" style="display:none;">
+
+                    <!-- Row 3: Action Buttons -->
+                    <div class="form-actions-vertical">
+                        <button type="button" class="btn btn-secondary action-btn-extra" id="btn-trigger-photo" title="Fotoğraf Çek / Yükle">
+                            <span>📷</span>
+                            <span id="photo-btn-text">Fotoğraf</span>
+                        </button>
+                        <button type="button" class="btn-mic action-btn-extra" id="btn-voice-input" title="Sesle Söyle (Türkçe)">
+                            <span>🎙️</span>
+                            <span>Sesle Söyle</span>
+                        </button>
+                        <button type="submit" class="btn btn-primary action-btn-submit" id="btn-submit-add">
+                            <span>➕</span>
+                            <span>Eksik Listesine Ekle</span>
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Selected Photo Preview Strip -->
+                <div id="add-photo-preview-container" style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
+                    <img id="add-photo-preview-img" src="" alt="Önizleme" style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2);">
+                    <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">Fotoğraf eklendi</span>
+                    <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm" style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
+                </div>
+
+                <!-- Hardware Quick Selection Bar with Add / Remove Capability -->
+                <div class="quick-pills-section">
+                    <div class="quick-pills-header">
+                        <div class="quick-pills-title">
+                            <span>⚡</span>
+                            <span>Hızlı Seçenekler (Sık Bitenler)</span>
+                        </div>
+                        <div class="quick-pills-controls">
+                            <button type="button" class="btn-pill-action danger" id="btn-toggle-edit-pills" title="Listeden Ürün Çıkar">
+                                <span id="edit-pills-icon">🗑️</span>
+                                <span id="edit-pills-text">Çıkar / Düzenle</span>
+                            </button>
+                            <button type="button" class="btn-pill-action primary" id="btn-open-add-pill" title="Yeni Hızlı Ürün Ekle">
+                                <span>➕</span>
+                                <span>Yeni Ekle</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hardware-quick-pills" id="hardware-quick-pills-container">
+                        <!-- Populated dynamically via JavaScript with LocalStorage -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- Quick Filter Chips Bar -->
+            <div class="quick-chips-bar">
+                <button class="chip-filter active" data-filter="all">Tümü <span class="chip-badge" id="chip-total">0</span></button>
+                <button class="chip-filter" data-filter="critical">🔴 Yok Satıyor <span class="chip-badge" id="chip-critical">0</span></button>
+                <button class="chip-filter" data-filter="urgent">🚨 Acil <span class="chip-badge" id="chip-urgent">0</span></button>
+                <button class="chip-filter" data-filter="pending">⏳ Bekleyen <span class="chip-badge" id="chip-pending">0</span></button>
+                <button class="chip-filter" data-filter="ordered">🚚 Sipariş Edildi <span class="chip-badge" id="chip-ordered">0</span></button>
+                <button class="chip-filter" data-filter="completed">✅ Alındı <span class="chip-badge" id="chip-completed">0</span></button>
+                <button class="chip-filter chip-trash" data-filter="trash" style="border-color: rgba(239, 68, 68, 0.35); color: #f87171;">🗑️ Çöp Kutusu <span class="chip-badge" id="chip-trash" style="background: rgba(239, 68, 68, 0.25); color: #fca5a5;">0</span></button>
+            </div>
+
+            <!-- Toolbar & Filters -->
+            <section class="toolbar-bar">
+                <div class="toolbar-left">
+                    <input type="text" id="search-input" class="search-input" placeholder="Ürün veya toptancı ara...">
+
+                    <select id="filter-status" class="filter-select">
+                        <option value="all">Tüm Durumlar</option>
+                        <option value="pending">Sadece Bekleyenler</option>
+                        <option value="ordered">Sipariş Edilenler</option>
+                        <option value="completed">Alınanlar / Tamamlananlar</option>
+                        <option value="trash">🗑️ Çöp Kutusu (Geri Dönüşüm)</option>
+                    </select>
+
+                    <select id="filter-supplier" class="filter-select">
+                        <option value="all">Tüm Toptancılar</option>
+                    </select>
+                </div>
+
+                <div class="toolbar-right">
+                    <div class="tab-pills">
+                        <button class="tab-pill active" data-view="list">📋 Tüm Liste</button>
+                        <button class="tab-pill" data-view="bySupplier">👤 Toptancıya Göre</button>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" id="btn-clear-completed" title="Tamamlananları temizle">
+                        <span>🧹</span>
+                        <span>Tamamlananları Temizle</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Items List -->
+            <main class="items-container" id="items-container">
+                <!-- Injected via JS -->
+            </main>
+        </div>
+
+        <!-- Mobile Floating Mic Button -->
+        <div class="mobile-fab-container">
+            <button class="fab-btn fab-mic" id="fab-voice" title="Sesle Ekle">🎙️</button>
+        </div>
+    </div>
+
+    <!-- MODAL: DUPLICATE ITEM WARNING -->
+    <div class="modal-overlay" id="duplicate-modal">
+        <div class="modal-card" style="border: 2px solid #f59e0b; max-width: 480px;">
+            <div class="modal-header" style="border-bottom-color: rgba(245, 158, 11, 0.3);">
+                <div class="modal-title" style="color: #fbbf24;">
+                    <span>⚠️</span>
+                    <span>Bu Ürün Zaten Listede Var!</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div style="padding: 0.5rem 0;">
+                <p style="font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-primary);">
+                    Yazmak istediğiniz <strong id="dup-new-name" style="color:#60a5fa;"></strong> ürünü, listedeki mevcut ürünle aynı veya çok benzer görünüyor:
+                </p>
+
+                <div style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem;">
+                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">LİSTEDEKİ MEVCUT ÜRÜN:</div>
+                    <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc;" id="dup-existing-name">-</div>
+                    <div style="font-size: 0.85rem; color: #38bdf8; margin-top: 0.25rem;">
+                        Mevcut Miktar: <strong id="dup-existing-qty">-</strong> | Durum: <span id="dup-existing-status">-</span>
+                    </div>
+                </div>
+
+                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                    <button class="btn btn-primary" id="btn-dup-update-qty" style="padding: 0.75rem 1rem; justify-content: center; font-weight: 700;">
+                        ➕ Mevcut Ürünün Miktarını Güncelle / Artır
+                    </button>
+                    <button class="btn btn-secondary" id="btn-dup-force-add" style="padding: 0.65rem 1rem; justify-content: center;">
+                        Farklı Ürün, Yine de Ayrı Olarak Ekle
+                    </button>
+                    <button class="btn btn-secondary" id="btn-dup-cancel" style="padding: 0.6rem 1rem; justify-content: center; color: var(--text-muted);">
+                        Vazgeç / İptal Et
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SUPPLIERS MANAGEMENT (Toptancı Ekle / Sil) -->
+    <div class="modal-overlay" id="suppliers-modal">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🏢</span>
+                    <span>Toptancıları Yönet</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div style="padding: 0.5rem 0;">
+                <!-- Add New Supplier Form -->
+                <form id="add-supplier-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
+                    <input type="text" id="new-supplier-name" placeholder="Yeni toptancı adı yazın..." required style="flex:1;">
+                    <button type="submit" class="btn btn-primary">+ Ekle</button>
+                </form>
+
+                <!-- Current Suppliers List -->
+                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">KAYITLI TOPTANCILARINIZ:</div>
+                <div id="suppliers-list-container" style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 280px; overflow-y: auto;">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT ITEM (Eklenen Ürünü Düzenle) -->
+    <div class="modal-overlay" id="edit-item-modal">
+        <div class="modal-card" style="max-width: 500px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>✏️</span>
+                    <span>Ürünü Düzenle</span>
+                </div>
+                <button class="btn-close" type="button">&times;</button>
+            </div>
+            <form id="edit-item-form" style="display: flex; flex-direction: column; gap: 0.9rem; padding: 0.25rem 0;">
+                <input type="hidden" id="edit-item-id">
+                
+                <div class="form-group-vertical">
+                    <label class="input-label" for="edit-item-name">Ürün Adı ve Modeli</label>
+                    <input type="text" id="edit-item-name" placeholder="Ürün adı" required autocomplete="off">
+                </div>
+
+                <div class="form-row-responsive">
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-quantity">Miktar & Birim</label>
+                        <input type="text" id="edit-item-quantity" placeholder="Miktar (örn: 10 kutu)" required>
+                    </div>
+
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-supplier">Toptancı</label>
+                        <select id="edit-item-supplier">
+                            <option value="Belirtilmedi">Belirtilmedi</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row-responsive">
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-urgency">Aciliyet Durumu</label>
+                        <select id="edit-item-urgency">
+                            <option value="normal">Normal</option>
+                            <option value="urgent">🚨 Acil</option>
+                            <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="edit-item-status">Sipariş Durumu</label>
+                        <select id="edit-item-status">
+                            <option value="pending">⏳ Bekliyor</option>
+                            <option value="ordered">🚚 Sipariş Edildi</option>
+                            <option value="completed">✅ Alındı</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group-vertical">
+                    <label class="input-label" for="edit-item-notes">Not / Açıklama (Opsiyonel)</label>
+                    <input type="text" id="edit-item-notes" placeholder="Örn: 2. raf, yarın gelecek..." autocomplete="off">
+                </div>
+
+                <!-- Photo preview & controls within edit modal -->
+                <div class="form-group-vertical">
+                    <label class="input-label">Ürün Fotoğrafı</label>
+                    <div id="edit-photo-container" style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-surface-elevated); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <img id="edit-photo-preview" src="" alt="Fotoğraf" style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); display: none;">
+                        <span id="edit-photo-text" style="font-size: 0.85rem; color: var(--text-secondary); flex: 1;">Fotoğraf yok</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo" style="padding: 0.35rem 0.7rem;">📷 Fotoğraf Ekle / Değiştir</button>
+                        <button type="button" class="btn btn-danger btn-sm" id="btn-edit-remove-photo" style="display: none; padding: 0.35rem 0.6rem;" title="Fotoğrafı Kaldır">✕</button>
+                        <input type="file" id="edit-photo-file-input" accept="image/*" style="display: none;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                    <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
+                        <span>💾</span>
+                        <span>Değişiklikleri Kaydet</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: IMAGE LIGHTBOX (Büyük Fotoğraf Görüntüleyici) -->
+    <div class="modal-overlay" id="image-lightbox-modal">
+        <div class="modal-card" style="max-width: 600px; padding: 1rem; background: #000; text-align: center;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span id="lightbox-title" style="font-size: 0.95rem; font-weight: 600; color: #fff;"></span>
+                <button class="btn-close" style="color: #fff;">&times;</button>
+            </div>
+            <img id="lightbox-img" src="" alt="Ürün Fotoğrafı" style="max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: var(--radius-md);">
+        </div>
+    </div>
+
+    <!-- Hidden input to add/change photo on an existing item -->
+    <input type="file" id="item-card-photo-input" accept="image/*" style="display:none;">
+
+    <!-- MODAL: Change Password -->
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal-card" style="max-width: 400px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🔐</span>
+                    <span>Şifre Değiştir</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <form id="change-password-form">
+                <div id="pwd-change-msg" style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:1rem;"></div>
+                <div class="form-group" style="margin-bottom:0.75rem;">
+                    <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut Şifre</label>
+                    <input type="password" id="input-curr-pwd" required>
+                </div>
+                <div class="form-group" style="margin-bottom:1rem;">
+                    <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni Şifre</label>
+                    <input type="password" id="input-new-pwd" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%;">Şifreyi Güncelle</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD QUICK PILL (Hızlı Seçeneklere Ürün Ekle) -->
+    <div class="modal-overlay" id="add-quick-pill-modal">
+        <div class="modal-card" style="max-width: 440px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>⚡</span>
+                    <span>Hızlı Seçeneklere Ürün Ekle</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <form id="add-quick-pill-form" style="display: flex; flex-direction: column; gap: 0.95rem; padding: 0.25rem 0;">
+                <div class="form-group-vertical">
+                    <label class="input-label" for="new-pill-name">Ürün Adı ve Ölçüsü</label>
+                    <input type="text" id="new-pill-name" placeholder="Örn: PPRC Boru 20mm, Çelik Dübel 10x80" required autocomplete="off">
+                </div>
+                <div class="form-group-vertical">
+                    <label class="input-label" for="new-pill-qty">Varsayılan Miktar & Birim</label>
+                    <input type="text" id="new-pill-qty" placeholder="Örn: 10 kutu, 5 paket, 2 koli, 20 boy" value="1 kutu">
+                </div>
+                <div class="form-group-vertical">
+                    <label class="input-label">Simge / İkon Seçin</label>
+                    <div class="emoji-picker-grid" id="pill-emoji-grid">
+                        <button type="button" class="emoji-opt-btn active" data-emoji="🔩">🔩</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧴">🧴</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="⚙️">⚙️</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🩹">🩹</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="📦">📦</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧱">🧱</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="📍">📍</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🧼">🧼</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🛢️">🛢️</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🔌">🔌</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🪚">🪚</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🔨">🔨</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="🎨">🎨</button>
+                        <button type="button" class="emoji-opt-btn" data-emoji="⚡">⚡</button>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary" style="margin-top: 0.6rem; justify-content: center; padding: 0.8rem; font-weight: 700;">
+                    <span>➕</span>
+                    <span>Hızlı Seçeneklere Ekle</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Voice Listening Popup -->
+    <div class="modal-overlay" id="voice-modal">
+        <div class="modal-card" style="max-width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>🎙️</span>
+                    <span>Sesle Eksik Yazdırılıyor</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div class="voice-visualizer">
+                <div class="voice-wave-ring">
+                    <span class="voice-wave-icon">🎤</span>
+                </div>
+                <div class="voice-transcript-preview" id="voice-transcript-text">
+                    Sizi dinliyorum... Lütfen konuşun.
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.5rem;">
+                    Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli bandı"
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Confirmation Dialog (No native alert/confirm) -->
+    <div class="modal-overlay" id="confirm-dialog-modal">
+        <div class="modal-card" style="max-width: 420px; text-align: center;">
+            <div style="font-size: 2.8rem; margin-bottom: 0.75rem;" id="confirm-modal-icon">⚠️</div>
+            <h3 id="confirm-modal-title" style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Onay Gerekiyor</h3>
+            <p id="confirm-modal-desc" style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1.35rem;">Bu işlemi yapmak istediğinize emin misiniz?</p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center;">
+                <button type="button" class="btn btn-secondary" id="confirm-modal-btn-cancel" style="flex: 1; padding: 0.75rem; font-weight: 700;">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="confirm-modal-btn-ok" style="flex: 1; padding: 0.75rem; font-weight: 700;">Evet, Devam Et</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Import Backup Preview & Confirmation -->
+    <div class="modal-overlay" id="import-backup-modal">
+        <div class="modal-card" style="max-width: 460px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📥</span>
+                    <span>Yedek Dosyasını İçe Aktar</span>
+                </div>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div style="margin-bottom: 1.25rem;">
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.9rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.8rem; color: #a5b4fc; margin-bottom: 0.35rem;" id="import-file-name">📁 dosya.json</div>
+                    <div style="font-size: 0.98rem; font-weight: 800; color: #fff;" id="import-summary-text">Yedek dosyası inceleniyor...</div>
+                </div>
+
+                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.6rem;">Yükleme Yöntemini Seçin:</div>
+                
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); margin-bottom: 0.6rem; cursor: pointer;">
+                    <input type="radio" name="import-mode" value="merge" checked style="margin-top: 0.25rem;">
+                    <div>
+                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">🔄 Mevcut Listeyle Birleştir (Tavsiye Edilen)</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Şu anki dükkan ürünleriniz silinmez, yedekteki ürünler listenize eklenir / güncellenir.</div>
+                    </div>
+                </label>
+
+                <label style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); cursor: pointer;">
+                    <input type="radio" name="import-mode" value="replace" style="margin-top: 0.25rem;">
+                    <div>
+                        <div style="font-weight: 700; color: #f87171; font-size: 0.88rem;">⚠️ Listeyi Temizle ve Sıfırdan Yükle</div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Mevcut ürünler temizlenir, sadece yedek dosyasındaki ürünler yüklenir.</div>
+                    </div>
+                </label>
+            </div>
+
+            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()" style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup" style="padding: 0.65rem 1.35rem; font-weight: 800;">
+                    <span>📥</span>
+                    <span>Yedeği Şimdi Yükle</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Force unregister all old service workers and purge caches
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+                for (let r of regs) r.unregister();
+            });
+        }
+        if ('caches' in window) {
+            caches.keys().then(function(keys) {
+                for (let k of keys) caches.delete(k);
+            });
+        }
+    </script>
+
+    <!-- App Scripts with Cache Busting -->
+    <script src="/js/duplicate-detector.js?v=20261017_2358"></script>
+    <script src="/js/audio.js?v=20261017_2358"></script>
+    <script src="/js/speech.js?v=20261017_2358"></script>
+    <script src="/js/export.js?v=20261017_2358"></script>
+    <script src="/js/app.js?v=20261019_edit"></script>
+    <script>
+        document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
+    </script>
+</body>
+</html>
