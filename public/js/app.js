@@ -1,4 +1,4 @@
-// Main Application Logic - Turso / LibSQL, Suppliers Management & Photo Support
+﻿// Main Application Logic - Turso / LibSQL, Suppliers Management & Photo Support
 class App {
     constructor() {
         this.items = [];
@@ -15,6 +15,15 @@ class App {
         this.pendingDuplicateItem = null;
         this.selectedAddPhoto = ''; // Base64 data URL for new item
         this.targetPhotoItemId = null; // Used when attaching photo to an existing item card
+
+        this.isPillsEditMode = false;
+        this.selectedPillEmoji = '🔩';
+        this.quickItems = [];
+        this.loadQuickPills();
+
+        this.pendingDeleteId = null;
+        this.pendingDeleteTimer = null;
+        this.pendingImportData = null;
         this.editingItemId = null;
         this.editingItemPhoto = '';
         this.appIcon = localStorage.getItem('dukkan_app_icon') || '⚡';
@@ -31,6 +40,7 @@ class App {
         this.initAuth();
         this.initEventListeners();
         this.initPhotoHandlers();
+        this.renderQuickPills();
         this.loadSettings();
 
         if (this.isAuthenticated()) {
@@ -72,12 +82,11 @@ class App {
         const logoutBtn = document.getElementById('btn-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
-                if (confirm('Oturumu kapatmak istediğinize emin misiniz?')) {
-                    localStorage.removeItem('dukkan_token');
-                    localStorage.removeItem('dukkan_username');
-                    this.authToken = null;
-                    this.showLoginScreen();
-                }
+                localStorage.removeItem('dukkan_token');
+                localStorage.removeItem('dukkan_username');
+                this.authToken = null;
+                this.showLoginScreen();
+                this.showToast('Çıkış yapıldı');
             });
         }
 
@@ -176,20 +185,178 @@ class App {
     }
 
     initTheme() {
-        const savedTheme = localStorage.getItem('theme_mode') || 'dark';
-        if (savedTheme === 'light') {
-            document.body.classList.add('light-theme');
-            const themeBtn = document.getElementById('theme-toggle-btn');
-            if (themeBtn) themeBtn.textContent = '🌙';
+        localStorage.setItem('theme_mode', 'dark');
+        document.body.classList.remove('light-theme');
+    }
+
+    fillQuickItem(name, qty) {
+        const nameInput = document.getElementById('input-name');
+        const qtyInput = document.getElementById('input-quantity');
+        if (nameInput) {
+            nameInput.value = name;
+            nameInput.focus();
+        }
+        if (qtyInput) {
+            qtyInput.value = qty || '1 kutu';
+        }
+        this.showToast(`Seçildi: ${name} (${qty || '1 kutu'})`);
+    }
+
+    // Quick Selection Pills Dynamic Manager
+    getDefaultQuickItems() {
+        return [
+            { id: '1', name: '4x50 Sunta Vidası', qty: '10 kutu', emoji: '🔩' },
+            { id: '2', name: 'Şeffaf Silikon', qty: '1 koli', emoji: '🧴' },
+            { id: '3', name: '115mm Taşlama Taşı', qty: '25 adet', emoji: '⚙️' },
+            { id: '4', name: 'Teflon Bant', qty: '10 adet', emoji: '🩹' },
+            { id: '5', name: 'Koli Bandı 45x100', qty: '1 koli', emoji: '📦' },
+            { id: '6', name: 'Beyaz Akrilik Mastik', qty: '1 koli', emoji: '🧱' },
+            { id: '7', name: '8mm Plastik Dübel', qty: '5 paket', emoji: '📍' },
+            { id: '8', name: 'Poliüretan Köpük 750ml', qty: '1 koli', emoji: '🧼' },
+            { id: '9', name: 'WD-40 Pas Sökücü 400ml', qty: '6 adet', emoji: '🛢️' },
+            { id: '10', name: 'Siyah Elektrik Bandı', qty: '10 adet', emoji: '🔌' },
+            { id: '11', name: 'Dekupaj Testere Ucu', qty: '5 paket', emoji: '🪚' },
+            { id: '12', name: 'Hızlı Yapıştırıcı (MDF Kit)', qty: '1 koli', emoji: '⚡' }
+        ];
+    }
+
+    loadQuickPills() {
+        try {
+            const saved = localStorage.getItem('dukkan_quick_items');
+            if (saved) {
+                this.quickItems = JSON.parse(saved);
+            } else {
+                this.quickItems = this.getDefaultQuickItems();
+                this.saveQuickPills();
+            }
+        } catch (e) {
+            this.quickItems = this.getDefaultQuickItems();
         }
     }
 
-    toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        localStorage.setItem('theme_mode', isLight ? 'light' : 'dark');
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        if (themeBtn) themeBtn.textContent = isLight ? '🌙' : '☀️';
+    saveQuickPills() {
+        try {
+            localStorage.setItem('dukkan_quick_items', JSON.stringify(this.quickItems));
+        } catch (e) {
+            console.warn('Quick pills kaydedilemedi:', e);
+        }
+    }
+
+    renderQuickPills() {
+        const container = document.getElementById('hardware-quick-pills-container');
+        if (!container) return;
+
+        if (!this.quickItems || this.quickItems.length === 0) {
+            container.innerHTML = `
+                <div style="color:var(--text-muted); font-size:0.8rem; padding:0.4rem 0;">
+                    Kayıtlı hızlı seçenek kalmadı. 
+                    <button type="button" class="btn btn-secondary btn-xs" onclick="window.app.restoreDefaultQuickPills()" style="margin-left:0.5rem;">Varsayılanları Yükle</button>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.quickItems.map(item => `
+            <div class="quick-pill-item ${this.isPillsEditMode ? 'edit-mode' : ''}" id="pill-${item.id}">
+                <button type="button" class="quick-pill-btn" onclick="window.app.handleQuickPillClick('${item.id}')" title="${item.name} (${item.qty})">
+                    <span>${item.emoji || '⚡'}</span>
+                    <span>${this.escapeHtml(item.name)}</span>
+                </button>
+                <button type="button" class="quick-pill-delete-btn" title="Bu seçeneği kaldır" onclick="window.app.deleteQuickPill('${item.id}', event)">✕</button>
+            </div>
+        `).join('');
+    }
+
+    handleQuickPillClick(id) {
+        if (this.isPillsEditMode) {
+            this.deleteQuickPill(id);
+            return;
+        }
+        const item = (this.quickItems || []).find(q => q.id === id);
+        if (item) {
+            this.fillQuickItem(item.name, item.qty);
+        }
+    }
+
+    togglePillsEditMode() {
+        this.isPillsEditMode = !this.isPillsEditMode;
+        const icon = document.getElementById('edit-pills-icon');
+        const text = document.getElementById('edit-pills-text');
+        const btn = document.getElementById('btn-toggle-edit-pills');
+
+        if (this.isPillsEditMode) {
+            if (icon) icon.textContent = '✓';
+            if (text) text.textContent = 'Tamamla';
+            if (btn) btn.classList.add('active');
+            this.showToast('Çıkarmak istediğiniz hızlı seçeneğin üzerindeki ✕ butonuna dokunun');
+        } else {
+            if (icon) icon.textContent = '🗑️';
+            if (text) text.textContent = 'Çıkar / Düzenle';
+            if (btn) btn.classList.remove('active');
+        }
+
+        this.renderQuickPills();
+    }
+
+    deleteQuickPill(id, event) {
+        if (event) event.stopPropagation();
+        const found = (this.quickItems || []).find(q => q.id === id);
+        this.quickItems = (this.quickItems || []).filter(q => q.id !== id);
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.showToast(`Çıkarıldı: ${found ? found.name : 'Seçenek'}`);
+    }
+
+    openAddQuickPillModal() {
+        const nameInput = document.getElementById('new-pill-name');
+        const qtyInput = document.getElementById('new-pill-qty');
+        if (nameInput) nameInput.value = '';
+        if (qtyInput) qtyInput.value = '1 kutu';
+        this.selectedPillEmoji = '🔩';
+        this.updateEmojiPickerUI();
+        this.openModal('add-quick-pill-modal');
+        if (nameInput) setTimeout(() => nameInput.focus(), 150);
+    }
+
+    updateEmojiPickerUI() {
+        document.querySelectorAll('.emoji-opt-btn').forEach(btn => {
+            if (btn.dataset.emoji === this.selectedPillEmoji) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+    }
+
+    handleAddQuickPill(e) {
+        if (e) e.preventDefault();
+        const nameInput = document.getElementById('new-pill-name');
+        const qtyInput = document.getElementById('new-pill-qty');
+        const name = nameInput ? nameInput.value.trim() : '';
+        const qty = qtyInput ? qtyInput.value.trim() || '1 kutu' : '1 kutu';
+
+        if (!name) return;
+
+        const newItem = {
+            id: Date.now().toString(),
+            name: name,
+            qty: qty,
+            emoji: this.selectedPillEmoji || '⚡'
+        };
+
+        if (!this.quickItems) this.quickItems = [];
+        this.quickItems.push(newItem);
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.closeAllModals();
+        this.showToast(`Hızlı Seçeneklere Eklendi: ${name}`);
+    }
+
+    restoreDefaultQuickPills() {
+        this.quickItems = this.getDefaultQuickItems();
+        this.saveQuickPills();
+        this.renderQuickPills();
+        this.showToast('Varsayılan hırdavat seçenekleri geri yüklendi');
     }
 
     // Socket.IO
@@ -255,8 +422,35 @@ class App {
             });
 
             this.socket.on('items:bulk-deleted', () => {
-                this.items = this.items.filter(i => i.status !== 'completed');
+                this.items.forEach(i => {
+                    if (i.status === 'completed') i.status = 'deleted';
+                });
                 this.render();
+            });
+
+            this.socket.on('items:all-restored', () => {
+                this.items.forEach(i => {
+                    if (i.status === 'deleted') i.status = 'pending';
+                });
+                this.render();
+            });
+
+            this.socket.on('items:trash-emptied', () => {
+                this.items = this.items.filter(i => i.status !== 'deleted');
+                this.render();
+            });
+
+            this.socket.on('backup:imported', (data) => {
+                if (data.items) this.items = data.items;
+                if (data.suppliers) {
+                    this.suppliers = data.suppliers;
+                    this.populateSupplierSelects();
+                }
+                this.render();
+                if (window.soundManager && window.soundManager.playCompleted) {
+                    window.soundManager.playCompleted();
+                }
+                this.showToast('📥 Canlı yedek senkronizasyonu tamamlandı!');
             });
 
             this.socket.on('supplier:added', (newSup) => {
@@ -269,6 +463,12 @@ class App {
 
             this.socket.on('supplier:deleted', (data) => {
                 this.suppliers = this.suppliers.filter(s => s.id !== data.id);
+                this.populateSupplierSelects();
+                this.renderSuppliersModal();
+            });
+
+            this.socket.on('supplier:all-deleted', () => {
+                this.suppliers = [];
                 this.populateSupplierSelects();
                 this.renderSuppliersModal();
             });
@@ -353,18 +553,28 @@ class App {
         if (!container) return;
 
         if (this.suppliers.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.5rem;">Kayıtlı toptancı bulunmuyor. Yukarıdan ekleyebilirsiniz.</div>';
+            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.75rem; text-align:center;">Kayıtlı toptancı bulunmuyor. Yukarıdan istediğiniz toptancıyı ekleyebilirsiniz.</div>';
             return;
         }
 
-        container.innerHTML = this.suppliers.map(sup => `
+        const itemsHtml = this.suppliers.map(sup => `
             <div class="supplier-manage-item">
-                <span style="font-weight:600; font-size:0.9rem;">👤 ${this.escapeHtml(sup.name)}</span>
-                <button class="btn btn-danger btn-sm" style="padding:0.25rem 0.5rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
+                <span style="font-weight:600; font-size:0.9rem; color:var(--text-primary);">🏢 ${this.escapeHtml(sup.name)}</span>
+                <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.6rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
                     Sil 🗑️
                 </button>
             </div>
         `).join('');
+
+        const clearAllHtml = `
+            <div style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px dashed rgba(255,255,255,0.12);">
+                <button type="button" class="btn btn-danger btn-sm" style="width: 100%; justify-content: center; padding: 0.55rem;" onclick="window.app.clearAllSuppliers()">
+                    🗑️ Tüm Toptancıları Temizle (Boş Bırak)
+                </button>
+            </div>
+        `;
+
+        container.innerHTML = itemsHtml + clearAllHtml;
     }
 
     async handleAddSupplier(name) {
@@ -389,26 +599,37 @@ class App {
                 this.showToast(`Toptancı Eklendi: ${created.name}`);
             } else {
                 const err = await res.json();
-                alert(err.error || 'Toptancı eklenemedi.');
+                this.showToast(err.error || 'Toptancı eklenemedi.');
             }
         } catch (e) {
-            alert('Sunucu hatası.');
+            this.showToast('Sunucu hatası.');
         }
     }
 
     async deleteSupplier(id, name) {
-        if (!confirm(`"${name}" toptancısını silmek istediğinize emin misiniz?`)) return;
+        // Optimistic removal for instant UI feedback
+        this.suppliers = this.suppliers.filter(s => s.id !== id && s.name !== name);
+        this.populateSupplierSelects();
+        this.renderSuppliersModal();
+        this.showToast(`Toptancı Silindi: ${name}`);
 
         try {
-            const res = await fetch(`/api/suppliers/${id}`, { method: 'DELETE' });
-            if (res.ok) {
-                this.suppliers = this.suppliers.filter(s => s.id !== id);
-                this.populateSupplierSelects();
-                this.renderSuppliersModal();
-                this.showToast(`Toptancı Silindi: ${name}`);
-            }
+            await fetch(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' });
         } catch (e) {
-            alert('Silme hatası.');
+            console.error('Silme hatası:', e);
+        }
+    }
+
+    async clearAllSuppliers() {
+        this.suppliers = [];
+        this.populateSupplierSelects();
+        this.renderSuppliersModal();
+        this.showToast('Tüm toptancılar temizlendi');
+
+        try {
+            await fetch('/api/suppliers', { method: 'DELETE' });
+        } catch (e) {
+            console.error('Temizleme hatası:', e);
         }
     }
 
@@ -606,11 +827,69 @@ class App {
             });
         });
 
+        // Copy to Clipboard
+        const btnCopy = document.getElementById('btn-copy-list');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', () => this.copyListToClipboard());
+        }
+
+        // Quick Filter Chips
+        document.querySelectorAll('.chip-filter').forEach(chip => {
+            chip.addEventListener('click', () => {
+                document.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                this.filterStatus = chip.dataset.filter;
+                
+                // Sync with dropdown filter if applicable
+                const filterDropdown = document.getElementById('filter-status');
+                if (filterDropdown && ['all', 'pending', 'ordered', 'completed'].includes(this.filterStatus)) {
+                    filterDropdown.value = this.filterStatus;
+                } else if (filterDropdown) {
+                    filterDropdown.value = 'all';
+                }
+
+                this.render();
+            });
+        });
+
         // PDF Export & Print
         const btnPdf = document.getElementById('btn-export-pdf');
         if (btnPdf) {
             btnPdf.addEventListener('click', () => {
-                window.exportManager.printOrderSheet(this.items, 'Dükkan');
+                window.exportManager.printOrderSheet(this.items, 'App');
+            });
+        }
+
+        // JSON Full Security Backup
+        const btnBackup = document.getElementById('btn-export-backup');
+        if (btnBackup) {
+            btnBackup.addEventListener('click', () => {
+                this.exportBackupJson();
+            });
+        }
+
+        // Backup File Import Trigger
+        const btnImportTrigger = document.getElementById('btn-import-backup-trigger');
+        const backupFileInput = document.getElementById('backup-file-input');
+        if (btnImportTrigger && backupFileInput) {
+            btnImportTrigger.addEventListener('click', () => {
+                backupFileInput.value = '';
+                backupFileInput.click();
+            });
+
+            backupFileInput.addEventListener('change', (e) => {
+                const file = e.target.files && e.target.files[0];
+                if (file) {
+                    this.handleBackupFileSelect(file);
+                }
+            });
+        }
+
+        // Confirm Backup Import Button
+        const btnConfirmImport = document.getElementById('btn-confirm-import-backup');
+        if (btnConfirmImport) {
+            btnConfirmImport.addEventListener('click', () => {
+                this.executeBackupImport();
             });
         }
 
@@ -631,12 +910,35 @@ class App {
             });
         }
 
-        // Theme Toggle
-        const themeBtn = document.getElementById('theme-toggle-btn');
-        if (themeBtn) {
-            themeBtn.addEventListener('click', () => this.toggleTheme());
+        // Quick Pills Controls
+        const btnAddPill = document.getElementById('btn-open-add-pill');
+        if (btnAddPill) {
+            btnAddPill.addEventListener('click', () => this.openAddQuickPillModal());
         }
 
+        const btnEditPills = document.getElementById('btn-toggle-edit-pills');
+        if (btnEditPills) {
+            btnEditPills.addEventListener('click', () => this.togglePillsEditMode());
+        }
+
+        const formAddPill = document.getElementById('add-quick-pill-form');
+        if (formAddPill) {
+            formAddPill.addEventListener('submit', (e) => this.handleAddQuickPill(e));
+        }
+
+        const emojiGrid = document.getElementById('pill-emoji-grid');
+        if (emojiGrid) {
+            emojiGrid.addEventListener('click', (e) => {
+                const btn = e.target.closest('.emoji-opt-btn');
+                if (btn && btn.dataset.emoji) {
+                    this.selectedPillEmoji = btn.dataset.emoji;
+                    this.updateEmojiPickerUI();
+                }
+            });
+        }
+
+        // Close buttons
+        
         // Edit Item Form
         const editForm = document.getElementById('edit-item-form');
         if (editForm) {
@@ -756,7 +1058,6 @@ class App {
             btnSaveIcon.addEventListener('click', () => this.saveAppIcon());
         }
 
-        // Close buttons
         document.querySelectorAll('.btn-close').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.closeAllModals();
@@ -895,7 +1196,7 @@ class App {
             }
         } catch (e) {
             console.error('Ekleme hatası:', e);
-            alert('Ürün eklenemedi.');
+            this.showToast('Ürün eklenemedi.');
         }
     }
 
@@ -924,12 +1225,102 @@ class App {
         }
     }
 
-    async deleteItem(id) {
-        if (!confirm('Bu ürünü listeden silmek istediğinize emin misiniz?')) return;
+    openConfirmModal({ icon = '⚠️', title = 'Onay Gerekiyor', desc = 'Bu işlemi yapmak istediğinize emin misiniz?', onConfirm }) {
+        const modal = document.getElementById('confirm-dialog-modal');
+        const iconEl = document.getElementById('confirm-modal-icon');
+        const titleEl = document.getElementById('confirm-modal-title');
+        const descEl = document.getElementById('confirm-modal-desc');
+        const btnOk = document.getElementById('confirm-modal-btn-ok');
+        const btnCancel = document.getElementById('confirm-modal-btn-cancel');
 
-        this.items = this.items.filter(i => i.id !== id);
-        window.soundManager.playDelete();
+        if (iconEl) iconEl.textContent = icon;
+        if (titleEl) titleEl.textContent = title;
+        if (descEl) descEl.textContent = desc;
+
+        const cleanup = () => {
+            this.closeAllModals();
+            if (btnOk) btnOk.onclick = null;
+            if (btnCancel) btnCancel.onclick = null;
+        };
+
+        if (btnCancel) btnCancel.onclick = () => cleanup();
+        if (btnOk) {
+            btnOk.onclick = () => {
+                cleanup();
+                if (typeof onConfirm === 'function') onConfirm();
+            };
+        }
+
+        this.openModal('confirm-dialog-modal');
+    }
+
+    // 2-Step Confirmation Delete (No browser confirm() to avoid "uyarıları bastır" blocking)
+    requestDeleteItem(id, event) {
+        if (event) {
+            try {
+                event.stopPropagation();
+                event.preventDefault();
+            } catch (e) {}
+        }
+
+        const btn = document.getElementById(`delete-btn-${id}`);
+        if (!btn) {
+            return this.executeSoftDelete(id);
+        }
+
+        // 2nd CLICK: User already clicked once and now clicks again to confirm!
+        if (btn.classList.contains('btn-delete-confirm')) {
+            this.resetPendingDeleteButtons();
+            this.executeSoftDelete(id);
+            return;
+        }
+
+        // 1st CLICK: Turn button into pulsing "⚠️ Onayla?" state
+        this.resetPendingDeleteButtons();
+
+        this.pendingDeleteId = id;
+        btn.classList.add('btn-delete-confirm');
+        btn.innerHTML = '⚠️ Onayla?';
+
+        // Auto revert back to normal 🗑️ if not confirmed within 4.5 seconds
+        this.pendingDeleteTimer = setTimeout(() => {
+            this.resetPendingDeleteButtons();
+        }, 4500);
+    }
+
+    resetPendingDeleteButtons() {
+        if (this.pendingDeleteTimer) {
+            clearTimeout(this.pendingDeleteTimer);
+            this.pendingDeleteTimer = null;
+        }
+        this.pendingDeleteId = null;
+        document.querySelectorAll('.btn-delete-confirm').forEach(b => {
+            b.classList.remove('btn-delete-confirm');
+            b.innerHTML = '🗑️';
+        });
+    }
+
+    // Alias for compatibility
+    deleteItem(id, event) {
+        return this.requestDeleteItem(id, event);
+    }
+
+    // Soft Delete (Item moves to Çöp Kutusu, NEVER lost)
+    async executeSoftDelete(id) {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        const oldStatus = item.status || 'pending';
+        item.status = 'deleted';
+        item.updatedAt = new Date().toISOString();
+
+        if (window.soundManager && window.soundManager.playDelete) {
+            window.soundManager.playDelete();
+        }
         this.render();
+
+        // Show floating Undo toast for 6.5s
+        this.showUndoToast(item, oldStatus);
 
         try {
             await fetch(`/api/items/${id}`, { method: 'DELETE' });
@@ -938,17 +1329,273 @@ class App {
         }
     }
 
-    async clearCompletedItems() {
-        const completedCount = this.items.filter(i => i.status === 'completed').length;
-        if (completedCount === 0) {
-            alert('Temizlenecek tamamlanmış ürün bulunmuyor.');
+    // Floating Undo Toast (1-click restore)
+    showUndoToast(item, previousStatus = 'pending') {
+        document.querySelectorAll('.toast-undo-container').forEach(t => t.remove());
+
+        const toast = document.createElement('div');
+        toast.className = 'toast-undo-container';
+        toast.innerHTML = `
+            <span>🗑️ <strong>${this.escapeHtml(item.name)}</strong> silindi.</span>
+            <button type="button" class="toast-undo-btn" id="btn-undo-delete">↩️ Geri Al</button>
+        `;
+
+        document.body.appendChild(toast);
+
+        const undoBtn = toast.querySelector('#btn-undo-delete');
+        if (undoBtn) {
+            undoBtn.onclick = (e) => {
+                e.stopPropagation();
+                toast.remove();
+                this.restoreItem(item.id, previousStatus);
+            };
+        }
+
+        setTimeout(() => {
+            if (document.body.contains(toast)) {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.35s ease';
+                setTimeout(() => toast.remove(), 350);
+            }
+        }, 6500);
+    }
+
+    // Restore item from Çöp Kutusu back to active
+    async restoreItem(id, targetStatus = 'pending') {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        item.status = targetStatus || 'pending';
+        item.updatedAt = new Date().toISOString();
+
+        if (window.soundManager && window.soundManager.playCompleted) {
+            window.soundManager.playCompleted();
+        }
+        this.render();
+        this.showToast(`↩️ Geri Yüklendi: ${item.name}`);
+
+        try {
+            await fetch(`/api/items/${id}/restore`, { method: 'POST' });
+        } catch (e) {
+            console.error('Geri yükleme hatası:', e);
+        }
+    }
+
+    // Restore All Deleted Items in 1 click
+    async restoreAllDeleted() {
+        const deletedItems = this.items.filter(i => i.status === 'deleted');
+        if (deletedItems.length === 0) {
+            this.showToast('Çöp kutusunda geri yüklenecek ürün yok.');
             return;
         }
 
-        if (!confirm(`${completedCount} adet tamamlanmış ürün listeden kalıcı olarak temizlensin mi?`)) return;
+        deletedItems.forEach(i => {
+            i.status = 'pending';
+            i.updatedAt = new Date().toISOString();
+        });
 
-        this.items = this.items.filter(i => i.status !== 'completed');
+        if (window.soundManager && window.soundManager.playCompleted) {
+            window.soundManager.playCompleted();
+        }
         this.render();
+        this.showToast(`✅ ${deletedItems.length} ürün listeye geri yüklendi!`);
+
+        try {
+            await fetch('/api/items/restore-all', { method: 'POST' });
+        } catch (e) {
+            console.error('Toplu geri yükleme hatası:', e);
+        }
+    }
+
+    // Empty Trash (permanently deletes ONLY soft-deleted items)
+    emptyTrash() {
+        const trashCount = this.items.filter(i => i.status === 'deleted').length;
+        if (trashCount === 0) {
+            this.showToast('Çöp kutusu zaten boş.');
+            return;
+        }
+
+        this.openConfirmModal({
+            icon: '🧹',
+            title: 'Çöp Kutusunu Boşalt',
+            desc: `Çöp kutusundaki ${trashCount} adet ürün kalıcı olarak silinecek. Bu işlem geri alınamaz! Kalıcı olarak silinsin mi?`,
+            onConfirm: async () => {
+                this.items = this.items.filter(i => i.status !== 'deleted');
+                this.render();
+                this.showToast('Çöp kutusu tamamen boşaltıldı.');
+                try {
+                    await fetch('/api/items/trash/empty', { method: 'DELETE' });
+                } catch (e) {
+                    console.error('Çöp boşaltma hatası:', e);
+                }
+            }
+        });
+    }
+
+    // Permanently Delete single item (only when in trash)
+    permanentDeleteItem(id) {
+        const item = this.items.find(i => i.id === id);
+        const name = item ? item.name : 'Ürün';
+
+        this.openConfirmModal({
+            icon: '❌',
+            title: 'Kalıcı Olarak Sil',
+            desc: `"${name}" ürünü veritabanından kalıcı olarak silinecektir. Emin misiniz?`,
+            onConfirm: async () => {
+                this.items = this.items.filter(i => i.id !== id);
+                if (window.soundManager && window.soundManager.playDelete) {
+                    window.soundManager.playDelete();
+                }
+                this.render();
+                this.showToast(`Kalıcı olarak silindi: ${name}`);
+
+                try {
+                    await fetch(`/api/items/${id}?permanent=true`, { method: 'DELETE' });
+                } catch (e) {
+                    console.error('Kalıcı silme hatası:', e);
+                }
+            }
+        });
+    }
+
+    // Full Security Backup (Downloads JSON file containing all items)
+    exportBackupJson() {
+        const data = {
+            exportDate: new Date().toISOString(),
+            app: 'App - Dükkan Eksik Takip',
+            totalItems: this.items.length,
+            activeItems: this.items.filter(i => i.status !== 'deleted').length,
+            deletedItems: this.items.filter(i => i.status === 'deleted').length,
+            suppliers: this.suppliers,
+            items: this.items
+        };
+
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.href = url;
+        a.download = `eksik-app-yedek-${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        this.showToast(`💾 ${this.items.length} ürünün tam güvenlik yedeği indirildi!`);
+    }
+
+    // Handle Backup File Select (Parse and preview before importing)
+    handleBackupFileSelect(file) {
+        if (!file.name.endsWith('.json')) {
+            this.showToast('Lütfen geçerli bir .json yedek dosyası seçin.');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const content = JSON.parse(e.target.result);
+                let items = [];
+                let suppliers = [];
+
+                if (Array.isArray(content)) {
+                    items = content;
+                } else if (content && typeof content === 'object') {
+                    items = content.items || [];
+                    suppliers = content.suppliers || [];
+                }
+
+                if (!Array.isArray(items) || items.length === 0) {
+                    this.showToast('Yedek dosyasında içe aktarılacak ürün bulunamadı.');
+                    return;
+                }
+
+                this.pendingImportData = {
+                    fileName: file.name,
+                    items,
+                    suppliers
+                };
+
+                const nameEl = document.getElementById('import-file-name');
+                const summaryEl = document.getElementById('import-summary-text');
+                if (nameEl) nameEl.textContent = `📁 ${file.name}`;
+                if (summaryEl) {
+                    summaryEl.textContent = `${items.length} adet ürün ve ${suppliers.length} toptancı tespit edildi.`;
+                }
+
+                this.openModal('import-backup-modal');
+            } catch (err) {
+                console.error('Yedek okuma hatası:', err);
+                this.showToast('Yedek dosyası okunamadı veya JSON formatı bozuk.');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    // Execute Backup Import to Turso / SQLite
+    async executeBackupImport() {
+        if (!this.pendingImportData) return;
+
+        const modeRadio = document.querySelector('input[name="import-mode"]:checked');
+        const mode = modeRadio ? modeRadio.value : 'merge';
+
+        const payload = {
+            items: this.pendingImportData.items,
+            suppliers: this.pendingImportData.suppliers,
+            mode: mode
+        };
+
+        const btnConfirm = document.getElementById('btn-confirm-import-backup');
+        if (btnConfirm) {
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<span>⏳</span><span>Yükleniyor...</span>';
+        }
+
+        try {
+            const res = await fetch('/api/backup/import', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+                this.closeAllModals();
+                this.showToast(`✅ ${data.importedItemsCount} ürün başarıyla içe aktarıldı!`);
+                if (window.soundManager && window.soundManager.playCompleted) {
+                    window.soundManager.playCompleted();
+                }
+                await this.loadInitialData();
+                await this.loadSuppliers();
+            } else {
+                this.showToast(data.error || 'İçe aktarma başarısız oldu.');
+            }
+        } catch (err) {
+            console.error('Import error:', err);
+            this.showToast('Sunucuya bağlanırken hata oluştu.');
+        } finally {
+            if (btnConfirm) {
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<span>📥</span><span>Yedeği Şimdi Yükle</span>';
+            }
+            this.pendingImportData = null;
+        }
+    }
+
+    async clearCompletedItems() {
+        const completedCount = this.items.filter(i => i.status === 'completed').length;
+        if (completedCount === 0) {
+            this.showToast('Temizlenecek tamamlanmış ürün bulunmuyor.');
+            return;
+        }
+
+        // Soft-delete completed items so they are safe in Çöp Kutusu!
+        this.items.forEach(i => {
+            if (i.status === 'completed') i.status = 'deleted';
+        });
+        this.render();
+        this.showToast(`${completedCount} tamamlanmış ürün çöp kutusuna taşındı (güvende).`);
 
         try {
             await fetch('/api/items/clear-completed', { method: 'POST' });
@@ -961,7 +1608,7 @@ class App {
         const voiceModal = document.getElementById('voice-modal');
         const voiceText = document.getElementById('voice-transcript-text');
         this.openModal('voice-modal');
-        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "12 li defter")';
+        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "10 kutu sunta vidası")';
 
         const micBtn = document.getElementById('btn-voice-input');
         if (micBtn) micBtn.classList.add('listening');
@@ -995,6 +1642,366 @@ class App {
         );
     }
 
+    openModal(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal) modal.classList.add('active');
+    }
+
+    closeAllModals() {
+        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        window.speechManager.stop();
+    }
+
+    showToast(message) {
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b;
+            color: #f8fafc;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 0.65rem 1.25rem;
+            border-radius: 9999px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            font-size: 0.875rem;
+            font-weight: 600;
+            z-index: 200;
+        `;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.3s ease';
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }
+
+    getFilteredItems() {
+        return this.items.filter(item => {
+            // Trash view shows ONLY deleted items
+            if (this.filterStatus === 'trash') {
+                if (item.status !== 'deleted') return false;
+            } else {
+                // All other views NEVER show deleted items
+                if (item.status === 'deleted') return false;
+
+                if (this.filterStatus !== 'all') {
+                    if (this.filterStatus === 'critical') {
+                        if (item.urgency !== 'critical' || item.status === 'completed') return false;
+                    } else if (this.filterStatus === 'urgent') {
+                        if (item.urgency !== 'urgent' || item.status === 'completed') return false;
+                    } else if (item.status !== this.filterStatus) {
+                        return false;
+                    }
+                }
+            }
+
+            if (this.activeSupplier !== 'all' && item.supplier !== this.activeSupplier) {
+                return false;
+            }
+            if (this.searchQuery) {
+                const search = this.searchQuery;
+                const matchName = item.name.toLowerCase().includes(search);
+                const matchNotes = (item.notes || '').toLowerCase().includes(search);
+                const matchSupplier = (item.supplier || '').toLowerCase().includes(search);
+                if (!matchName && !matchNotes && !matchSupplier) {
+                    return false;
+                }
+            }
+            return true;
+        });
+    }
+
+    renderStats() {
+        const activeItems = this.items.filter(i => i.status !== 'deleted');
+        const total = activeItems.length;
+        const pending = activeItems.filter(i => i.status === 'pending').length;
+        const urgent = activeItems.filter(i => (i.urgency === 'critical' || i.urgency === 'urgent') && i.status !== 'completed').length;
+        const completed = activeItems.filter(i => i.status === 'completed').length;
+        const ordered = activeItems.filter(i => i.status === 'ordered').length;
+        const critical = activeItems.filter(i => i.urgency === 'critical' && i.status !== 'completed').length;
+        const urgentOnly = activeItems.filter(i => i.urgency === 'urgent' && i.status !== 'completed').length;
+        const trashCount = this.items.filter(i => i.status === 'deleted').length;
+
+        const statTotal = document.getElementById('stat-total');
+        const statPending = document.getElementById('stat-pending');
+        const statUrgent = document.getElementById('stat-urgent');
+        const statCompleted = document.getElementById('stat-completed');
+
+        if (statTotal) statTotal.textContent = total;
+        if (statPending) statPending.textContent = pending;
+        if (statUrgent) statUrgent.textContent = urgent;
+        if (statCompleted) statCompleted.textContent = completed;
+
+        // Progress Bar
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const fillBar = document.getElementById('progress-fill-bar');
+        const percentText = document.getElementById('progress-percent-text');
+        if (fillBar) fillBar.style.width = `${percent}%`;
+        if (percentText) percentText.textContent = `%${percent} Tamamlandı (${completed}/${total})`;
+
+        // Quick Chips Count Badges
+        const chipTotal = document.getElementById('chip-total');
+        const chipCrit = document.getElementById('chip-critical');
+        const chipUrg = document.getElementById('chip-urgent');
+        const chipPend = document.getElementById('chip-pending');
+        const chipOrd = document.getElementById('chip-ordered');
+        const chipComp = document.getElementById('chip-completed');
+        const chipTrash = document.getElementById('chip-trash');
+
+        if (chipTotal) chipTotal.textContent = total;
+        if (chipCrit) chipCrit.textContent = critical;
+        if (chipUrg) chipUrg.textContent = urgentOnly;
+        if (chipPend) chipPend.textContent = pending;
+        if (chipOrd) chipOrd.textContent = ordered;
+        if (chipComp) chipComp.textContent = completed;
+        if (chipTrash) chipTrash.textContent = trashCount;
+    }
+
+    render() {
+        this.renderStats();
+        const container = document.getElementById('items-container');
+        if (!container) return;
+
+        const filtered = this.getFilteredItems();
+
+        if (filtered.length === 0) {
+            if (this.filterStatus === 'trash') {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🛡️</div>
+                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Çöp Kutusu Boş</h3>
+                        <p style="font-size:0.875rem;">Silinmiş herhangi bir ürün bulunmuyor. Tüm ürünleriniz ana listede güvende!</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✨</div>
+                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Eksik Ürün Bulunamadı</h3>
+                        <p style="font-size:0.875rem;">Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        if (this.currentView === 'bySupplier') {
+            this.renderBySupplier(filtered, container);
+        } else {
+            this.renderListView(filtered, container);
+        }
+    }
+
+    renderListView(items, container) {
+        let bannerHtml = '';
+        if (this.filterStatus === 'trash') {
+            const trashCount = items.length;
+            bannerHtml = `
+                <div class="trash-banner">
+                    <div class="trash-banner-info">
+                        <span style="font-size: 1.8rem;">🛡️</span>
+                        <div>
+                            <div class="trash-banner-title">Çöp Kutusu & Geri Dönüşüm (${trashCount} Ürün)</div>
+                            <div class="trash-banner-desc">Sildiğiniz hiçbir ürün kaybolmaz! Dilediğiniz zaman tek tıkla geri yükleyebilirsiniz.</div>
+                        </div>
+                    </div>
+                    <div class="trash-banner-actions">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.app.restoreAllDeleted()" ${trashCount === 0 ? 'disabled' : ''}>
+                            <span>↩️</span>
+                            <span>Tümünü Geri Yükle</span>
+                        </button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="window.app.emptyTrash()" ${trashCount === 0 ? 'disabled' : ''}>
+                            <span>🧹</span>
+                            <span>Çöp Kutusunu Boşalt</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        container.innerHTML = bannerHtml + items.map(item => this.createItemCardHtml(item)).join('');
+    }
+
+    renderBySupplier(items, container) {
+        const groups = {};
+        items.forEach(item => {
+            const sup = item.supplier || 'Belirtilmedi';
+            if (!groups[sup]) groups[sup] = [];
+            groups[sup].push(item);
+        });
+
+        let html = '';
+        Object.keys(groups).forEach(supplier => {
+            const groupItems = groups[supplier];
+            html += `
+                <div class="supplier-group-card">
+                    <div class="supplier-group-header">
+                        <div class="supplier-group-info">
+                            <span class="supplier-name">👤 ${supplier}</span>
+                            <span class="supplier-count-badge">${groupItems.length} Çeşit</span>
+                        </div>
+                    </div>
+                    <div class="supplier-group-items">
+                        ${groupItems.map(item => this.createItemCardHtml(item)).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    createItemCardHtml(item) {
+        // Special Trash Card if item is soft-deleted
+        if (item.status === 'deleted') {
+            return `
+                <div class="item-card" id="card-${item.id}" style="opacity: 0.9; border-color: rgba(239, 68, 68, 0.35);">
+                    <div class="card-body-top">
+                        <div class="item-main-info" style="width: 100%;">
+                            <div class="item-title-row">
+                                <span class="urgency-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🗑️ Çöp Kutusunda</span>
+                                <h3 class="item-title" style="text-decoration: line-through; color: #94a3b8;">${this.escapeHtml(item.name)}</h3>
+                            </div>
+                            <div class="item-meta-row">
+                                <span class="meta-tag quantity">📦 ${this.escapeHtml(item.quantity || '1 adet')}</span>
+                                <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                                <span class="meta-tag time">🕒 ${this.formatTime(item.updatedAt || item.createdAt)}</span>
+                            </div>
+                            ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
+                        </div>
+                    </div>
+
+                    <div class="card-body-bottom" style="border-top: 1px solid rgba(239, 68, 68, 0.15); padding-top: 0.6rem;">
+                        <span style="font-size: 0.78rem; color: #94a3b8;">🛡️ Veritabanında saklanıyor</span>
+                        <div class="item-actions">
+                            <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-weight: 700;" title="Listeye Geri Yükle" onclick="event.stopPropagation(); window.app.restoreItem('${item.id}')">
+                                ↩️ Geri Yükle
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm" style="padding: 0.35rem 0.65rem;" title="Kalıcı Olarak Sil" onclick="event.stopPropagation(); window.app.permanentDeleteItem('${item.id}')">
+                                ❌ Kalıcı Sil
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        const urgencyClass = item.urgency === 'critical' ? 'critical' : (item.urgency === 'urgent' ? 'urgent' : 'normal');
+        const urgencyLabels = { critical: 'Yok Satıyor', urgent: 'Acil', normal: 'Normal' };
+        const isCompleted = item.status === 'completed';
+        const hasPhoto = !!item.image;
+
+        return `
+            <div class="item-card ${urgencyClass} ${isCompleted ? 'completed' : ''} ${hasPhoto ? 'item-card-with-photo' : ''}" id="card-${item.id}">
+                <div class="card-body-top">
+                    <button class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
+                        ✓
+                    </button>
+
+                    ${hasPhoto ? `
+                        <img src="${item.image}" class="item-photo-thumb" title="Büyük Fotoğrafı Gör" onclick="window.app.openLightbox('${item.id}')">
+                    ` : ''}
+
+                    <div class="item-main-info">
+                        <div class="item-title-row">
+                            <span class="item-title" title="Düzenlemek için tıklayın" style="cursor: pointer;" onclick="event.stopPropagation(); window.app.openEditItemModal('${item.id}')">${this.escapeHtml(item.name)}</span>
+                            <div class="qty-control-group">
+                                <button type="button" class="btn-qty-step" title="Miktarı 1 Azalt" onclick="window.app.quickAdjustQuantity('${item.id}', -1)">−</button>
+                                <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
+                                <button type="button" class="btn-qty-step" title="Miktarı 1 Artır" onclick="window.app.quickAdjustQuantity('${item.id}', 1)">+</button>
+                            </div>
+                            <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
+                        </div>
+                        <div class="item-meta-row">
+                            <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                            <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
+                            ${item.source === 'phone' ? '<span class="meta-tag" title="Telefondan Eklendi">📱 Mobil</span>' : '<span class="meta-tag" title="Bilgisayardan Eklendi">💻 PC</span>'}
+                        </div>
+                        ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
+                    </div>
+                </div>
+
+                <div class="card-body-bottom">
+                    <div class="status-pill-group">
+                        <button class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
+                        <button class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
+                        <button class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
+                    </div>
+
+                    <div class="item-actions">
+                        <button type="button" class="btn btn-secondary btn-icon-only" title="Ürünü Düzenle" onclick="event.stopPropagation(); window.app.openEditItemModal('${item.id}')">
+                            ✏️
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="event.stopPropagation(); window.app.triggerCardPhotoUpload('${item.id}')">
+                            📷
+                        </button>
+                        <button type="button" 
+                                id="delete-btn-${item.id}"
+                                class="btn btn-danger btn-icon-only" 
+                                title="Silmek için tıklayın (2. tıklama onaylar)" 
+                                onclick="event.stopPropagation(); window.app.requestDeleteItem('${item.id}', event)">
+                            🗑️
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    async quickAdjustQuantity(id, delta) {
+        const item = this.items.find(i => i.id === id);
+        if (!item) return;
+
+        const currQty = item.quantity || '1 adet';
+        const match = currQty.match(/^(\d+)(.*)$/);
+
+        let newQty = currQty;
+        if (match) {
+            const num = parseInt(match[1], 10);
+            const unit = match[2];
+            const nextNum = Math.max(1, num + delta);
+            newQty = `${nextNum}${unit}`;
+        } else {
+            newQty = delta > 0 ? `${currQty} + 1` : currQty;
+        }
+
+        await this.updateItemDetails(id, { quantity: newQty });
+        this.showToast(`${item.name}: ${currQty} ➔ ${newQty}`);
+        window.soundManager.playNewItem();
+    }
+
+    async copyListToClipboard() {
+        const pendingItems = this.items.filter(i => i.status !== 'completed');
+        if (pendingItems.length === 0) {
+            this.showToast('Kopyalanacak bekleyen eksik ürün bulunmuyor.');
+            return;
+        }
+
+        const dateStr = new Date().toLocaleDateString('tr-TR');
+        let text = `📦 APP - EKSİK & SİPARİŞ LİSTESİ (${dateStr})\n\n`;
+
+        pendingItems.forEach((item, idx) => {
+            const urgTag = item.urgency === 'critical' ? ' [YOK SATAN]' : (item.urgency === 'urgent' ? ' [ACİL]' : '');
+            text += `${idx + 1}. ${item.name} - ${item.quantity}${urgTag}${item.supplier && item.supplier !== 'Belirtilmedi' ? ' (' + item.supplier + ')' : ''}\n`;
+        });
+
+        try {
+            await navigator.clipboard.writeText(text);
+            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+            window.soundManager.playCompleted();
+        } catch (e) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            textarea.remove();
+            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+        }
+    }
+
+    
     openEditItemModal(itemId) {
         const item = this.items.find(i => i.id === itemId);
         if (!item) return;
@@ -1002,11 +2009,10 @@ class App {
         this.editingItemId = itemId;
         this.editingItemPhoto = item.image || '';
 
-        // Populate suppliers in edit modal select
         const supSelect = document.getElementById('edit-item-supplier');
         if (supSelect) {
-            supSelect.innerHTML = `<option value="Belirtilmedi">Belirtilmedi</option>` +
-                this.suppliers.map(s => `<option value="${this.escapeHtml(s.name)}">${this.escapeHtml(s.name)}</option>`).join('');
+            supSelect.innerHTML = '<option value="Belirtilmedi">Belirtilmedi</option>' +
+                this.suppliers.map(s => '<option value="' + this.escapeHtml(s.name) + '">' + this.escapeHtml(s.name) + '</option>').join('');
             supSelect.value = item.supplier || 'Belirtilmedi';
         }
 
@@ -1026,9 +2032,7 @@ class App {
 
         this.updateEditPhotoUI();
         this.openModal('edit-item-modal');
-        if (nameEl) {
-            setTimeout(() => nameEl.focus(), 100);
-        }
+        if (nameEl) setTimeout(() => nameEl.focus(), 100);
     }
 
     updateEditPhotoUI() {
@@ -1094,7 +2098,7 @@ class App {
         this.editingItemPhoto = '';
 
         await this.updateItemDetails(itemId, updates);
-        this.showToast(`Ürün Güncellendi: ${name}`);
+        this.showToast('Ürün Güncellendi: ' + name);
     }
 
     handleReceivedIconSetting(rawVal) {
@@ -1136,7 +2140,7 @@ class App {
         const renderContent = (container) => {
             if (!container) return;
             if (this.appIconIsImage) {
-                container.innerHTML = `<img src="${this.appIcon}" alt="Logo">`;
+                container.innerHTML = '<img src="' + this.appIcon + '" alt="Logo">';
             } else {
                 container.textContent = this.appIcon;
             }
@@ -1155,8 +2159,8 @@ class App {
             faviconUrl = iconValue;
         } else {
             const char = iconValue || '⚡';
-            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%234f46e5'/><text x='50' y='68' font-size='56' text-anchor='middle'>${char}</text></svg>`;
-            faviconUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="%236366f1"/><text x="50" y="68" font-size="56" text-anchor="middle">' + char + '</text></svg>';
+            faviconUrl = 'data:image/svg+xml,' + encodeURIComponent(svg);
         }
         let link = document.querySelector("link[rel*='icon']");
         if (!link) {
@@ -1176,7 +2180,6 @@ class App {
             customInput.value = this.tempIconIsImage ? '' : (this.tempIconValue === '⚡' ? '' : this.tempIconValue);
         }
 
-        // Highlight preset if matching
         document.querySelectorAll('#app-preset-icons-grid .emoji-opt-btn').forEach(btn => {
             if (!this.tempIconIsImage && btn.dataset.icon === this.tempIconValue) {
                 btn.classList.add('active');
@@ -1196,7 +2199,7 @@ class App {
 
         if (preview) {
             if (this.tempIconIsImage) {
-                preview.innerHTML = `<img src="${this.tempIconValue}" alt="Logo">`;
+                preview.innerHTML = '<img src="' + this.tempIconValue + '" alt="Logo">';
             } else {
                 preview.textContent = this.tempIconValue || '⚡';
             }
@@ -1207,7 +2210,7 @@ class App {
         }
 
         if (caption) {
-            caption.textContent = this.tempIconIsImage ? 'Yüklenen Özel Logo' : `Seçilen İkon: ${this.tempIconValue || '⚡'}`;
+            caption.textContent = this.tempIconIsImage ? 'Yüklenen Özel Logo' : ('Seçilen İkon: ' + (this.tempIconValue || '⚡'));
         }
     }
 
@@ -1236,189 +2239,6 @@ class App {
         }
     }
 
-    openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) modal.classList.add('active');
-    }
-
-    closeAllModals() {
-        document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
-        window.speechManager.stop();
-    }
-
-    showToast(message) {
-        const toast = document.createElement('div');
-        toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 0.65rem 1.25rem;
-            border-radius: 9999px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            font-size: 0.875rem;
-            font-weight: 600;
-            z-index: 200;
-        `;
-        document.body.appendChild(toast);
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            toast.style.transition = 'opacity 0.3s ease';
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
-    }
-
-    getFilteredItems() {
-        return this.items.filter(item => {
-            if (this.filterStatus !== 'all' && item.status !== this.filterStatus) {
-                return false;
-            }
-            if (this.activeSupplier !== 'all' && item.supplier !== this.activeSupplier) {
-                return false;
-            }
-            if (this.searchQuery) {
-                const search = this.searchQuery;
-                const matchName = item.name.toLowerCase().includes(search);
-                const matchNotes = (item.notes || '').toLowerCase().includes(search);
-                const matchSupplier = (item.supplier || '').toLowerCase().includes(search);
-                if (!matchName && !matchNotes && !matchSupplier) {
-                    return false;
-                }
-            }
-            return true;
-        });
-    }
-
-    renderStats() {
-        const total = this.items.length;
-        const pending = this.items.filter(i => i.status === 'pending').length;
-        const urgent = this.items.filter(i => (i.urgency === 'critical' || i.urgency === 'urgent') && i.status !== 'completed').length;
-        const completed = this.items.filter(i => i.status === 'completed').length;
-
-        const statTotal = document.getElementById('stat-total');
-        const statPending = document.getElementById('stat-pending');
-        const statUrgent = document.getElementById('stat-urgent');
-        const statCompleted = document.getElementById('stat-completed');
-
-        if (statTotal) statTotal.textContent = total;
-        if (statPending) statPending.textContent = pending;
-        if (statUrgent) statUrgent.textContent = urgent;
-        if (statCompleted) statCompleted.textContent = completed;
-    }
-
-    render() {
-        this.renderStats();
-        const container = document.getElementById('items-container');
-        if (!container) return;
-
-        const filtered = this.getFilteredItems();
-
-        if (filtered.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">✨</div>
-                    <h3 style="font-weight:700; margin-bottom:0.35rem;">Eksik Ürün Bulunamadı</h3>
-                    <p style="font-size:0.875rem;">Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
-                </div>
-            `;
-            return;
-        }
-
-        if (this.currentView === 'bySupplier') {
-            this.renderBySupplier(filtered, container);
-        } else {
-            this.renderListView(filtered, container);
-        }
-    }
-
-    renderListView(items, container) {
-        container.innerHTML = items.map(item => this.createItemCardHtml(item)).join('');
-    }
-
-    renderBySupplier(items, container) {
-        const groups = {};
-        items.forEach(item => {
-            const sup = item.supplier || 'Belirtilmedi';
-            if (!groups[sup]) groups[sup] = [];
-            groups[sup].push(item);
-        });
-
-        let html = '';
-        Object.keys(groups).forEach(supplier => {
-            const groupItems = groups[supplier];
-            html += `
-                <div class="supplier-group-card">
-                    <div class="supplier-group-header">
-                        <div class="supplier-group-info">
-                            <span class="supplier-name">👤 ${supplier}</span>
-                            <span class="supplier-count-badge">${groupItems.length} Çeşit</span>
-                        </div>
-                    </div>
-                    <div class="supplier-group-items">
-                        ${groupItems.map(item => this.createItemCardHtml(item)).join('')}
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
-    createItemCardHtml(item) {
-        const urgencyClass = item.urgency === 'critical' ? 'critical' : (item.urgency === 'urgent' ? 'urgent' : 'normal');
-        const urgencyLabels = { critical: 'Yok Satıyor', urgent: 'Acil', normal: 'Normal' };
-        const isCompleted = item.status === 'completed';
-
-        const hasPhoto = !!item.image;
-
-        return `
-            <div class="item-card ${urgencyClass} ${isCompleted ? 'completed' : ''} ${hasPhoto ? 'item-card-with-photo' : ''}" id="card-${item.id}">
-                <button class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
-                    ✓
-                </button>
-
-                ${hasPhoto ? `
-                    <img src="${item.image}" class="item-photo-thumb" title="Büyük Fotoğrafı Gör" onclick="window.app.openLightbox('${item.id}')">
-                ` : ''}
-
-                <div class="item-main-info">
-                    <div class="item-title-row">
-                        <span class="item-title" title="Düzenlemek için tıklayın" onclick="window.app.openEditItemModal('${item.id}')">${this.escapeHtml(item.name)}</span>
-                        <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
-                        <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
-                    </div>
-                    <div class="item-meta-row">
-                        <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
-                        <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
-                        ${item.source === 'phone' ? '<span class="meta-tag" title="Telefondan Eklendi">📱 Mobil</span>' : '<span class="meta-tag" title="Bilgisayardan Eklendi">💻 PC</span>'}
-                    </div>
-                    ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
-                </div>
-
-                <div class="status-pill-group">
-                    <button class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
-                    <button class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
-                    <button class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
-                </div>
-
-                <div class="item-actions">
-                    <button class="btn btn-secondary btn-icon-only" title="Ürünü Düzenle" onclick="window.app.openEditItemModal('${item.id}')">
-                        ✏️
-                    </button>
-                    <button class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="window.app.triggerCardPhotoUpload('${item.id}')">
-                        📷
-                    </button>
-                    <button class="btn btn-danger btn-icon-only" title="Sil" onclick="window.app.deleteItem('${item.id}')">
-                        🗑️
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-
     formatTime(isoString) {
         if (!isoString) return '';
         const d = new Date(isoString);
@@ -1439,7 +2259,5 @@ class App {
 // Bootstrap
 window.addEventListener('DOMContentLoaded', () => {
     window.app = new App();
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js').catch(err => {});
-    }
 });
+
