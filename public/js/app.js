@@ -26,6 +26,7 @@ class App {
         this.pendingImportData = null;
         this.editingItemId = null;
         this.editingItemPhoto = '';
+        this.appName = localStorage.getItem('dukkan_app_name') || 'App';
         this.appIcon = localStorage.getItem('dukkan_app_icon') || '⚡';
         this.appIconIsImage = localStorage.getItem('dukkan_app_icon_is_image') === '1';
         this.tempIconValue = this.appIcon;
@@ -36,6 +37,7 @@ class App {
 
     async init() {
         this.applyAppIcon(this.appIcon, this.appIconIsImage);
+        this.applyAppName(this.appName);
         this.initTheme();
         this.initAuth();
         this.initEventListeners();
@@ -93,7 +95,21 @@ class App {
         const userSettingsBtn = document.getElementById('btn-open-user-settings');
         if (userSettingsBtn) {
             userSettingsBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('input-app-name');
+                if (nameInput) nameInput.value = this.appName || 'App';
+                this.updateSoundButtonUI();
                 this.openModal('password-modal');
+            });
+        }
+
+        const formAppName = document.getElementById('form-change-app-name');
+        if (formAppName) {
+            formAppName.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const input = document.getElementById('input-app-name');
+                if (input && input.value.trim()) {
+                    await this.saveAppName(input.value.trim());
+                }
             });
         }
 
@@ -385,11 +401,17 @@ class App {
                 if (data.settings && data.settings.app_icon) {
                     this.handleReceivedIconSetting(data.settings.app_icon);
                 }
+                if (data.settings && data.settings.app_name) {
+                    this.handleReceivedNameSetting(data.settings.app_name);
+                }
             });
 
             this.socket.on('setting:updated', (data) => {
                 if (data.key === 'app_icon') {
                     this.handleReceivedIconSetting(data.value);
+                }
+                if (data.key === 'app_name') {
+                    this.handleReceivedNameSetting(data.value);
                 }
             });
 
@@ -922,10 +944,10 @@ class App {
         // Sound Mute Toggle
         const btnMute = document.getElementById('btn-toggle-sound');
         if (btnMute) {
-            btnMute.textContent = window.soundManager.muted ? '🔇' : '🔔';
+            this.updateSoundButtonUI();
             btnMute.addEventListener('click', () => {
                 const isMuted = window.soundManager.toggleMute();
-                btnMute.textContent = isMuted ? '🔇' : '🔔';
+                this.updateSoundButtonUI();
                 this.showToast(isMuted ? 'Sesler Kapatıldı' : 'Sesler Açıldı');
             });
         }
@@ -2159,10 +2181,77 @@ class App {
                 if (settings.app_icon) {
                     this.handleReceivedIconSetting(settings.app_icon);
                 }
+                if (settings.app_name) {
+                    this.handleReceivedNameSetting(settings.app_name);
+                }
             }
         } catch (err) {
             console.warn('Ayarlar yüklenemedi:', err);
         }
+    }
+
+    applyAppName(name) {
+        const appName = (name || 'App').trim();
+        this.appName = appName;
+
+        const titleText = document.getElementById('app-title-text');
+        if (titleText) titleText.textContent = appName;
+
+        const loginTitle = document.getElementById('login-title-text');
+        if (loginTitle) loginTitle.textContent = appName;
+
+        const printTitle = document.getElementById('print-app-title');
+        if (printTitle) printTitle.textContent = appName.toUpperCase() + ' - SİPARİŞ LİSTESİ';
+
+        const inputAppName = document.getElementById('input-app-name');
+        if (inputAppName && document.activeElement !== inputAppName) {
+            inputAppName.value = appName;
+        }
+
+        const iconPreviewTitle = document.getElementById('icon-preview-app-title');
+        if (iconPreviewTitle) iconPreviewTitle.textContent = appName;
+
+        document.title = appName;
+        localStorage.setItem('dukkan_app_name', appName);
+    }
+
+    handleReceivedNameSetting(rawVal) {
+        if (!rawVal) return;
+        this.applyAppName(rawVal);
+    }
+
+    async saveAppName(newName) {
+        if (!newName || !newName.trim()) return;
+        const name = newName.trim();
+        this.applyAppName(name);
+
+        try {
+            const res = await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key: 'app_name', value: name })
+            });
+
+            if (res.ok) {
+                this.showToast(`✅ Uygulama adı güncellendi: ${name}`);
+            } else {
+                this.showToast('Uygulama adı kaydedilemedi');
+            }
+        } catch (err) {
+            console.error('Uygulama adı kaydetme hatası:', err);
+            this.showToast('Bağlantı hatası');
+        }
+    }
+
+    updateSoundButtonUI() {
+        const soundIcon = document.getElementById('sound-tool-icon');
+        const soundTitle = document.getElementById('sound-tool-title');
+        const soundSub = document.getElementById('sound-tool-subtitle');
+        const isMuted = window.soundManager && window.soundManager.muted;
+
+        if (soundIcon) soundIcon.textContent = isMuted ? '🔇' : '🔔';
+        if (soundTitle) soundTitle.textContent = isMuted ? 'Sesler Kapalı' : 'Ses Bildirimleri';
+        if (soundSub) soundSub.textContent = isMuted ? 'Açmak için tıklayın' : 'Açık (Sessize al)';
     }
 
     applyAppIcon(iconValue, isImage = false) {

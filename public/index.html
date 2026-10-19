@@ -27,7 +27,7 @@
         <div class="login-card">
             <div class="login-brand">
                 <div class="brand-avatar-glow" id="login-brand-icon" title="Uygulama İkonu">⚡</div>
-                <h2>App</h2>
+                <h2 id="login-title-text">App</h2>
                 <p>Devam etmek için giriş yapınız</p>
             </div>
 
@@ -55,7 +55,7 @@
     <div id="main-app-container" style="display: none;">
         <!-- Print Header -->
         <div class="print-only-header">
-            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;">APP - SİPARİŞ LİSTESİ</h1>
+            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;" id="print-app-title">APP - SİPARİŞ LİSTESİ</h1>
             <p style="font-size:13px; color:#555;">Yazdırma Tarihi: <span id="print-date"></span></p>
         </div>
 
@@ -66,7 +66,7 @@
                     <div class="brand-icon" id="app-brand-icon" title="Uygulama İkonunu Değiştir (Tıklayın)">⚡</div>
                     <div class="brand-info">
                         <h1>
-                            App
+                            <span id="app-title-text">App</span>
                             <span class="badge-live" id="connection-badge">
                                 <span class="pulse-dot"></span>
                                 <span id="connection-text">Canlı</span>
@@ -77,32 +77,8 @@
                 </div>
 
                 <div class="header-actions">
-                    <button class="btn btn-secondary" id="btn-copy-list" title="Tüm Listeyi Panoya Kopyala">
-                        <span>📋</span>
-                        <span>Listeyi Kopyala</span>
-                    </button>
-                    <button class="btn btn-secondary" id="btn-open-suppliers" title="Toptancıları Ekle / Sil / Yönet">
-                        <span>🏢</span>
-                        <span>Toptancılar</span>
-                    </button>
-                    <button class="btn btn-secondary" id="btn-export-pdf" title="PDF / Yazdır Çıktısı Al">
-                        <span>📄</span>
-                        <span>Yazdır</span>
-                    </button>
-                    <button class="btn btn-secondary" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
-                        <span>💾</span>
-                        <span>Yedek Al</span>
-                    </button>
-                    <button class="btn btn-secondary" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
-                        <span>📥</span>
-                        <span>Yedek Yükle</span>
-                    </button>
-                    <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
-                    <button class="btn btn-secondary btn-icon-only" id="btn-toggle-sound" title="Ses Bildirimleri">
-                        <span>🔔</span>
-                    </button>
                     <div class="user-menu-pill">
-                        <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Şifre Değiştir">
+                        <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Yönetim & Ayarlar">
                             👤 <span id="display-username">admin</span>
                         </button>
                         <button class="btn btn-danger btn-sm" id="btn-logout" title="Çıkış Yap">
@@ -467,32 +443,118 @@
     <!-- Hidden input to add/change photo on an existing item -->
     <input type="file" id="item-card-photo-input" accept="image/*" style="display:none;">
 
-    <!-- MODAL: Change Password -->
+    <!-- MODAL: ADMIN & SETTINGS (Yönetim ve Ayarlar) -->
     <div class="modal-overlay" id="password-modal">
-        <div class="modal-card" style="max-width: 400px;">
+        <div class="modal-card" style="max-width: 520px; width: 95%;">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>🔐</span>
-                    <span>Şifre Değiştir</span>
+                    <span>⚙️</span>
+                    <span>Yönetim ve Ayarlar</span>
                 </div>
                 <button class="btn-close">&times;</button>
             </div>
-            <form id="change-password-form">
-                <div id="pwd-change-msg" style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:1rem;"></div>
-                <div class="form-group" style="margin-bottom:0.75rem;">
-                    <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut Şifre</label>
-                    <input type="password" id="input-curr-pwd" required>
+
+            <div style="display: flex; flex-direction: column; gap: 1.15rem; padding: 0.5rem 0;">
+
+                <!-- 1. Uygulama Adı ve İkonu -->
+                <div class="admin-section-box">
+                    <div class="admin-section-title">
+                        <span>🏷️</span>
+                        <span>Uygulama Adı & Özelleştirme</span>
+                    </div>
+                    <form id="form-change-app-name" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                        <input type="text" id="input-app-name" placeholder="Uygulama Adı yazın..." required style="flex: 1;" autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="btn-save-app-name" style="white-space: nowrap; padding: 0.6rem 1rem;">
+                            <span>💾</span>
+                            <span>Adı Kaydet</span>
+                        </button>
+                    </form>
+                    <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings" style="width: 100%; justify-content: center;">
+                        <span>🎨</span>
+                        <span>Uygulama İkonunu Değiştir</span>
+                    </button>
                 </div>
-                <div class="form-group" style="margin-bottom:1rem;">
-                    <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni Şifre</label>
-                    <input type="password" id="input-new-pwd" required>
+
+                <!-- 2. Hızlı İşlemler & Araçlar (Üst Kısımdan Taşınanlar) -->
+                <div class="admin-section-box">
+                    <div class="admin-section-title">
+                        <span>🛠️</span>
+                        <span>İşlemler ve Araçlar</span>
+                    </div>
+                    <div class="admin-tools-grid">
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-copy-list" title="Tüm Listeyi Panoya Kopyala">
+                            <span class="tool-icon">📋</span>
+                            <div class="tool-text">
+                                <strong>Listeyi Kopyala</strong>
+                                <small>Panoya metin kopyalar</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-suppliers" title="Toptancıları Ekle / Sil / Yönet">
+                            <span class="tool-icon">🏢</span>
+                            <div class="tool-text">
+                                <strong>Toptancılar</strong>
+                                <small>Ekle / Sil / Yönet</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-pdf" title="PDF / Yazdır Çıktısı Al">
+                            <span class="tool-icon">📄</span>
+                            <div class="tool-text">
+                                <strong>Yazdır / PDF</strong>
+                                <small>Sipariş fişi al</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup" title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
+                            <span class="tool-icon">💾</span>
+                            <div class="tool-text">
+                                <strong>Yedek Al</strong>
+                                <small>JSON dosyası indir</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger" title="Yedek Dosyasını Geri Yükle (JSON)">
+                            <span class="tool-icon">📥</span>
+                            <div class="tool-text">
+                                <strong>Yedek Yükle</strong>
+                                <small>JSON geri yükle</small>
+                            </div>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-toggle-sound" title="Ses Bildirimleri">
+                            <span class="tool-icon" id="sound-tool-icon">🔔</span>
+                            <div class="tool-text">
+                                <strong id="sound-tool-title">Ses Bildirimleri</strong>
+                                <small id="sound-tool-subtitle">Açık / Kapalı</small>
+                            </div>
+                        </button>
+                    </div>
+                    <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
                 </div>
-                <button type="submit" class="btn btn-primary" style="width:100%;">Şifreyi Güncelle</button>
-            </form>
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
-                <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings" style="width:100%; justify-content:center;">
-                    🎨 Uygulama İkonunu Değiştir
-                </button>
+
+                <!-- 3. Şifre Değiştir -->
+                <div class="admin-section-box">
+                    <div class="admin-section-title">
+                        <span>🔐</span>
+                        <span>Şifre Değiştir</span>
+                    </div>
+                    <form id="change-password-form">
+                        <div id="pwd-change-msg" style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:0.75rem;"></div>
+                        <div class="form-row-responsive" style="margin-bottom: 0.75rem;">
+                            <div class="form-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut Şifre</label>
+                                <input type="password" id="input-curr-pwd" placeholder="Mevcut şifreniz" required>
+                            </div>
+                            <div class="form-group-vertical">
+                                <label style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni Şifre</label>
+                                <input type="password" id="input-new-pwd" placeholder="Yeni şifreniz" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center; padding: 0.65rem;">Şifreyi Güncelle</button>
+                    </form>
+                </div>
+
             </div>
         </div>
     </div>
@@ -512,7 +574,7 @@
                 <div style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
                     <div id="icon-preview-box" class="brand-icon" style="width: 56px; height: 56px; font-size: 2rem; cursor: default;">⚡</div>
                     <div>
-                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;">App</div>
+                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;" id="icon-preview-app-title">App</div>
                         <div style="font-size: 0.8rem; color: #38bdf8;" id="icon-preview-caption">Canlı Görünüm Önizlemesi</div>
                     </div>
                 </div>

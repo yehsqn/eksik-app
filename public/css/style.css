@@ -1,4 +1,4 @@
-﻿/* ==========================================================================
+/* ==========================================================================
    Dükkan Eksik Takip - Design System & Modern UI Styles
    ========================================================================== */
 
@@ -2074,6 +2074,86 @@ select option {
 }
 .toast-undo-btn:active {
     transform: scale(0.96);
+}
+
+/* ==========================================================================
+   Admin & Settings Panel (Yönetim & Ayarlar Modalı)
+   ========================================================================== */
+.admin-section-box {
+    background: var(--bg-surface-elevated, #1e293b);
+    border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.08));
+    border-radius: var(--radius-lg, 14px);
+    padding: 1rem 1.15rem;
+}
+
+.admin-section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.admin-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+}
+
+@media (max-width: 480px) {
+    .admin-tools-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.admin-tool-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.85rem;
+    text-align: left;
+    justify-content: flex-start;
+    border-radius: var(--radius-md, 10px);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    width: 100%;
+}
+
+.admin-tool-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(99, 102, 241, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.admin-tool-btn .tool-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.admin-tool-btn .tool-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.admin-tool-btn .tool-text strong {
+    font-size: 0.85rem;
+    color: var(--text-primary, #f8fafc);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-tool-btn .tool-text small {
+    font-size: 0.72rem;
+    color: var(--text-muted, #94a3b8);
 }
 
 
