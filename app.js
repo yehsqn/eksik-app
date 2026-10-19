@@ -17,15 +17,21 @@ class App {
         this.targetPhotoItemId = null; // Used when attaching photo to an existing item card
         this.editingItemId = null;
         this.editingItemPhoto = '';
+        this.appIcon = localStorage.getItem('dukkan_app_icon') || '⚡';
+        this.appIconIsImage = localStorage.getItem('dukkan_app_icon_is_image') === '1';
+        this.tempIconValue = this.appIcon;
+        this.tempIconIsImage = this.appIconIsImage;
 
         this.init();
     }
 
     async init() {
+        this.applyAppIcon(this.appIcon, this.appIconIsImage);
         this.initTheme();
         this.initAuth();
         this.initEventListeners();
         this.initPhotoHandlers();
+        this.loadSettings();
 
         if (this.isAuthenticated()) {
             this.showAppScreen();
@@ -208,6 +214,15 @@ class App {
                 if (data.suppliers) {
                     this.suppliers = data.suppliers;
                     this.populateSupplierSelects();
+                }
+                if (data.settings && data.settings.app_icon) {
+                    this.handleReceivedIconSetting(data.settings.app_icon);
+                }
+            });
+
+            this.socket.on('setting:updated', (data) => {
+                if (data.key === 'app_icon') {
+                    this.handleReceivedIconSetting(data.value);
                 }
             });
 
@@ -659,6 +674,88 @@ class App {
             });
         }
 
+        // App Icon Customization triggers
+        const brandHeader = document.getElementById('app-brand-icon');
+        if (brandHeader) {
+            brandHeader.addEventListener('click', () => this.openAppIconModal());
+        }
+
+        const loginBrand = document.getElementById('login-brand-icon');
+        if (loginBrand) {
+            loginBrand.addEventListener('click', () => this.openAppIconModal());
+        }
+
+        const btnIconSettings = document.getElementById('btn-open-icon-from-settings');
+        if (btnIconSettings) {
+            btnIconSettings.addEventListener('click', () => {
+                this.closeAllModals();
+                this.openAppIconModal();
+            });
+        }
+
+        // Preset Icon Grid
+        document.querySelectorAll('#app-preset-icons-grid .emoji-opt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('#app-preset-icons-grid .emoji-opt-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                this.tempIconValue = btn.dataset.icon;
+                this.tempIconIsImage = false;
+                const customInput = document.getElementById('custom-icon-text-input');
+                if (customInput) customInput.value = '';
+                this.updateIconModalPreview();
+            });
+        });
+
+        // Custom Icon / Emoji Text Input
+        const customIconInput = document.getElementById('custom-icon-text-input');
+        if (customIconInput) {
+            customIconInput.addEventListener('input', (e) => {
+                const val = e.target.value.trim();
+                if (val) {
+                    document.querySelectorAll('#app-preset-icons-grid .emoji-opt-btn').forEach(b => b.classList.remove('active'));
+                    this.tempIconValue = val;
+                    this.tempIconIsImage = false;
+                    this.updateIconModalPreview();
+                }
+            });
+        }
+
+        // Custom Logo File Upload
+        const btnUploadLogo = document.getElementById('btn-upload-custom-logo');
+        const logoFileInput = document.getElementById('custom-logo-file-input');
+        const btnClearLogo = document.getElementById('btn-clear-custom-logo');
+
+        if (btnUploadLogo && logoFileInput) {
+            btnUploadLogo.addEventListener('click', () => logoFileInput.click());
+            logoFileInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                try {
+                    const compressed = await this.compressImage(file, 256, 0.85);
+                    this.tempIconValue = compressed;
+                    this.tempIconIsImage = true;
+                    this.updateIconModalPreview();
+                } catch (err) {
+                    console.error('Logo yükleme hatası:', err);
+                }
+                logoFileInput.value = '';
+            });
+        }
+
+        if (btnClearLogo) {
+            btnClearLogo.addEventListener('click', () => {
+                this.tempIconValue = '⚡';
+                this.tempIconIsImage = false;
+                this.updateIconModalPreview();
+            });
+        }
+
+        // Save App Icon
+        const btnSaveIcon = document.getElementById('btn-save-app-icon');
+        if (btnSaveIcon) {
+            btnSaveIcon.addEventListener('click', () => this.saveAppIcon());
+        }
+
         // Close buttons
         document.querySelectorAll('.btn-close').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -998,6 +1095,145 @@ class App {
 
         await this.updateItemDetails(itemId, updates);
         this.showToast(`Ürün Güncellendi: ${name}`);
+    }
+
+    handleReceivedIconSetting(rawVal) {
+        if (!rawVal) return;
+        try {
+            const parsed = JSON.parse(rawVal);
+            this.applyAppIcon(parsed.icon, parsed.isImage);
+            localStorage.setItem('dukkan_app_icon', parsed.icon);
+            localStorage.setItem('dukkan_app_icon_is_image', parsed.isImage ? '1' : '0');
+        } catch (e) {
+            this.applyAppIcon(rawVal, false);
+            localStorage.setItem('dukkan_app_icon', rawVal);
+            localStorage.setItem('dukkan_app_icon_is_image', '0');
+        }
+    }
+
+    async loadSettings() {
+        try {
+            const res = await fetch('/api/settings');
+            if (res.ok) {
+                const settings = await res.json();
+                if (settings.app_icon) {
+                    this.handleReceivedIconSetting(settings.app_icon);
+                }
+            }
+        } catch (err) {
+            console.warn('Ayarlar yüklenemedi:', err);
+        }
+    }
+
+    applyAppIcon(iconValue, isImage = false) {
+        this.appIcon = iconValue || '⚡';
+        this.appIconIsImage = !!isImage;
+
+        const brandIcon = document.getElementById('app-brand-icon');
+        const loginIcon = document.getElementById('login-brand-icon');
+        const previewBox = document.getElementById('icon-preview-box');
+
+        const renderContent = (container) => {
+            if (!container) return;
+            if (this.appIconIsImage) {
+                container.innerHTML = `<img src="${this.appIcon}" alt="Logo">`;
+            } else {
+                container.textContent = this.appIcon;
+            }
+        };
+
+        renderContent(brandIcon);
+        renderContent(loginIcon);
+        renderContent(previewBox);
+
+        this.updateFavicon(this.appIcon, this.appIconIsImage);
+    }
+
+    updateFavicon(iconValue, isImage) {
+        let faviconUrl = '';
+        if (isImage) {
+            faviconUrl = iconValue;
+        } else {
+            const char = iconValue || '⚡';
+            const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='25' fill='%234f46e5'/><text x='50' y='68' font-size='56' text-anchor='middle'>${char}</text></svg>`;
+            faviconUrl = `data:image/svg+xml,${encodeURIComponent(svg)}`;
+        }
+        let link = document.querySelector("link[rel*='icon']");
+        if (!link) {
+            link = document.createElement('link');
+            link.rel = 'icon';
+            document.head.appendChild(link);
+        }
+        link.href = faviconUrl;
+    }
+
+    openAppIconModal() {
+        this.tempIconValue = this.appIcon;
+        this.tempIconIsImage = this.appIconIsImage;
+
+        const customInput = document.getElementById('custom-icon-text-input');
+        if (customInput) {
+            customInput.value = this.tempIconIsImage ? '' : (this.tempIconValue === '⚡' ? '' : this.tempIconValue);
+        }
+
+        // Highlight preset if matching
+        document.querySelectorAll('#app-preset-icons-grid .emoji-opt-btn').forEach(btn => {
+            if (!this.tempIconIsImage && btn.dataset.icon === this.tempIconValue) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        this.updateIconModalPreview();
+        this.openModal('app-icon-modal');
+    }
+
+    updateIconModalPreview() {
+        const preview = document.getElementById('icon-preview-box');
+        const clearBtn = document.getElementById('btn-clear-custom-logo');
+        const caption = document.getElementById('icon-preview-caption');
+
+        if (preview) {
+            if (this.tempIconIsImage) {
+                preview.innerHTML = `<img src="${this.tempIconValue}" alt="Logo">`;
+            } else {
+                preview.textContent = this.tempIconValue || '⚡';
+            }
+        }
+
+        if (clearBtn) {
+            clearBtn.style.display = this.tempIconIsImage ? 'inline-flex' : 'none';
+        }
+
+        if (caption) {
+            caption.textContent = this.tempIconIsImage ? 'Yüklenen Özel Logo' : `Seçilen İkon: ${this.tempIconValue || '⚡'}`;
+        }
+    }
+
+    async saveAppIcon() {
+        const val = this.tempIconValue || '⚡';
+        const isImg = this.tempIconIsImage || false;
+
+        this.applyAppIcon(val, isImg);
+        localStorage.setItem('dukkan_app_icon', val);
+        localStorage.setItem('dukkan_app_icon_is_image', isImg ? '1' : '0');
+
+        this.closeAllModals();
+        this.showToast('Uygulama ikonu başarıyla güncellendi!');
+
+        try {
+            await fetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    key: 'app_icon',
+                    value: JSON.stringify({ icon: val, isImage: isImg })
+                })
+            });
+        } catch (e) {
+            console.warn('Sunucuya ikon kaydedilemedi:', e);
+        }
     }
 
     openModal(modalId) {

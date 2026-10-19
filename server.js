@@ -21,11 +21,18 @@ app.use(cors());
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    next();
+});
+
 // Support both public/ directory and root directory if uploaded without public folder
 if (fs.existsSync(path.join(__dirname, 'public'))) {
-    app.use(express.static(path.join(__dirname, 'public')));
+    app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 }
-app.use(express.static(__dirname));
+app.use(express.static(__dirname, { etag: false, maxAge: 0 }));
 
 app.get('/', (req, res) => {
     const publicIndex = path.join(__dirname, 'public', 'index.html');
@@ -165,6 +172,39 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     } catch (err) {
         console.error('Delete supplier error:', err);
         res.status(500).json({ error: 'Toptancı silinemedi' });
+    }
+});
+
+// Settings Endpoints (App icon, customization, etc.)
+app.get('/api/settings', async (req, res) => {
+    try {
+        const result = await db.execute('SELECT * FROM settings');
+        const settings = {};
+        result.rows.forEach(r => { settings[r.key] = r.value; });
+        res.json(settings);
+    } catch (err) {
+        console.error('Get settings error:', err);
+        res.status(500).json({ error: 'Ayarlar yüklenemedi' });
+    }
+});
+
+app.post('/api/settings', async (req, res) => {
+    const { key, value } = req.body;
+    if (!key) {
+        return res.status(400).json({ error: 'Ayar anahtarı zorunludur' });
+    }
+
+    try {
+        await db.execute({
+            sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
+            args: [String(key), String(value || '')]
+        });
+
+        io.emit('setting:updated', { key, value });
+        res.json({ success: true, key, value });
+    } catch (err) {
+        console.error('Save setting error:', err);
+        res.status(500).json({ error: 'Ayar kaydedilemedi' });
     }
 });
 
@@ -312,12 +352,16 @@ io.on('connection', async (socket) => {
     try {
         const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
+        const settingsRes = await db.execute('SELECT * FROM settings');
+        const settingsMap = {};
+        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
         socket.emit('init', {
             items: itemsRes.rows,
-            suppliers: supsRes.rows
+            suppliers: supsRes.rows,
+            settings: settingsMap
         });
     } catch (e) {
-        socket.emit('init', { items: [], suppliers: [] });
+        socket.emit('init', { items: [], suppliers: [], settings: {} });
     }
 });
 
