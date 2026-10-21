@@ -1432,6 +1432,13 @@ class App {
         const btnOk = document.getElementById('confirm-modal-btn-ok');
         const btnCancel = document.getElementById('confirm-modal-btn-cancel');
 
+        if (!modal || !btnOk) {
+            if (window.confirm(desc)) {
+                if (typeof onConfirm === 'function') onConfirm();
+            }
+            return;
+        }
+
         if (iconEl) iconEl.textContent = icon;
         if (titleEl) titleEl.textContent = title;
         if (descEl) descEl.textContent = desc;
@@ -1453,55 +1460,28 @@ class App {
         this.openModal('confirm-dialog-modal');
     }
 
-    // 2-Step Confirmation Delete (No browser confirm() to avoid "uyarıları bastır" blocking)
-    requestDeleteItem(id, event) {
+    // Direct 1-Click Delete (Moves item to Silinenler with floating Undo Toast)
+    deleteItem(id, event) {
         if (event) {
             try {
                 event.stopPropagation();
                 event.preventDefault();
             } catch (e) {}
         }
-
-        const btn = document.getElementById(`delete-btn-${id}`);
-        if (!btn) {
-            return this.executeSoftDelete(id);
-        }
-
-        // 2nd CLICK: User already clicked once and now clicks again to confirm!
-        if (btn.classList.contains('btn-delete-confirm')) {
-            this.resetPendingDeleteButtons();
-            this.executeSoftDelete(id);
-            return;
-        }
-
-        // 1st CLICK: Turn button into pulsing "⚠️ Onayla?" state
-        this.resetPendingDeleteButtons();
-
-        this.pendingDeleteId = id;
-        btn.classList.add('btn-delete-confirm');
-        btn.innerHTML = '⚠️ Onayla?';
-
-        // Auto revert back to normal 🗑️ if not confirmed within 4.5 seconds
-        this.pendingDeleteTimer = setTimeout(() => {
-            this.resetPendingDeleteButtons();
-        }, 4500);
-    }
-
-    resetPendingDeleteButtons() {
-        if (this.pendingDeleteTimer) {
-            clearTimeout(this.pendingDeleteTimer);
-            this.pendingDeleteTimer = null;
-        }
-        this.pendingDeleteId = null;
-        document.querySelectorAll('.btn-delete-confirm').forEach(b => {
-            b.classList.remove('btn-delete-confirm');
-            b.innerHTML = '🗑️';
-        });
+        return this.executeSoftDelete(id);
     }
 
     // Alias for compatibility
-    deleteItem(id, event) {
-        return this.requestDeleteItem(id, event);
+    requestDeleteItem(id, event) {
+        return this.deleteItem(id, event);
+    }
+
+    // Delete item directly from the Edit Modal
+    deleteEditingItem() {
+        if (!this.editingItemId) return;
+        const id = this.editingItemId;
+        this.closeAllModals();
+        this.executeSoftDelete(id);
     }
 
     // Soft Delete (Item moves to Çöp Kutusu, NEVER lost)
@@ -2577,8 +2557,8 @@ class App {
                         <button type="button" 
                                 id="delete-btn-${item.id}"
                                 class="btn btn-danger btn-icon-only" 
-                                title="Silmek için tıklayın (2. tıklama onaylar)" 
-                                onclick="event.stopPropagation(); window.app.requestDeleteItem('${item.id}', event)">
+                                title="Sil" 
+                                onclick="event.stopPropagation(); window.app.deleteItem('${item.id}', event)">
                             🗑️
                         </button>
                     </div>

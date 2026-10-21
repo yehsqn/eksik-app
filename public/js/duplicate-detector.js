@@ -1,15 +1,15 @@
 // Intelligent Turkish Product Name Normalizer & Duplicate Detector
 class DuplicateDetector {
-    // Basic normalization: trim, lowercase, Turkish characters
+    // Basic normalization: trim, lowercase, Turkish characters  BİR ÜRÜN İKİ KERE EKLENİRSE UYAR----> BİR DAHA EKLENEMEZ DEĞİLDİR..
     static normalizeBasic(text) {
         if (!text) return '';
         let s = String(text).toLowerCase().trim();
         s = s.replace(/ğ/g, 'g')
-             .replace(/ü/g, 'u')
-             .replace(/ş/g, 's')
-             .replace(/ı/g, 'i')
-             .replace(/ö/g, 'o')
-             .replace(/ç/g, 'c');
+            .replace(/ü/g, 'u')
+            .replace(/ş/g, 's')
+            .replace(/ı/g, 'i')
+            .replace(/ö/g, 'o')
+            .replace(/ç/g, 'c');
         // Collapse multiple spaces
         return s.replace(/\s+/g, ' ');
     }
@@ -95,3 +95,4 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = DuplicateDetector;
 }
+//-----------------------------end-----------------------------end

@@ -479,13 +479,20 @@
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
-                        style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                    <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
-                        <span>💾</span>
-                        <span>Değişiklikleri Kaydet</span>
+                <div style="display: flex; gap: 0.75rem; justify-content: space-between; align-items: center; margin-top: 0.6rem; flex-wrap: wrap;">
+                    <button type="button" class="btn btn-danger" onclick="window.app.deleteEditingItem()"
+                        style="padding: 0.65rem 1rem; font-weight: 600;">
+                        <span>🗑️</span>
+                        <span>Ürünü Sil</span>
                     </button>
+                    <div style="display: flex; gap: 0.75rem; margin-left: auto;">
+                        <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
+                            style="padding: 0.65rem 1.25rem;">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
+                            <span>💾</span>
+                            <span>Değişiklikleri Kaydet</span>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>

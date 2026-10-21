@@ -738,10 +738,10 @@ app.delete('/api/items/:id', async (req, res) => {
             sql: 'SELECT * FROM items WHERE id = ? LIMIT 1',
             args: [id]
         });
-        const updatedItem = updatedRes.rows[0];
+        const updatedItem = (updatedRes.rows && updatedRes.rows[0]) || { id, status: 'deleted', updatedAt: now };
 
-        io.emit('item:updated', updatedItem);
         io.emit('item:soft-deleted', { id, item: updatedItem });
+        io.emit('item:updated', updatedItem);
         scheduleAutoBackup('item-delete');
         return res.json({ success: true, item: updatedItem, softDeleted: true });
     } catch (err) {
