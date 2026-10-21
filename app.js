@@ -31,6 +31,8 @@ class App {
         this.appIconIsImage = localStorage.getItem('dukkan_app_icon_is_image') === '1';
         this.tempIconValue = this.appIcon;
         this.tempIconIsImage = this.appIconIsImage;
+        this.isPushSubscribed = false;
+        this.swRegistration = null;
 
         this.init();
     }
@@ -44,6 +46,7 @@ class App {
         this.initPhotoHandlers();
         this.renderQuickPills();
         this.loadSettings();
+        this.initPushNotifications();
 
         if (this.isAuthenticated()) {
             this.showAppScreen();
@@ -1073,6 +1076,23 @@ class App {
             });
         }
 
+        // Phone Push Notifications Toggle & Test
+        const btnTogglePush = document.getElementById('btn-toggle-push');
+        if (btnTogglePush) {
+            btnTogglePush.addEventListener('click', () => this.togglePushNotifications());
+        }
+
+        const btnQuickPush = document.getElementById('btn-quick-push-toggle');
+        if (btnQuickPush) {
+            btnQuickPush.addEventListener('click', () => this.togglePushNotifications());
+        }
+
+        const btnTestPush = document.getElementById('btn-test-push');
+        if (btnTestPush) {
+            btnTestPush.addEventListener('click', () => this.sendTestPushNotification());
+        }
+
+
         // Quick Pills Controls
         const btnAddPill = document.getElementById('btn-open-add-pill');
         if (btnAddPill) {
@@ -1993,7 +2013,219 @@ class App {
         }
     }
 
+    // ==========================================
+    // WEB PUSH NOTIFICATION CLIENT ENGINE
+    // ==========================================
+    urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding)
+            .replace(/\-/g, '+')
+            .replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    async initPushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.log('Push bildirimleri bu tarayıcıda doğrudan desteklenmiyor.');
+            this.updatePushUI(false);
+            return;
+        }
+
+        try {
+            this.swRegistration = await navigator.serviceWorker.ready;
+            const subscription = await this.swRegistration.pushManager.getSubscription();
+            this.isPushSubscribed = !(subscription === null);
+            this.updatePushUI(true);
+        } catch (error) {
+            console.error('Push bildirim servisi başlatma hatası:', error);
+            this.updatePushUI(false);
+        }
+    }
+
+    updatePushUI(supported = true) {
+        const badge = document.getElementById('push-status-badge');
+        const btnText = document.getElementById('push-btn-text');
+        const btnIcon = document.getElementById('push-btn-icon');
+        const quickIcon = document.getElementById('quick-push-icon');
+        const quickLabel = document.getElementById('quick-push-label');
+        const hint = document.getElementById('push-info-hint');
+
+        if (!supported) {
+            if (badge) {
+                badge.textContent = '⚪ Desteklenmiyor';
+                badge.style.background = 'rgba(148, 163, 184, 0.15)';
+                badge.style.color = '#94a3b8';
+            }
+            if (btnText) btnText.textContent = 'Tarayıcı Desteklemiyor';
+            if (quickLabel) quickLabel.textContent = 'Desteklenmiyor';
+            if (hint) {
+                hint.style.display = 'block';
+                hint.innerHTML = '💡 <em>iPhone kullanıyorsanız Safari\'de "Paylaş > Ana Ekrana Ekle" yaparak telefon bildirimlerini açabilirsiniz.</em>';
+            }
+            return;
+        }
+
+        if (Notification.permission === 'denied') {
+            if (badge) {
+                badge.textContent = '🔴 Engellendi';
+                badge.style.background = 'rgba(239, 68, 68, 0.15)';
+                badge.style.color = '#f87171';
+            }
+            if (btnText) btnText.textContent = 'Bildirim İzni Engellenmiş';
+            if (quickLabel) quickLabel.textContent = 'Engellendi';
+            if (hint) {
+                hint.style.display = 'block';
+                hint.innerHTML = '⚠️ <em>Bildirim izni engellenmiş. Tarayıcı adres çubuğundaki kilit simgesine dokunup Bildirimlere İzin Verin.</em>';
+            }
+            return;
+        }
+
+        if (this.isPushSubscribed) {
+            if (badge) {
+                badge.textContent = '🟢 Açık (Aktif)';
+                badge.style.background = 'rgba(16, 185, 129, 0.15)';
+                badge.style.color = '#34d399';
+            }
+            if (btnText) btnText.textContent = 'Bu Telefonda Bildirimleri Kapat';
+            if (btnIcon) btnIcon.textContent = '🔕';
+            if (quickIcon) quickIcon.textContent = '🔔';
+            if (quickLabel) quickLabel.textContent = 'Bildirim Açık';
+            if (hint) {
+                hint.style.display = 'block';
+                hint.innerHTML = '✅ <em>Bu telefonda bildirimler aktif! Başka biri yeni ürün eklediğinde telefonunuza sesli/titreşimli bildirim gelecektir.</em>';
+            }
+        } else {
+            if (badge) {
+                badge.textContent = '⚪ Kapalı';
+                badge.style.background = 'rgba(148, 163, 184, 0.15)';
+                badge.style.color = '#94a3b8';
+            }
+            if (btnText) btnText.textContent = 'Bu Telefonda Bildirimleri Aç';
+            if (btnIcon) btnIcon.textContent = '🔔';
+            if (quickIcon) quickIcon.textContent = '🔕';
+            if (quickLabel) quickLabel.textContent = 'Bildirim Aç';
+            if (hint) {
+                hint.style.display = 'block';
+                hint.innerHTML = '💡 <em>Yeni ürünler eklendiğinde telefonunuzun çalması için "Bildirimleri Aç" butonuna dokunun.</em>';
+            }
+        }
+    }
+
+    async togglePushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            this.showToast('Bu tarayıcı Web Push bildirimlerini desteklemiyor (iOS için Ana Ekrana Ekleyin).');
+            return;
+        }
+
+        const btn = document.getElementById('btn-toggle-push');
+        if (btn) btn.disabled = true;
+
+        try {
+            if (this.isPushSubscribed) {
+                // Unsubscribe
+                const sub = await this.swRegistration.pushManager.getSubscription();
+                if (sub) {
+                    await fetch('/api/push/unsubscribe', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ endpoint: sub.endpoint })
+                    });
+                    await sub.unsubscribe();
+                }
+                this.isPushSubscribed = false;
+                this.updatePushUI(true);
+                this.showToast('🔕 Bu telefonda bildirimler kapatıldı.');
+            } else {
+                // Request Permission
+                const permission = await Notification.requestPermission();
+                if (permission !== 'granted') {
+                    this.showToast('⚠️ Bildirim izni verilmedi.');
+                    this.updatePushUI(true);
+                    return;
+                }
+
+                // Get VAPID public key
+                const keyRes = await fetch('/api/push/public-key');
+                if (!keyRes.ok) {
+                    throw new Error('Push sunucusu anahtarı alınamadı');
+                }
+                const { publicKey } = await keyRes.json();
+                const applicationServerKey = this.urlBase64ToUint8Array(publicKey);
+
+                // Subscribe via PushManager
+                const sub = await this.swRegistration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: applicationServerKey
+                });
+
+                // Send to backend
+                const subRes = await fetch('/api/push/subscribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subscription: sub.toJSON(),
+                        userAgent: navigator.userAgent
+                    })
+                });
+
+                if (subRes.ok) {
+                    this.isPushSubscribed = true;
+                    this.updatePushUI(true);
+                    this.showToast('🔔 Harika! Telefon bildirimleri açıldı.');
+                    
+                    // Trigger a test notification automatically
+                    setTimeout(() => {
+                        fetch('/api/push/test', { method: 'POST' }).catch(() => {});
+                    }, 500);
+                } else {
+                    throw new Error('Abonelik sunucuya kaydedilemedi');
+                }
+            }
+        } catch (err) {
+            console.error('Toggle push error:', err);
+            this.showToast('Bildirim ayarı değiştirilemedi: ' + err.message);
+            this.updatePushUI(true);
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    async sendTestPushNotification() {
+        if (!this.isPushSubscribed) {
+            this.showToast('Lütfen önce "Bildirimleri Aç" butonuna basarak bu telefonda bildirimleri aktif edin.');
+            return;
+        }
+
+        const btn = document.getElementById('btn-test-push');
+        if (btn) {
+            btn.disabled = true;
+            btn.textContent = '⏳ Gönderiliyor...';
+        }
+
+        try {
+            const res = await fetch('/api/push/test', { method: 'POST' });
+            if (res.ok) {
+                this.showToast('🧪 Test bildirimi telefonunuza gönderildi! Üst bildirim çubuğunu kontrol edin.');
+            } else {
+                this.showToast('Test bildirimi gönderilemedi.');
+            }
+        } catch (e) {
+            this.showToast('Sunucu bağlantı hatası.');
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.innerHTML = '<span>🧪</span><span>Test Bildirimi Gönder</span>';
+            }
+        }
+    }
+
     startVoiceInput() {
+
         const voiceModal = document.getElementById('voice-modal');
         const voiceText = document.getElementById('voice-transcript-text');
         this.openModal('voice-modal');
@@ -2045,9 +2277,11 @@ class App {
         const nameInput = document.getElementById('input-app-name');
         if (nameInput) nameInput.value = this.appName || 'App';
         this.updateSoundButtonUI();
+        this.updatePushUI(!!('serviceWorker' in navigator && 'PushManager' in window));
         this.fetchAndDisplayLastBackup();
         this.openModal('password-modal');
     }
+
 
 
     closeAllModals() {

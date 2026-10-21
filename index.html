@@ -87,6 +87,10 @@
                 </div>
 
                 <div class="header-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-push-toggle" title="Telefon Bildirimlerini Aç/Kapat" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; border-color: rgba(99, 102, 241, 0.3);">
+                        <span id="quick-push-icon">🔔</span>
+                        <span id="quick-push-label">Bildirim Aç</span>
+                    </button>
                     <div class="user-menu-pill">
                         <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Yönetim & Ayarlar">
                             👤 <span id="display-username">admin</span>
@@ -96,6 +100,7 @@
                         </button>
                     </div>
                 </div>
+
             </header>
 
             <!-- Stats -->
@@ -575,8 +580,41 @@
                     </div>
                 </div>
 
-                <!-- 3. Otomatik Yedekleme & Güvenlik (Auto-Backup) -->
+                <!-- 3. Telefon Bildirimleri (Web Push) -->
                 <div class="admin-section-box">
+                    <div class="admin-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span>📱</span>
+                            <span>Telefon Bildirimleri (Web Push)</span>
+                        </div>
+                        <span id="push-status-badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
+                            ⚪ Kontrol ediliyor...
+                        </span>
+                    </div>
+                    <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
+                        Dükkanda veya başka bir cihazda <strong>yeni bir eksik ürün eklendiğinde</strong>, bu telefonunuza anında sesli ve titreşimli sistem bildirimi gelir.
+                    </div>
+
+                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                        <button type="button" class="btn btn-primary" id="btn-toggle-push" style="width: 100%; justify-content: center; padding: 0.7rem; font-weight: 700;">
+                            <span id="push-btn-icon">🔔</span>
+                            <span id="push-btn-text">Bu Telefonda Bildirimleri Aç</span>
+                        </button>
+
+                        <button type="button" class="btn btn-secondary" id="btn-test-push" style="width: 100%; justify-content: center; padding: 0.55rem; font-size: 0.82rem;" title="Telefonunuza test bildirimi gönderin">
+                            <span>🧪</span>
+                            <span>Test Bildirimi Gönder</span>
+                        </button>
+                    </div>
+
+                    <div id="push-info-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; line-height: 1.35;">
+                        💡 <em>İpucu: Bildirim gelmesi için "Bildirimleri Aç" butonuna basıp çıkan tarayıcı uyarısına "İzin Ver" demeniz yeterlidir.</em>
+                    </div>
+                </div>
+
+                <!-- 4. Otomatik Yedekleme & Güvenlik (Auto-Backup) -->
+                <div class="admin-section-box">
+
                     <div class="admin-section-title"
                         style="display: flex; justify-content: space-between; align-items: center;">
                         <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -963,18 +1001,18 @@
     </div>
 
     <script>
-        // Force unregister all old service workers and purge caches
+        // Register Web Push Service Worker
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function (regs) {
-                for (let r of regs) r.unregister();
-            });
-        }
-        if ('caches' in window) {
-            caches.keys().then(function (keys) {
-                for (let k of keys) caches.delete(k);
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/sw.js').then(function (reg) {
+                    window.swRegistration = reg;
+                }).catch(function (err) {
+                    console.warn('Service worker registration failed:', err);
+                });
             });
         }
     </script>
+
 
     <!-- App Scripts with Cache Busting -->
     <script src="/js/duplicate-detector.js?v=20261017_2358"></script>

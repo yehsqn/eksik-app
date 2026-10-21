@@ -92,6 +92,17 @@ async function initDb() {
         )
     `);
 
+    await client.execute(`
+        CREATE TABLE IF NOT EXISTS push_subscriptions (
+            endpoint TEXT PRIMARY KEY,
+            p256dh TEXT NOT NULL,
+            auth TEXT NOT NULL,
+            userAgent TEXT DEFAULT '',
+            createdAt TEXT NOT NULL
+        )
+    `);
+
+
     // Insert default admin user if none exists
     const users = await client.execute('SELECT * FROM users LIMIT 1');
     if (users.rows.length === 0) {

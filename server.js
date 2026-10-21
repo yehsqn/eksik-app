@@ -195,9 +195,94 @@ function scheduleAutoBackup(reason = 'change') {
     }, 3500);
 }
 
+// ==========================================
+// WEB PUSH NOTIFICATION ENGINE (VAPID)
+// ==========================================
+const webpush = require('web-push');
+
+let vapidPublicKey = process.env.VAPID_PUBLIC_KEY || null;
+let vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || null;
+
+async function initVapidKeys() {
+    try {
+        if (!vapidPublicKey || !vapidPrivateKey) {
+            const pubRes = await db.execute({ sql: "SELECT value FROM settings WHERE key = 'vapid_public_key' LIMIT 1", args: [] });
+            const privRes = await db.execute({ sql: "SELECT value FROM settings WHERE key = 'vapid_private_key' LIMIT 1", args: [] });
+
+            if (pubRes.rows && pubRes.rows.length > 0 && privRes.rows && privRes.rows.length > 0) {
+                vapidPublicKey = pubRes.rows[0].value;
+                vapidPrivateKey = privRes.rows[0].value;
+            } else {
+                const keys = webpush.generateVAPIDKeys();
+                vapidPublicKey = keys.publicKey;
+                vapidPrivateKey = keys.privateKey;
+
+                await db.execute({
+                    sql: "INSERT OR REPLACE INTO settings (key, value) VALUES ('vapid_public_key', ?)",
+                    args: [vapidPublicKey]
+                });
+                await db.execute({
+                    sql: "INSERT OR REPLACE INTO settings (key, value) VALUES ('vapid_private_key', ?)",
+                    args: [vapidPrivateKey]
+                });
+            }
+        }
+
+        webpush.setVapidDetails(
+            'mailto:admin@eksik-app.com',
+            vapidPublicKey,
+            vapidPrivateKey
+        );
+        console.log('📱 Web Push (VAPID) Bildirim Motoru Hazır');
+    } catch (e) {
+        console.error('VAPID initialization error:', e);
+    }
+}
+
+async function sendPushNotificationToAll(payload) {
+    try {
+        if (!vapidPublicKey || !vapidPrivateKey) return;
+
+        const subsRes = await db.execute('SELECT endpoint, p256dh, auth FROM push_subscriptions');
+        const subscriptions = subsRes.rows || [];
+        if (subscriptions.length === 0) return;
+
+        const payloadStr = JSON.stringify(payload);
+
+        const tasks = subscriptions.map(async (sub) => {
+            const pushSub = {
+                endpoint: sub.endpoint,
+                keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth
+                }
+            };
+
+            try {
+                await webpush.sendNotification(pushSub, payloadStr);
+            } catch (err) {
+                if (err.statusCode === 410 || err.statusCode === 404) {
+                    await db.execute({
+                        sql: 'DELETE FROM push_subscriptions WHERE endpoint = ?',
+                        args: [sub.endpoint]
+                    });
+                    console.log('📱 Eski push aboneliği silindi:', String(sub.endpoint).slice(0, 30));
+                } else {
+                    console.error('Push bildirim hatası:', err.message);
+                }
+            }
+        });
+
+        await Promise.allSettled(tasks);
+    } catch (e) {
+        console.error('sendPushNotificationToAll error:', e);
+    }
+}
+
 app.use(cors());
 // 15MB limit for photo uploads directly to SQLite / Turso
 app.use(express.json({ limit: '15mb' }));
+
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 app.use((req, res, next) => {
@@ -550,11 +635,27 @@ app.post('/api/items', async (req, res) => {
 
         io.emit('item:added', newItem);
         scheduleAutoBackup('item-add');
+
+        // Send instant phone push notification to all registered phones
+        sendPushNotificationToAll({
+            title: '🛍️ Yeni Eksik Ürün!',
+            body: `${newItem.name} (${newItem.quantity}) - ${newItem.supplier || 'Belirtilmedi'}`,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            image: newItem.image || undefined,
+            tag: 'item-' + newItem.id,
+            data: {
+                url: '/',
+                itemId: newItem.id
+            }
+        }).catch(err => console.error('Push send notice:', err));
+
         res.status(201).json(newItem);
     } catch (err) {
         console.error('Insert item error:', err);
         res.status(500).json({ error: 'Ürün kaydedilemedi' });
     }
+
 });
 
 app.put('/api/items/:id', async (req, res) => {
@@ -1013,6 +1114,101 @@ app.post('/api/backup/import', async (req, res) => {
     }
 });
 
+// ==========================================
+// WEB PUSH NOTIFICATION API ENDPOINTS
+// ==========================================
+
+// Get VAPID public key for frontend subscription
+app.get('/api/push/public-key', (req, res) => {
+    if (!vapidPublicKey) {
+        return res.status(503).json({ error: 'Push bildirim anahtarı henüz hazır değil' });
+    }
+    res.json({ publicKey: vapidPublicKey });
+});
+
+// Save client subscription
+app.post('/api/push/subscribe', async (req, res) => {
+    try {
+        const { subscription, userAgent } = req.body;
+        if (!subscription || !subscription.endpoint || !subscription.keys) {
+            return res.status(400).json({ error: 'Geçersiz abonelik verisi' });
+        }
+
+        const endpoint = subscription.endpoint;
+        const p256dh = subscription.keys.p256dh;
+        const auth = subscription.keys.auth;
+        const ua = userAgent || req.headers['user-agent'] || '';
+        const now = new Date().toISOString();
+
+        await db.execute({
+            sql: `INSERT OR REPLACE INTO push_subscriptions (endpoint, p256dh, auth, userAgent, createdAt)
+                  VALUES (?, ?, ?, ?, ?)`,
+            args: [endpoint, p256dh, auth, ua, now]
+        });
+
+        console.log('📱 Yeni telefon/cihaz bildirim aboneliği kaydedildi:', endpoint.slice(0, 35));
+        res.json({ success: true, message: 'Bildirim aboneliği başarıyla kaydedildi' });
+    } catch (e) {
+        console.error('Push subscribe error:', e);
+        res.status(500).json({ error: 'Abonelik kaydedilemedi' });
+    }
+});
+
+// Remove client subscription
+app.post('/api/push/unsubscribe', async (req, res) => {
+    try {
+        const { endpoint } = req.body;
+        if (endpoint) {
+            await db.execute({
+                sql: 'DELETE FROM push_subscriptions WHERE endpoint = ?',
+                args: [endpoint]
+            });
+            console.log('📱 Push aboneliği iptal edildi:', endpoint.slice(0, 35));
+        }
+        res.json({ success: true });
+    } catch (e) {
+        console.error('Push unsubscribe error:', e);
+        res.status(500).json({ error: 'Abonelik silinemedi' });
+    }
+});
+
+// Send a test notification to all subscribed phones
+app.post('/api/push/test', async (req, res) => {
+    try {
+        await sendPushNotificationToAll({
+            title: '🔔 Bildirim Testi Başarılı!',
+            body: 'Tebrikler! Dükkana yeni ürün eklendiğinde telefonunuza anında bildirim gelecek.',
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'test-' + Date.now(),
+            data: { url: '/' }
+        });
+        res.json({ success: true, message: 'Test bildirimi gönderildi' });
+    } catch (e) {
+        res.status(500).json({ error: 'Test bildirimi gönderilemedi' });
+    }
+});
+
+// Get push subscriptions status
+app.get('/api/push/status', async (req, res) => {
+    try {
+        const countRes = await db.execute('SELECT COUNT(*) as count FROM push_subscriptions');
+        const count = (countRes.rows[0] && Number(countRes.rows[0].count)) || 0;
+        res.json({
+            activeSubscribersCount: count,
+            vapidReady: !!vapidPublicKey
+        });
+    } catch (e) {
+        res.json({ activeSubscribersCount: 0, vapidReady: false });
+    }
+});
+
+// Notification icon endpoint
+app.get(['/icon-192.png', '/icon.svg', '/img/icon-192.png'], (req, res) => {
+    res.setHeader('Content-Type', 'image/svg+xml');
+    res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="#2563eb"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">🛍️</text></svg>`);
+});
+
 // Socket.io connection handling
 io.on('connection', async (socket) => {
     try {
@@ -1036,6 +1232,7 @@ io.on('connection', async (socket) => {
 (async () => {
     try {
         await initDb();
+        await initVapidKeys();
 
         // Automatic initial backup on startup
         setTimeout(async () => {
@@ -1062,10 +1259,12 @@ io.on('connection', async (socket) => {
             console.log(`🚀 Port: ${PORT}`);
             console.log(`🔐 Giriş: admin / 123`);
             console.log(`🛡️ Otomatik Yedekleme (Auto-Backup): 7/24 AKTİF`);
+            console.log(`📱 Web Push Bildirim Servisi: 7/24 AKTİF`);
             console.log('====================================================\n');
         });
     } catch (err) {
         console.error('Sunucu başlatma hatası:', err);
     }
 })();
+
 
