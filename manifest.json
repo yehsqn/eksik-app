@@ -1,0 +1,29 @@
+{
+  "name": "HKC - Eksik ve Sipariş Takip",
+  "short_name": "HKC",
+  "description": "HKC - Eksik ve Sipariş Takip Sistemi",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#0a2240",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/logo.jpg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/logo.jpg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/jpeg"
+    }
+  ]
+}

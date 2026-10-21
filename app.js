@@ -26,9 +26,15 @@ class App {
         this.pendingImportData = null;
         this.editingItemId = null;
         this.editingItemPhoto = '';
-        this.appName = localStorage.getItem('dukkan_app_name') || 'App';
-        this.appIcon = localStorage.getItem('dukkan_app_icon') || '⚡';
-        this.appIconIsImage = localStorage.getItem('dukkan_app_icon_is_image') === '1';
+        this.appName = localStorage.getItem('dukkan_app_name') || 'HKC';
+        const savedIcon = localStorage.getItem('dukkan_app_icon');
+        if (!savedIcon || savedIcon === '⚡') {
+            this.appIcon = '/images/logo.jpg';
+            this.appIconIsImage = true;
+        } else {
+            this.appIcon = savedIcon;
+            this.appIconIsImage = localStorage.getItem('dukkan_app_icon_is_image') === '1';
+        }
         this.tempIconValue = this.appIcon;
         this.tempIconIsImage = this.appIconIsImage;
         this.isPushSubscribed = false;

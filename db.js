@@ -116,7 +116,7 @@ async function initDb() {
     // Insert default initial suppliers if empty
     const sups = await client.execute('SELECT COUNT(*) as count FROM suppliers');
     if (sups.rows[0].count === 0 || sups.rows[0].count === 0n) {
-        const defaultSups = ['Bizim Toptan', 'Metro Toptan', 'Özlem Gıda', 'Merkez Dağıtım', 'Kırtasiye Toptancısı'];
+        const defaultSups = ['Çelebi', 'Özen', 'Kardelen', 'Özyurt', 'Hacıyatmaz'];
         for (const s of defaultSups) {
             await client.execute({
                 sql: 'INSERT OR IGNORE INTO suppliers (id, name, createdAt) VALUES (?, ?, ?)',
@@ -124,6 +124,18 @@ async function initDb() {
             });
         }
     }
+
+    // Ensure default HKC app name & logo setting
+    try {
+        await client.execute({
+            sql: "INSERT OR IGNORE INTO settings (key, value) VALUES ('app_name', 'HKC')",
+            args: []
+        });
+        await client.execute({
+            sql: "INSERT OR IGNORE INTO settings (key, value) VALUES ('app_icon', ?)",
+            args: [JSON.stringify({ icon: '/images/logo.jpg', isImage: true })]
+        });
+    } catch (e) {}
 }
 
 module.exports = {

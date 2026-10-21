@@ -364,6 +364,22 @@ app.get(['/css/style.css', '/style.css'], (req, res) => {
     });
 });
 
+// App Logo, Favicon & Apple Touch Icons
+app.get(['/images/logo.jpg', '/logo.jpg', '/apple-touch-icon.png', '/icon-192.png', '/favicon.ico', '/favicon.png'], (req, res) => {
+    const file = findBestFile([
+        path.join(__dirname, 'public', 'images', 'logo.jpg'),
+        path.join(__dirname, 'images', 'logo.jpg'),
+        path.join(__dirname, 'public', 'logo.jpg'),
+        path.join(__dirname, 'logo.jpg')
+    ]);
+    if (file) {
+        res.setHeader('Content-Type', 'image/jpeg');
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        return res.sendFile(file);
+    }
+    res.status(404).send('Logo not found');
+});
+
 // Support both public/ directory and root directory for any assets
 if (fs.existsSync(path.join(__dirname, 'public'))) {
     app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
