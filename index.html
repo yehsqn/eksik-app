@@ -25,7 +25,7 @@
         rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css?v=20261021_polish">
+    <link rel="stylesheet" href="/css/style.css?v=20261021_stats">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -95,6 +95,10 @@
                 </div>
 
                 <div class="header-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-stats" title="İstatistikler" onclick="window.app.openStatsModal()">
+                        <span>📊</span>
+                        <span>İstatistik</span>
+                    </button>
                     <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-push-toggle" title="Telefon Bildirimlerini Aç/Kapat" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; border-color: rgba(99, 102, 241, 0.3);">
                         <span id="quick-push-icon">🔔</span>
                         <span id="quick-push-label">Bildirim Aç</span>
@@ -155,6 +159,18 @@
                 <div class="progress-track">
                     <div class="progress-fill" id="progress-fill-bar" style="width: 0%;"></div>
                 </div>
+            </section>
+
+            <!-- Sık Bitenler Hatırlatması (geçmişe göre hesaplanır) -->
+            <section class="reminders-card" id="reminders-card" style="display: none;">
+                <div class="reminders-head">
+                    <span class="reminders-icon">🔔</span>
+                    <div>
+                        <h3>Kontrol edilecekler</h3>
+                        <p>Sık biten ama bu dönem eklenmemiş ürünler</p>
+                    </div>
+                </div>
+                <div class="reminders-list" id="reminders-list"></div>
             </section>
 
             <!-- Quick Add Card -->
@@ -329,6 +345,17 @@
         <!-- Mobile Floating Mic Button -->
         <div class="mobile-fab-container">
             <button class="fab-btn fab-mic" id="fab-voice" title="Sesle Ekle">🎙️</button>
+        </div>
+    </div>
+
+    <!-- MODAL: İSTATİSTİKLER -->
+    <div class="modal-overlay" id="stats-modal">
+        <div class="modal-card stats-modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title"><span>📊</span> İstatistikler</h2>
+                <button type="button" class="btn-close" onclick="window.app.closeAllModals()">×</button>
+            </div>
+            <div id="stats-modal-body"></div>
         </div>
     </div>
 
@@ -1047,7 +1074,7 @@
     <script src="/js/audio.js?v=20261017_2358"></script>
     <script src="/js/speech.js?v=20261017_2358"></script>
     <script src="/js/export.js?v=20261017_2358"></script>
-    <script src="/js/app.js?v=20261019_icon"></script>
+    <script src="/js/app.js?v=20261021_stats"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

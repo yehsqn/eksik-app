@@ -40,6 +40,14 @@ class App {
         this.isPushSubscribed = false;
         this.swRegistration = null;
 
+        // Çevrimdışı eklenen ürünler (bağlantı gelince sunucuya gönderilir)
+        this.offlineQueue = this.readJsonStorage('dukkan_offline_queue', []);
+        this.isFlushingQueue = false;
+        // Eksik geçmişi (istatistik & hatırlatma); çevrimdışı da çalışsın diye saklanır
+        this.events = this.readJsonStorage('dukkan_events_cache', []);
+        this.reminderSnoozes = this.readJsonStorage('dukkan_reminder_snoozes', {});
+        this.statsRange = 'weekly';
+
         this.init();
     }
 
@@ -54,15 +62,442 @@ class App {
         this.loadSettings();
         this.initPushNotifications();
 
+        this.initOfflineHandlers();
+
         if (this.isAuthenticated()) {
             this.showAppScreen();
             this.initSocket();
             await this.loadSuppliers();
             await this.loadInitialData();
             await this.loadServerInfo();
+            this.loadEvents();
+            this.flushOfflineQueue();
         } else {
             this.showLoginScreen();
         }
+    }
+
+    readJsonStorage(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (e) {
+            return fallback;
+        }
+    }
+
+    writeJsonStorage(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+            return true;
+        } catch (e) {
+            console.warn('Yerel kayıt hatası:', e);
+            return false;
+        }
+    }
+
+    // ==========================================
+    // ÇEVRİMDIŞI ÇALIŞMA (Offline Queue)
+    // ==========================================
+    initOfflineHandlers() {
+        window.addEventListener('online', () => {
+            this.refreshConnectionBadge();
+            if (this.socket && !this.socket.connected) this.socket.connect();
+            this.flushOfflineQueue();
+        });
+        window.addEventListener('offline', () => {
+            this.refreshConnectionBadge();
+        });
+        this.refreshConnectionBadge();
+    }
+
+    refreshConnectionBadge() {
+        const queued = this.offlineQueue.length;
+        const serverReachable = this.socket && this.socket.connected;
+        if (!navigator.onLine) {
+            this.updateConnectionStatus(false, queued ? `Çevrimdışı · ${queued} bekliyor` : 'Çevrimdışı');
+        } else if (queued) {
+            this.updateConnectionStatus(false, serverReachable ? `Gönderiliyor · ${queued}` : `Bağlantı yok · ${queued} bekliyor`);
+        } else if (serverReachable) {
+            this.updateConnectionStatus(true, 'Canlı Bağlı');
+        }
+    }
+
+    queueOfflineItem(itemData) {
+        const entry = {
+            tempId: 'offline_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
+            data: itemData,
+            queuedAt: new Date().toISOString()
+        };
+        this.offlineQueue.push(entry);
+        if (!this.writeJsonStorage('dukkan_offline_queue', this.offlineQueue) && itemData.image) {
+            // Telefon hafızası doluysa fotoğrafsız sakla
+            entry.data = { ...itemData, image: '' };
+            this.writeJsonStorage('dukkan_offline_queue', this.offlineQueue);
+            this.showToast('📴 Fotoğraf çok büyük, ürün fotoğrafsız saklandı');
+        }
+        this.refreshConnectionBadge();
+        this.render();
+        this.showToast(`📴 İnternet yok — "${itemData.name}" saklandı, bağlantı gelince gönderilecek`);
+    }
+
+    cancelOfflineItem(tempId) {
+        this.offlineQueue = this.offlineQueue.filter(q => q.tempId !== tempId);
+        this.writeJsonStorage('dukkan_offline_queue', this.offlineQueue);
+        this.refreshConnectionBadge();
+        this.render();
+    }
+
+    async flushOfflineQueue() {
+        if (this.isFlushingQueue || !this.offlineQueue.length || !navigator.onLine) return;
+        this.isFlushingQueue = true;
+        let sent = 0;
+        try {
+            while (this.offlineQueue.length) {
+                const entry = this.offlineQueue[0];
+                const res = await fetch('/api/items', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(entry.data)
+                });
+                if (res.status === 503) break; // hâlâ çevrimdışı (service worker yanıtı)
+                if (res.ok) {
+                    const saved = await res.json();
+                    if (!this.items.find(i => i.id === saved.id)) this.items.unshift(saved);
+                    sent++;
+                }
+                // Başarılı ya da sunucu reddetti (ör. boş ad): kuyruktan çıkar ki takılı kalmasın
+                this.offlineQueue.shift();
+                this.writeJsonStorage('dukkan_offline_queue', this.offlineQueue);
+            }
+        } catch (e) {
+            console.warn('Çevrimdışı kuyruk gönderilemedi, sonra tekrar denenecek:', e);
+        } finally {
+            this.isFlushingQueue = false;
+            this.refreshConnectionBadge();
+            this.render();
+            if (sent) this.showToast(`✅ Çevrimdışı eklenen ${sent} ürün gönderildi`);
+        }
+    }
+
+    getOfflineItems() {
+        return this.offlineQueue.map(q => ({
+            ...q.data,
+            id: q.tempId,
+            status: 'pending',
+            createdAt: q.queuedAt,
+            offline: true
+        }));
+    }
+
+    // ==========================================
+    // EKSİK GEÇMİŞİ, İSTATİSTİK & HATIRLATMA
+    // ==========================================
+    async loadEvents() {
+        try {
+            const res = await fetch('/api/stats/events');
+            if (!res.ok) return;
+            this.events = await res.json();
+            this.writeJsonStorage('dukkan_events_cache', this.events);
+            this.renderReminders();
+            const statsModal = document.getElementById('stats-modal');
+            if (statsModal && statsModal.classList.contains('active')) this.renderStatsPage();
+        } catch (e) {
+            // Çevrimdışı: önbellekteki geçmiş kullanılır
+        }
+    }
+
+    nameKey(name) {
+        return String(name || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+    }
+
+    // Pazartesi 00:00 (yerel saat)
+    startOfWeek(date) {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        const day = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - day);
+        return d;
+    }
+
+    // Ürün bazında geçmiş: aynı gün birden fazla eklenme tek "bitti" sayılır
+    getProductHistory() {
+        const map = new Map();
+        this.events.forEach(ev => {
+            const key = ev.nameKey || this.nameKey(ev.name);
+            if (!key) return;
+            if (!map.has(key)) map.set(key, { key, name: ev.name, count: 0, days: [] });
+            const p = map.get(key);
+            p.count++;
+            p.name = ev.name; // en son kullanılan yazılış
+            const day = new Date(ev.createdAt);
+            day.setHours(0, 0, 0, 0);
+            const t = day.getTime();
+            if (!p.days.length || p.days[p.days.length - 1] !== t) p.days.push(t);
+        });
+        return [...map.values()];
+    }
+
+    getReminders() {
+        const DAY = 24 * 60 * 60 * 1000;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const activeKeys = new Set(
+            [...this.items, ...this.getOfflineItems()]
+                .filter(i => i.status === 'pending' || i.status === 'ordered')
+                .map(i => this.nameKey(i.name))
+        );
+
+        const reminders = [];
+        this.getProductHistory().forEach(p => {
+            if (p.days.length < 3 || activeKeys.has(p.key)) return;
+            const snoozedUntil = this.reminderSnoozes[p.key];
+            if (snoozedUntil && snoozedUntil > Date.now()) return;
+
+            // Son 6 aralığın ortancası = ürünün tipik bitme süresi
+            const gaps = [];
+            for (let i = 1; i < p.days.length; i++) gaps.push((p.days[i] - p.days[i - 1]) / DAY);
+            const recent = gaps.slice(-6).sort((a, b) => a - b);
+            const cycle = recent[Math.floor(recent.length / 2)];
+            if (cycle < 2 || cycle > 45) return;
+
+            const daysSince = Math.round((today.getTime() - p.days[p.days.length - 1]) / DAY);
+            // Süresi geldi ama çok da eskimedi (satışı bırakılmış ürünleri hatırlatma)
+            if (daysSince < cycle || daysSince > cycle * 4) return;
+
+            reminders.push({ key: p.key, name: p.name, cycle, daysSince, overdue: daysSince / cycle });
+        });
+        return reminders.sort((a, b) => b.overdue - a.overdue).slice(0, 5);
+    }
+
+    describeCycle(days) {
+        if (days <= 8 && days >= 6) return 'her hafta';
+        if (days < 6) return `${Math.round(days)} günde bir`;
+        if (days >= 12 && days <= 17) return '2 haftada bir';
+        if (days >= 26 && days <= 35) return 'her ay';
+        return `yaklaşık ${Math.round(days)} günde bir`;
+    }
+
+    renderReminders() {
+        const box = document.getElementById('reminders-card');
+        const list = document.getElementById('reminders-list');
+        if (!box || !list) return;
+        const reminders = this.getReminders();
+        if (!reminders.length) {
+            box.style.display = 'none';
+            return;
+        }
+        box.style.display = '';
+        list.innerHTML = reminders.map(r => {
+            const sinceText = r.daysSince >= 7 && r.daysSince % 7 === 0
+                ? `${r.daysSince / 7} haftadır`
+                : `${r.daysSince} gündür`;
+            const safeName = this.escapeHtml(r.name);
+            const jsKey = encodeURIComponent(r.key);
+            return `
+                <div class="reminder-row">
+                    <div class="reminder-text">
+                        <strong>${safeName}</strong>
+                        <span>Genelde ${this.describeCycle(r.cycle)} bitiyor, ${sinceText} eklenmedi. Kontrol et.</span>
+                    </div>
+                    <div class="reminder-actions">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="window.app.addFromReminder('${jsKey}')">Ekle</button>
+                        <button type="button" class="btn btn-secondary btn-sm" title="Stokta var, bu dönem hatırlatma" onclick="window.app.snoozeReminder('${jsKey}')">Var</button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    addFromReminder(encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        const r = this.getReminders().find(x => x.key === key);
+        if (!r) return;
+        this.fillQuickItem(r.name, '1 adet');
+        const nameInput = document.getElementById('input-name');
+        if (nameInput) nameInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    snoozeReminder(encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        const r = this.getReminders().find(x => x.key === key);
+        const DAY = 24 * 60 * 60 * 1000;
+        // Stokta var: bir sonraki döngüye kadar sus
+        const days = r ? Math.max(3, Math.round(r.cycle)) : 7;
+        this.reminderSnoozes[key] = Date.now() + days * DAY;
+        this.writeJsonStorage('dukkan_reminder_snoozes', this.reminderSnoozes);
+        this.renderReminders();
+        this.showToast(`👍 ${days} gün sonra tekrar hatırlatılacak`);
+    }
+
+    openStatsModal() {
+        this.renderStatsPage();
+        this.openModal('stats-modal');
+        this.loadEvents();
+    }
+
+    setStatsRange(range) {
+        this.statsRange = range;
+        this.renderStatsPage();
+    }
+
+    computeStats() {
+        const now = new Date();
+        const thisWeek = this.startOfWeek(now);
+
+        const weeks = [];
+        for (let i = 7; i >= 0; i--) {
+            const start = new Date(thisWeek);
+            start.setDate(start.getDate() - i * 7);
+            const end = new Date(start);
+            end.setDate(end.getDate() + 7);
+            const label = start.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+            weeks.push({ start, end, label, count: 0, current: i === 0 });
+        }
+        const months = [];
+        for (let i = 5; i >= 0; i--) {
+            const start = new Date(now.getFullYear(), now.getMonth() - i, 1);
+            const end = new Date(now.getFullYear(), now.getMonth() - i + 1, 1);
+            const label = start.toLocaleDateString('tr-TR', { month: 'short' });
+            months.push({ start, end, label, count: 0, current: i === 0 });
+        }
+
+        const supplierCounts = {};
+        let unassigned = 0;
+        this.events.forEach(ev => {
+            const t = new Date(ev.createdAt);
+            const w = weeks.find(b => t >= b.start && t < b.end);
+            if (w) w.count++;
+            const m = months.find(b => t >= b.start && t < b.end);
+            if (m) m.count++;
+            const sup = ev.supplier || 'Belirtilmedi';
+            if (sup === 'Belirtilmedi') unassigned++;
+            else supplierCounts[sup] = (supplierCounts[sup] || 0) + 1;
+        });
+
+        const topProducts = this.getProductHistory()
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'tr'))
+            .slice(0, 8);
+        const topSuppliers = Object.entries(supplierCounts)
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 6);
+
+        return {
+            weeks,
+            months,
+            thisWeekCount: weeks[7].count,
+            lastWeekCount: weeks[6].count,
+            thisMonthCount: months[5].count,
+            lastMonthCount: months[4].count,
+            total: this.events.length,
+            since: this.events.length ? new Date(this.events[0].createdAt) : null,
+            topProducts,
+            topSuppliers,
+            unassigned
+        };
+    }
+
+    formatDelta(current, previous) {
+        if (!previous) return current ? '<span class="stats-delta">ilk veri</span>' : '';
+        const diff = current - previous;
+        if (diff === 0) return '<span class="stats-delta">öncekiyle aynı</span>';
+        const pct = Math.round(Math.abs(diff) / previous * 100);
+        return `<span class="stats-delta ${diff > 0 ? 'up' : 'down'}">${diff > 0 ? '▲' : '▼'} %${pct}</span>`;
+    }
+
+    renderColumnChart(buckets) {
+        const max = Math.max(1, ...buckets.map(b => b.count));
+        return `
+            <div class="col-chart" role="img" aria-label="${buckets.map(b => `${b.label}: ${b.count}`).join(', ')}">
+                ${buckets.map(b => `
+                    <div class="col-chart-col ${b.current ? 'current' : ''}" tabindex="0" data-tip="${this.escapeHtml(b.label)}: ${b.count} eksik">
+                        <span class="col-chart-value">${b.current || b.count === max ? b.count : ''}</span>
+                        <div class="col-chart-track">
+                            <div class="col-chart-bar" style="height: ${b.count ? Math.max(4, (b.count / max) * 100) : 0}%"></div>
+                        </div>
+                        <span class="col-chart-label">${this.escapeHtml(b.label)}</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderBarList(rows, unit) {
+        if (!rows.length) return '<p class="stats-empty">Henüz yeterli veri yok.</p>';
+        const max = Math.max(1, ...rows.map(r => r.count));
+        return `
+            <div class="bar-list">
+                ${rows.map((r, idx) => `
+                    <div class="bar-list-row" tabindex="0" data-tip="${this.escapeHtml(r.name)}: ${r.count} ${unit}">
+                        <span class="bar-list-rank">${idx + 1}</span>
+                        <div class="bar-list-body">
+                            <div class="bar-list-head">
+                                <span class="bar-list-name">${this.escapeHtml(r.name)}</span>
+                                <span class="bar-list-count">${r.count}</span>
+                            </div>
+                            <div class="bar-list-track"><div class="bar-list-fill" style="width: ${(r.count / max) * 100}%"></div></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    renderStatsPage() {
+        const body = document.getElementById('stats-modal-body');
+        if (!body) return;
+        if (!this.events.length) {
+            body.innerHTML = '<p class="stats-empty">Henüz istatistik için kayıt yok. Ürün ekledikçe burası dolacak.</p>';
+            return;
+        }
+        const s = this.computeStats();
+        const isWeekly = this.statsRange === 'weekly';
+        const sinceText = s.since ? s.since.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+
+        body.innerHTML = `
+            <div class="stats-kpis">
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Bu hafta</span>
+                    <span class="stats-kpi-value">${s.thisWeekCount}</span>
+                    <span class="stats-kpi-sub">Geçen hafta ${s.lastWeekCount} ${this.formatDelta(s.thisWeekCount, s.lastWeekCount)}</span>
+                </div>
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Bu ay</span>
+                    <span class="stats-kpi-value">${s.thisMonthCount}</span>
+                    <span class="stats-kpi-sub">Geçen ay ${s.lastMonthCount} ${this.formatDelta(s.thisMonthCount, s.lastMonthCount)}</span>
+                </div>
+                <div class="stats-kpi">
+                    <span class="stats-kpi-label">Toplam kayıt</span>
+                    <span class="stats-kpi-value">${s.total}</span>
+                    <span class="stats-kpi-sub">İlk kayıt: ${sinceText}</span>
+                </div>
+            </div>
+
+            <section class="stats-section">
+                <div class="stats-section-head">
+                    <h3>${isWeekly ? 'Haftalık eksik sayısı' : 'Aylık eksik sayısı'}</h3>
+                    <div class="tab-pills stats-range">
+                        <button type="button" class="tab-pill ${isWeekly ? 'active' : ''}" onclick="window.app.setStatsRange('weekly')">Haftalık</button>
+                        <button type="button" class="tab-pill ${!isWeekly ? 'active' : ''}" onclick="window.app.setStatsRange('monthly')">Aylık</button>
+                    </div>
+                </div>
+                ${this.renderColumnChart(isWeekly ? s.weeks : s.months)}
+                <p class="stats-note">${isWeekly ? 'Son 8 hafta, haftalar pazartesi başlar.' : 'Son 6 ay.'} Parlak sütun içinde bulunduğumuz ${isWeekly ? 'hafta' : 'ay'}.</p>
+            </section>
+
+            <div class="stats-two-col">
+                <section class="stats-section">
+                    <div class="stats-section-head"><h3>En çok biten ürünler</h3></div>
+                    ${this.renderBarList(s.topProducts, 'kez eksik')}
+                </section>
+                <section class="stats-section">
+                    <div class="stats-section-head"><h3>En çok sipariş verilen toptancılar</h3></div>
+                    ${this.renderBarList(s.topSuppliers, 'ürün')}
+                    ${s.unassigned ? `<p class="stats-note">${s.unassigned} kayıtta toptancı seçilmemiş, sayılmadı.</p>` : ''}
+                </section>
+            </div>
+        `;
     }
 
     isAuthenticated() {
@@ -160,6 +595,8 @@ class App {
                 await this.loadSuppliers();
                 await this.loadInitialData();
                 await this.loadServerInfo();
+                this.loadEvents();
+                this.flushOfflineQueue();
                 this.showToast(`Hoş geldiniz, ${data.username}!`);
             } else {
                 errorDiv.textContent = data.error || 'Giriş yapılamadı!';
@@ -388,14 +825,16 @@ class App {
     initSocket() {
         if (this.socket) return;
         if (typeof io !== 'undefined') {
-            this.socket = io({ reconnectionDelay: 1000, reconnectionAttempts: 10 });
+            // Depoda/çekmeyen yerde uzun kopmalar olabilir: denemeyi hiç bırakma
+            this.socket = io({ reconnectionDelay: 1000, reconnectionDelayMax: 10000, reconnectionAttempts: Infinity });
 
             this.socket.on('connect', () => {
                 this.updateConnectionStatus(true, 'Canlı Bağlı');
+                this.flushOfflineQueue();
             });
 
             this.socket.on('disconnect', () => {
-                this.updateConnectionStatus(false, 'Bağlantı Kesildi');
+                this.updateConnectionStatus(false, navigator.onLine ? 'Bağlantı Kesildi' : 'Çevrimdışı');
             });
 
             this.socket.on('init', (data) => {
@@ -439,6 +878,17 @@ class App {
 
             this.socket.on('item:added', (newItem) => {
                 const existingIdx = this.items.findIndex(i => i.id === newItem.id);
+                if (!this.events.find(ev => ev.itemId === newItem.id)) {
+                    this.events.push({
+                        itemId: newItem.id,
+                        name: newItem.name,
+                        nameKey: this.nameKey(newItem.name),
+                        supplier: newItem.supplier,
+                        urgency: newItem.urgency,
+                        createdAt: newItem.createdAt
+                    });
+                    this.writeJsonStorage('dukkan_events_cache', this.events);
+                }
                 if (existingIdx === -1) {
                     this.items.unshift(newItem);
                     if (newItem.urgency === 'critical' || newItem.urgency === 'urgent') {
@@ -1389,6 +1839,10 @@ class App {
     }
 
     async saveNewItem(itemData) {
+        if (!navigator.onLine) {
+            this.queueOfflineItem(itemData);
+            return;
+        }
         try {
             const res = await fetch('/api/items', {
                 method: 'POST',
@@ -1396,10 +1850,20 @@ class App {
                 body: JSON.stringify(itemData)
             });
 
+            if (res.status === 503) {
+                // Service worker: sunucuya ulaşılamadı
+                this.queueOfflineItem(itemData);
+                return;
+            }
             if (!res.ok) {
                 throw new Error('Kayıt hatası');
             }
         } catch (e) {
+            if (e instanceof TypeError) {
+                // Ağ hatası (internet koptu): kaybetme, sırada beklet
+                this.queueOfflineItem(itemData);
+                return;
+            }
             console.error('Ekleme hatası:', e);
             this.showToast('Ürün eklenemedi.');
         }
@@ -1413,6 +1877,10 @@ class App {
     }
 
     async updateItemDetails(id, updates) {
+        if (!navigator.onLine) {
+            this.showToast('📴 İnternet yok — değişiklik için bağlantı gerekli');
+            return;
+        }
         const item = this.items.find(i => i.id === id);
         if (item) {
             Object.assign(item, updates);
@@ -2323,7 +2791,8 @@ class App {
     }
 
     getFilteredItems() {
-        return this.items.filter(item => {
+        const source = this.filterStatus === 'trash' ? this.items : [...this.getOfflineItems().reverse(), ...this.items];
+        return source.filter(item => {
             // Trash view shows ONLY deleted items
             if (this.filterStatus === 'trash') {
                 if (item.status !== 'deleted') return false;
@@ -2407,6 +2876,7 @@ class App {
     render() {
         this.saveOfflineBackup();
         this.renderStats();
+        this.renderReminders();
         const container = document.getElementById('items-container');
         if (!container) return;
 
@@ -2498,6 +2968,34 @@ class App {
     }
 
     createItemCardHtml(item) {
+        // Çevrimdışı eklenmiş, henüz sunucuya gitmemiş ürün
+        if (item.offline) {
+            return `
+                <div class="item-card offline-card" id="card-${item.id}">
+                    <div class="card-body-top">
+                        <div class="item-main-info" style="width: 100%;">
+                            <div class="item-title-row">
+                                <span class="item-title">${this.escapeHtml(item.name)}</span>
+                                <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
+                                <span class="urgency-badge offline">Gönderilmeyi bekliyor</span>
+                            </div>
+                            <div class="item-meta-row">
+                                <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                                <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
+                                <span class="meta-tag">📴 Çevrimdışı eklendi</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body-bottom">
+                        <span class="offline-card-hint">İnternet gelince otomatik gönderilecek</span>
+                        <div class="item-actions">
+                            <button type="button" class="btn btn-danger btn-sm" onclick="event.stopPropagation(); window.app.cancelOfflineItem('${item.id}')">İptal</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
         // Special Trash Card if item is soft-deleted
         if (item.status === 'deleted') {
             return `

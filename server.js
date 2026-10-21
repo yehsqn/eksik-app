@@ -4,7 +4,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const cors = require('cors');
-const { client: db, initDb, isTurso } = require('./db');
+const { client: db, initDb, isTurso, normalizeNameKey } = require('./db');
 
 const app = express();
 const server = http.createServer(app);
@@ -532,6 +532,10 @@ app.put('/api/suppliers/:id', async (req, res) => {
                 sql: 'UPDATE items SET supplier = ? WHERE supplier = ?',
                 args: [newName, oldName]
             });
+            await db.execute({
+                sql: 'UPDATE item_events SET supplier = ? WHERE supplier = ?',
+                args: [newName, oldName]
+            });
         }
 
         const updated = { id, name: newName, oldName };
@@ -595,6 +599,26 @@ app.post('/api/settings', async (req, res) => {
     }
 });
 
+// Eksik geçmişine bir kayıt ekler (istatistik & sık bitenler hatırlatması bunu kullanır)
+async function recordItemEvent(item, eventId) {
+    try {
+        await db.execute({
+            sql: 'INSERT OR IGNORE INTO item_events (id, itemId, name, nameKey, supplier, urgency, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            args: [
+                eventId || ('evt_' + item.id),
+                item.id,
+                item.name,
+                normalizeNameKey(item.name),
+                item.supplier || 'Belirtilmedi',
+                item.urgency || 'normal',
+                new Date().toISOString()
+            ]
+        });
+    } catch (err) {
+        console.error('Eksik geçmişi kayıt hatası:', err.message);
+    }
+}
+
 // Items Endpoints (Turso / SQLite)
 app.get('/api/items', async (req, res) => {
     try {
@@ -651,6 +675,7 @@ app.post('/api/items', async (req, res) => {
 
         io.emit('item:added', newItem);
         scheduleAutoBackup('item-add');
+        await recordItemEvent(newItem);
 
         // Send instant phone push notification to all registered phones
         sendPushNotificationToAll({
@@ -717,12 +742,40 @@ app.put('/api/items/:id', async (req, res) => {
             ]
         });
 
+        // Alınmış/silinmiş ürün tekrar listeye döndüyse bu yeni bir "bitti" olayıdır.
+        // Yanlışlıkla tıklamaları saymamak için en az 12 saat geçmiş olmalı.
+        const REACTIVATE_MIN_MS = 12 * 60 * 60 * 1000;
+        const wasClosed = current.status === 'completed' || current.status === 'deleted';
+        const lastChange = new Date(current.updatedAt).getTime() || 0;
+        if (wasClosed && updated.status === 'pending' && Date.now() - lastChange > REACTIVATE_MIN_MS) {
+            await recordItemEvent(updated, 'evt_' + id + '_' + Date.now());
+        }
+
+        // Ad veya toptancı düzeltildiyse geçmiş kayıtlarına da yansıt
+        if (updated.name !== current.name || updated.supplier !== current.supplier) {
+            await db.execute({
+                sql: 'UPDATE item_events SET name = ?, nameKey = ?, supplier = ? WHERE itemId = ?',
+                args: [updated.name, normalizeNameKey(updated.name), updated.supplier, id]
+            }).catch(e => console.error('Geçmiş güncelleme hatası:', e.message));
+        }
+
         io.emit('item:updated', updated);
         scheduleAutoBackup('item-update');
         res.json(updated);
     } catch (err) {
         console.error('Update item error:', err);
         res.status(500).json({ error: 'Güncelleme başarısız' });
+    }
+});
+
+// Eksik geçmişi: istatistik sayfası ve sık bitenler hatırlatması (hesaplama tarayıcıda, yerel saatle yapılır)
+app.get('/api/stats/events', async (req, res) => {
+    try {
+        const result = await db.execute('SELECT itemId, name, nameKey, supplier, urgency, createdAt FROM item_events ORDER BY createdAt ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Stats events error:', err);
+        res.status(500).json({ error: 'İstatistikler yüklenemedi' });
     }
 });
 

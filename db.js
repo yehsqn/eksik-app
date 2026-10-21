@@ -24,6 +24,11 @@ const client = createClient(dbConfig);
 
 console.log(isTurso ? '☁️ Turso Bulut Veritabanına Bağlanıldı' : '💾 Yerel SQLite / LibSQL Veritabanı Aktif');
 
+// "Şeffaf  Silikon " ve "şeffaf silikon" aynı ürün sayılsın
+function normalizeNameKey(name) {
+    return String(name || '').toLocaleLowerCase('tr-TR').replace(/\s+/g, ' ').trim();
+}
+
 // Initialize Tables
 async function initDb() {
     await client.execute(`
@@ -103,6 +108,36 @@ async function initDb() {
     `);
 
 
+    // Kalıcı eksik geçmişi (istatistik & hatırlatma için) — ürün silinse bile kayıt kalır
+    await client.execute(`
+        CREATE TABLE IF NOT EXISTS item_events (
+            id TEXT PRIMARY KEY,
+            itemId TEXT NOT NULL,
+            name TEXT NOT NULL,
+            nameKey TEXT NOT NULL,
+            supplier TEXT DEFAULT 'Belirtilmedi',
+            urgency TEXT DEFAULT 'normal',
+            createdAt TEXT NOT NULL
+        )
+    `);
+    await client.execute('CREATE INDEX IF NOT EXISTS idx_item_events_item ON item_events (itemId)');
+
+    // Mevcut ürünleri geçmişe bir kez aktar (aynı id tekrar eklenmez)
+    try {
+        const missing = await client.execute(
+            "SELECT id, name, supplier, urgency, createdAt FROM items WHERE ('evt_' || id) NOT IN (SELECT id FROM item_events)"
+        );
+        if (missing.rows.length > 0) {
+            await client.batch(missing.rows.map(r => ({
+                sql: 'INSERT OR IGNORE INTO item_events (id, itemId, name, nameKey, supplier, urgency, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                args: ['evt_' + r.id, r.id, r.name, normalizeNameKey(r.name), r.supplier || 'Belirtilmedi', r.urgency || 'normal', r.createdAt]
+            })), 'write');
+            console.log(`📊 ${missing.rows.length} ürün eksik geçmişine aktarıldı`);
+        }
+    } catch (e) {
+        console.error('Eksik geçmişi aktarma hatası:', e.message);
+    }
+
     // Insert default admin user if none exists
     const users = await client.execute('SELECT * FROM users LIMIT 1');
     if (users.rows.length === 0) {
@@ -141,5 +176,6 @@ async function initDb() {
 module.exports = {
     client,
     initDb,
-    isTurso
+    isTurso,
+    normalizeNameKey
 };
