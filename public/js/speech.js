@@ -1,15 +1,84 @@
-// Speech Recognition with Turkish language support and smart parser
+// Speech Recognition with Turkish language support, iOS getUserMedia prompt & smart parser
 class SpeechManager {
     constructor() {
-        const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
-        this.available = !!SpeechRec;
+        this.SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+        this.available = !!this.SpeechRec;
         this.recognition = null;
         this.isListening = false;
         this.onResultCallback = null;
         this.onErrorCallback = null;
+        this.onStateChange = null;
+        this.hasPromptedMic = false;
+    }
 
-        if (this.available) {
-            this.recognition = new SpeechRec();
+    translateError(err) {
+        const errorMap = {
+            'aborted': 'Mikrofon bağlantısı durduruldu veya izin bekleniyor. Lütfen "Tekrar Dene" butonuna basın.',
+            'not-allowed': 'Mikrofon izni verilmedi. iPhone Ayarlar > Safari > Mikrofon bölümünden "İzin Ver"i seçiniz.',
+            'service-not-allowed': 'Mikrofon servisine erişim izni verilmedi. Lütfen izinleri kontrol ediniz.',
+            'no-speech': 'Ses algılanamadı. Lütfen mikrofona yakın konuşarak tekrar deneyiniz.',
+            'network': 'Ses tanıma için internet bağlantısı gerekiyor.',
+            'audio-capture': 'Mikrofon donanımı bulunamadı veya başka bir uygulama tarafından kullanılıyor.'
+        };
+        return errorMap[err] || `Ses algılama hatası: ${err}`;
+    }
+
+    async requestMicPermission() {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(t => t.stop());
+                this.hasPromptedMic = true;
+                return true;
+            } catch (err) {
+                console.warn('getUserMedia permission error:', err);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    async start(onResult, onError, onStateChange) {
+        if (!this.available) {
+            if (onError) onError('Tarayıcınız sesle yazmayı desteklemiyor. Lütfen Chrome, Edge veya Safari kullanın.', 'not_supported');
+            return;
+        }
+
+        this.onResultCallback = onResult;
+        this.onErrorCallback = onError;
+        this.onStateChange = onStateChange;
+
+        // On iOS Safari / Standalone Home Screen PWA: Request getUserMedia first to trigger system permission prompt
+        if (!this.hasPromptedMic && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(t => t.stop());
+                this.hasPromptedMic = true;
+            } catch (permErr) {
+                console.warn('Mikrofon izni alınamadı:', permErr);
+                if (permErr.name === 'NotAllowedError' || permErr.name === 'PermissionDeniedError') {
+                    if (this.onErrorCallback) {
+                        this.onErrorCallback('Mikrofon izni verilmedi. iPhone Ayarları > Safari > Mikrofon bölümünden izin veriniz.', 'not-allowed');
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Clean up any stale recognition instance (prevents iOS InvalidStateError)
+        if (this.recognition) {
+            try {
+                this.recognition.onstart = null;
+                this.recognition.onend = null;
+                this.recognition.onerror = null;
+                this.recognition.onresult = null;
+                this.recognition.abort();
+            } catch (e) {}
+            this.recognition = null;
+        }
+
+        try {
+            this.recognition = new this.SpeechRec();
             this.recognition.lang = 'tr-TR';
             this.recognition.continuous = false;
             this.recognition.interimResults = false;
@@ -27,43 +96,40 @@ class SpeechManager {
             this.recognition.onerror = (event) => {
                 this.isListening = false;
                 if (this.onStateChange) this.onStateChange(false);
-                if (this.onErrorCallback) this.onErrorCallback(event.error);
+                const translated = this.translateError(event.error);
+                if (this.onErrorCallback) {
+                    this.onErrorCallback(translated, event.error);
+                }
             };
 
             this.recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                const parsed = this.parseTurkishVoiceInput(transcript);
-                if (this.onResultCallback) {
-                    this.onResultCallback(parsed, transcript);
+                if (event.results && event.results[0] && event.results[0][0]) {
+                    const transcript = event.results[0][0].transcript;
+                    const parsed = this.parseTurkishVoiceInput(transcript);
+                    if (this.onResultCallback) {
+                        this.onResultCallback(parsed, transcript);
+                    }
                 }
             };
-        }
-    }
 
-    start(onResult, onError, onStateChange) {
-        if (!this.available) {
-            if (onError) onError('Tarayıcınız sesle yazmayı desteklemiyor. Lütfen Chrome, Edge veya Safari kullanın.');
-            return;
-        }
-
-        this.onResultCallback = onResult;
-        this.onErrorCallback = onError;
-        this.onStateChange = onStateChange;
-
-        try {
             this.recognition.start();
         } catch (e) {
             console.warn('Speech rec start error:', e);
-            if (this.isListening) {
-                this.recognition.stop();
+            this.isListening = false;
+            if (this.onStateChange) this.onStateChange(false);
+            if (this.onErrorCallback) {
+                this.onErrorCallback('Ses tanıma başlatılamadı. Lütfen "Tekrar Dene"ye basınız.', 'start_failed');
             }
         }
     }
 
     stop() {
-        if (this.recognition && this.isListening) {
-            this.recognition.stop();
+        if (this.recognition) {
+            try {
+                this.recognition.stop();
+            } catch (e) {}
         }
+        this.isListening = false;
     }
 
     // Smart natural language parser for Turkish retail missing items

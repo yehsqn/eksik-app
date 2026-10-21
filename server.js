@@ -67,7 +67,7 @@ function cleanOldBackups(maxKeep = 35) {
         if (backupFiles.length > maxKeep) {
             const toDelete = backupFiles.slice(maxKeep);
             toDelete.forEach(f => {
-                try { fs.unlinkSync(f.path); } catch (e) {}
+                try { fs.unlinkSync(f.path); } catch (e) { }
             });
         }
     } catch (e) {
@@ -80,7 +80,7 @@ async function createServerBackup(reason = 'auto') {
         const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         const settingsRes = await db.execute('SELECT * FROM settings');
-        
+
         const settingsMap = {};
         settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
 
@@ -110,7 +110,7 @@ async function createServerBackup(reason = 'auto') {
         };
 
         const jsonStr = JSON.stringify(payload, null, 2);
-        
+
         // 1. Save to Disk (if writable)
         try {
             if (!fs.existsSync(BACKUP_DIR)) {
@@ -959,7 +959,7 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
     if (fs.existsSync(filePath)) {
         try {
             content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        } catch (e) {}
+        } catch (e) { }
     }
 
     if (!content) {
@@ -971,7 +971,7 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
             if (dbRes.rows && dbRes.rows.length > 0 && dbRes.rows[0].data) {
                 content = JSON.parse(dbRes.rows[0].data);
             }
-        } catch (e) {}
+        } catch (e) { }
     }
 
     if (!content) {

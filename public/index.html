@@ -882,7 +882,15 @@
                 <div class="voice-transcript-preview" id="voice-transcript-text">
                     Sizi dinliyorum... Lütfen konuşun.
                 </div>
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.5rem;">
+                <div id="voice-modal-actions" style="display: none; gap: 0.65rem; margin-top: 1.25rem; width: 100%;">
+                    <button type="button" class="btn btn-primary" id="btn-voice-retry" style="flex: 1; justify-content: center; padding: 0.65rem; font-weight: 700;">
+                        🔄 Tekrar Dene
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="btn-voice-keyboard" style="flex: 1; justify-content: center; padding: 0.65rem;">
+                        ⌨️ Klavyeyle Yaz
+                    </button>
+                </div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.25rem;">
                     Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli
                     bandı"
                 </div>

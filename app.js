@@ -2211,14 +2211,35 @@ class App {
     }
 
     startVoiceInput() {
-
         const voiceModal = document.getElementById('voice-modal');
         const voiceText = document.getElementById('voice-transcript-text');
+        const voiceActions = document.getElementById('voice-modal-actions');
+        const btnRetry = document.getElementById('btn-voice-retry');
+        const btnKeyboard = document.getElementById('btn-voice-keyboard');
+
+        if (voiceActions) voiceActions.style.display = 'none';
         this.openModal('voice-modal');
-        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "10 kutu sunta vidası")';
+        if (voiceText) voiceText.textContent = 'Dinleniyor... (Örn: "10 kutu 4x50 sunta vidası")';
 
         const micBtn = document.getElementById('btn-voice-input');
         if (micBtn) micBtn.classList.add('listening');
+
+        // Bind Retry & Keyboard buttons
+        if (btnRetry) {
+            btnRetry.onclick = () => {
+                this.startVoiceInput();
+            };
+        }
+        if (btnKeyboard) {
+            btnKeyboard.onclick = () => {
+                this.closeAllModals();
+                const nameInput = document.getElementById('input-name');
+                if (nameInput) {
+                    nameInput.focus();
+                    this.showToast('💡 Klavyedeki 🎤 mikrofon tuşuna basarak sesle yazabilirsiniz.');
+                }
+            };
+        }
 
         window.speechManager.start(
             (parsed, rawText) => {
@@ -2238,10 +2259,10 @@ class App {
                     this.checkAndAddItem();
                 }, 900);
             },
-            (errorMsg) => {
-                if (voiceText) voiceText.textContent = errorMsg;
+            (errorMsg, rawCode) => {
+                if (voiceText) voiceText.innerHTML = `<span style="color: #f87171; font-weight: 600;">⚠️ ${this.escapeHtml(errorMsg)}</span>`;
                 if (micBtn) micBtn.classList.remove('listening');
-                setTimeout(() => this.closeAllModals(), 2000);
+                if (voiceActions) voiceActions.style.display = 'flex';
             },
             (isListening) => {
                 if (!isListening && micBtn) micBtn.classList.remove('listening');
