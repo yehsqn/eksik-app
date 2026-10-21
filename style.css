@@ -1354,6 +1354,37 @@ input[type="checkbox"], input[type="radio"], input[type="file"], input[type="hid
 .notes-modal-card .modal-header {
     margin-bottom: 0;
 }
+.notes-identity {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0 0.1rem;
+    font-size: 0.74rem;
+    color: var(--text-muted);
+}
+.notes-identity strong {
+    color: var(--text-secondary);
+}
+.notes-identity .note-delete {
+    font-size: 0.74rem;
+    color: #b9adff;
+}
+.notes-name-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.notes-name-row {
+    display: flex;
+    gap: 0.5rem;
+}
+.notes-name-row input {
+    flex: 1;
+    min-width: 0;
+}
 .notes-list {
     flex: 1;
     overflow-y: auto;

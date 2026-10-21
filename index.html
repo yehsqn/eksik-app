@@ -25,7 +25,7 @@
         rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css?v=20261021_notes">
+    <link rel="stylesheet" href="/css/style.css?v=20261021_names">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -360,7 +360,16 @@
                 <h2 class="modal-title"><span>💬</span> Notlar</h2>
                 <button type="button" class="btn-close" onclick="window.app.closeAllModals()">×</button>
             </div>
+            <div class="notes-identity" id="notes-identity"></div>
             <div class="notes-list" id="notes-list"></div>
+            <!-- Aynı hesabı birden fazla kişi kullanıyor: her telefon adını bir kez söyler -->
+            <form class="notes-name-form" id="notes-name-form" style="display: none;">
+                <label class="input-label" for="notes-name-input">Adın ne? Notlarında bu ad görünecek.</label>
+                <div class="notes-name-row">
+                    <input type="text" id="notes-name-input" maxlength="40" placeholder="Örn: Ahmet" autocomplete="given-name">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
             <form class="notes-composer" id="notes-form">
                 <textarea id="notes-input" rows="1" maxlength="2000" placeholder="Not yaz…"></textarea>
                 <button type="submit" class="btn btn-primary notes-send-btn" title="Gönder">➤</button>
@@ -1094,7 +1103,7 @@
     <script src="/js/audio.js?v=20261017_2358"></script>
     <script src="/js/speech.js?v=20261017_2358"></script>
     <script src="/js/export.js?v=20261021_notes"></script>
-    <script src="/js/app.js?v=20261021_notes"></script>
+    <script src="/js/app.js?v=20261021_names"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

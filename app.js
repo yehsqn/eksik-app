@@ -50,6 +50,8 @@ class App {
         // Notlar (sohbet tarzı)
         this.notes = [];
         this.notesLastSeen = Number(localStorage.getItem('dukkan_notes_last_seen') || 0);
+        // Tek hesabı birden fazla kişi kullandığı için ad bu telefonda saklanır
+        this.deviceName = localStorage.getItem('dukkan_device_name') || '';
 
         this.init();
     }
@@ -214,6 +216,63 @@ class App {
             }
         });
         input.addEventListener('input', () => this.autoGrowNoteInput());
+
+        const nameForm = document.getElementById('notes-name-form');
+        if (nameForm) {
+            nameForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.saveDeviceName();
+            });
+        }
+    }
+
+    saveDeviceName() {
+        const input = document.getElementById('notes-name-input');
+        const name = input ? input.value.trim().replace(/\s+/g, ' ').slice(0, 40) : '';
+        if (!name) {
+            if (input) input.focus();
+            return;
+        }
+        this.deviceName = name;
+        this.isEditingDeviceName = false;
+        localStorage.setItem('dukkan_device_name', name);
+        this.renderNotesIdentity();
+        this.renderNotes();
+        this.updateNotesBadge();
+        const noteInput = document.getElementById('notes-input');
+        if (noteInput) noteInput.focus();
+        this.showToast(`👋 Merhaba ${name}! Bu telefon seni hatırlayacak.`);
+    }
+
+    changeDeviceName() {
+        const input = document.getElementById('notes-name-input');
+        if (input) input.value = this.deviceName;
+        this.isEditingDeviceName = true;
+        this.renderNotesIdentity();
+        if (input) {
+            input.focus();
+            input.select();
+        }
+    }
+
+    renderNotesIdentity() {
+        const identity = document.getElementById('notes-identity');
+        const nameForm = document.getElementById('notes-name-form');
+        const composer = document.getElementById('notes-form');
+        const hasName = !!this.deviceName && !this.isEditingDeviceName;
+        if (nameForm) nameForm.style.display = hasName ? 'none' : '';
+        if (composer) composer.style.display = hasName ? '' : 'none';
+        if (identity) {
+            identity.innerHTML = hasName
+                ? `<span><strong>${this.escapeHtml(this.deviceName)}</strong> olarak yazıyorsun</span>
+                   <button type="button" class="note-delete" onclick="window.app.changeDeviceName()">Değiştir</button>`
+                : '';
+            identity.style.display = hasName ? '' : 'none';
+        }
+    }
+
+    isMyNote(note) {
+        return !!this.deviceName && note.author === this.deviceName;
     }
 
     autoGrowNoteInput() {
@@ -236,12 +295,14 @@ class App {
     }
 
     openNotesModal() {
+        this.isEditingDeviceName = false;
         this.openModal('notes-modal');
+        this.renderNotesIdentity();
         this.renderNotes();
         this.markNotesSeen();
         this.loadNotes();
-        const input = document.getElementById('notes-input');
-        if (input && window.innerWidth >= 768) input.focus();
+        const input = document.getElementById(this.deviceName ? 'notes-input' : 'notes-name-input');
+        if (input && (window.innerWidth >= 768 || !this.deviceName)) input.focus();
     }
 
     markNotesSeen() {
@@ -255,7 +316,7 @@ class App {
         const badge = document.getElementById('notes-unread-badge');
         if (!badge) return;
         const unread = this.notes.filter(n =>
-            n.author !== this.currentUser && new Date(n.createdAt).getTime() > this.notesLastSeen
+            !this.isMyNote(n) && new Date(n.createdAt).getTime() > this.notesLastSeen
         ).length;
         badge.textContent = unread > 9 ? '9+' : String(unread);
         badge.style.display = unread ? '' : 'none';
@@ -266,6 +327,10 @@ class App {
         if (!input) return;
         const text = input.value.trim();
         if (!text) return;
+        if (!this.deviceName) {
+            this.renderNotesIdentity();
+            return;
+        }
         if (!navigator.onLine) {
             this.showToast('📴 İnternet yok — not bağlantı gelince gönderilebilir');
             return;
@@ -276,7 +341,7 @@ class App {
             const res = await fetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text, author: this.currentUser })
+                body: JSON.stringify({ text, author: this.deviceName })
             });
             if (!res.ok) throw new Error('Not kaydedilemedi');
             const note = await res.json();
@@ -333,7 +398,7 @@ class App {
                     : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
                 html += `<div class="notes-day"><span>${label}</span></div>`;
             }
-            const mine = n.author === this.currentUser;
+            const mine = this.isMyNote(n);
             html += `
                 <div class="note-row ${mine ? 'mine' : ''}">
                     <div class="note-bubble">
@@ -1165,7 +1230,7 @@ class App {
                 const isOpen = modal && modal.classList.contains('active');
                 if (isOpen) {
                     this.markNotesSeen();
-                } else if (note.author !== this.currentUser) {
+                } else if (!this.isMyNote(note)) {
                     this.updateNotesBadge();
                     if (window.soundManager && window.soundManager.playNewItem) window.soundManager.playNewItem();
                     this.showToast(`💬 ${note.author || 'Yeni not'}: ${note.text.slice(0, 60)}`);
