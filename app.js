@@ -47,6 +47,9 @@ class App {
         this.events = this.readJsonStorage('dukkan_events_cache', []);
         this.reminderSnoozes = this.readJsonStorage('dukkan_reminder_snoozes', {});
         this.statsRange = 'weekly';
+        // Notlar (sohbet tarzı)
+        this.notes = [];
+        this.notesLastSeen = Number(localStorage.getItem('dukkan_notes_last_seen') || 0);
 
         this.init();
     }
@@ -63,6 +66,7 @@ class App {
         this.initPushNotifications();
 
         this.initOfflineHandlers();
+        this.initNotes();
 
         if (this.isAuthenticated()) {
             this.showAppScreen();
@@ -71,6 +75,7 @@ class App {
             await this.loadInitialData();
             await this.loadServerInfo();
             this.loadEvents();
+            this.loadNotes();
             this.flushOfflineQueue();
         } else {
             this.showLoginScreen();
@@ -188,6 +193,164 @@ class App {
             createdAt: q.queuedAt,
             offline: true
         }));
+    }
+
+    // ==========================================
+    // NOTLAR (sohbet tarzı ortak not defteri)
+    // ==========================================
+    initNotes() {
+        const form = document.getElementById('notes-form');
+        const input = document.getElementById('notes-input');
+        if (!form || !input) return;
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.sendNote();
+        });
+        // Enter gönderir, Shift+Enter yeni satır
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+                e.preventDefault();
+                this.sendNote();
+            }
+        });
+        input.addEventListener('input', () => this.autoGrowNoteInput());
+    }
+
+    autoGrowNoteInput() {
+        const input = document.getElementById('notes-input');
+        if (!input) return;
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 140) + 'px';
+    }
+
+    async loadNotes() {
+        try {
+            const res = await fetch('/api/notes');
+            if (!res.ok) return;
+            this.notes = await res.json();
+            this.renderNotes();
+            this.updateNotesBadge();
+        } catch (e) {
+            // Çevrimdışı: notlar bağlantı gelince yüklenir
+        }
+    }
+
+    openNotesModal() {
+        this.openModal('notes-modal');
+        this.renderNotes();
+        this.markNotesSeen();
+        this.loadNotes();
+        const input = document.getElementById('notes-input');
+        if (input && window.innerWidth >= 768) input.focus();
+    }
+
+    markNotesSeen() {
+        const last = this.notes.length ? new Date(this.notes[this.notes.length - 1].createdAt).getTime() : Date.now();
+        this.notesLastSeen = Math.max(this.notesLastSeen, last);
+        localStorage.setItem('dukkan_notes_last_seen', String(this.notesLastSeen));
+        this.updateNotesBadge();
+    }
+
+    updateNotesBadge() {
+        const badge = document.getElementById('notes-unread-badge');
+        if (!badge) return;
+        const unread = this.notes.filter(n =>
+            n.author !== this.currentUser && new Date(n.createdAt).getTime() > this.notesLastSeen
+        ).length;
+        badge.textContent = unread > 9 ? '9+' : String(unread);
+        badge.style.display = unread ? '' : 'none';
+    }
+
+    async sendNote() {
+        const input = document.getElementById('notes-input');
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+        if (!navigator.onLine) {
+            this.showToast('📴 İnternet yok — not bağlantı gelince gönderilebilir');
+            return;
+        }
+        input.value = '';
+        this.autoGrowNoteInput();
+        try {
+            const res = await fetch('/api/notes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, author: this.currentUser })
+            });
+            if (!res.ok) throw new Error('Not kaydedilemedi');
+            const note = await res.json();
+            if (!this.notes.find(n => n.id === note.id)) this.notes.push(note);
+            this.renderNotes();
+            this.markNotesSeen();
+        } catch (e) {
+            input.value = text;
+            this.showToast('Not gönderilemedi, tekrar deneyin.');
+        }
+    }
+
+    deleteNote(id) {
+        this.openConfirmModal({
+            icon: '🗑️',
+            title: 'Notu sil',
+            desc: 'Bu not herkes için silinecek. Emin misiniz?',
+            onConfirm: async () => {
+                try {
+                    await fetch(`/api/notes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    this.notes = this.notes.filter(n => n.id !== id);
+                    this.renderNotes();
+                } catch (e) {
+                    this.showToast('Not silinemedi.');
+                }
+            }
+        });
+    }
+
+    renderNotes() {
+        const list = document.getElementById('notes-list');
+        if (!list) return;
+        if (!this.notes.length) {
+            list.innerHTML = `
+                <div class="notes-empty">
+                    <div class="notes-empty-icon">💬</div>
+                    <p>Henüz not yok. Toptancı bilgisi, hatırlatma ya da ekiple paylaşmak istediğin her şeyi buraya yazabilirsin.</p>
+                </div>
+            `;
+            return;
+        }
+
+        const today = new Date().toDateString();
+        const yesterday = new Date(Date.now() - 86400000).toDateString();
+        let lastDay = '';
+        let html = '';
+        this.notes.forEach(n => {
+            const d = new Date(n.createdAt);
+            const dayKey = d.toDateString();
+            if (dayKey !== lastDay) {
+                lastDay = dayKey;
+                const label = dayKey === today ? 'Bugün'
+                    : dayKey === yesterday ? 'Dün'
+                    : d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                html += `<div class="notes-day"><span>${label}</span></div>`;
+            }
+            const mine = n.author === this.currentUser;
+            html += `
+                <div class="note-row ${mine ? 'mine' : ''}">
+                    <div class="note-bubble">
+                        ${!mine && n.author ? `<span class="note-author">${this.escapeHtml(n.author)}</span>` : ''}
+                        <div class="note-text">${this.escapeHtml(n.text)}</div>
+                        <div class="note-meta">
+                            <span>${this.formatTime(n.createdAt)}</span>
+                            ${mine ? `<button type="button" class="note-delete" title="Notu sil" onclick="window.app.deleteNote('${n.id}')">Sil</button>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        const nearBottom = list.scrollHeight - list.scrollTop - list.clientHeight < 80;
+        list.innerHTML = html;
+        if (nearBottom || !list.dataset.rendered) list.scrollTop = list.scrollHeight;
+        list.dataset.rendered = '1';
     }
 
     // ==========================================
@@ -596,6 +759,7 @@ class App {
                 await this.loadInitialData();
                 await this.loadServerInfo();
                 this.loadEvents();
+                this.loadNotes();
                 this.flushOfflineQueue();
                 this.showToast(`Hoş geldiniz, ${data.username}!`);
             } else {
@@ -991,6 +1155,27 @@ class App {
                 this.populateSupplierSelects();
                 this.renderSuppliersModal();
                 this.render();
+            });
+
+            this.socket.on('note:added', (note) => {
+                if (this.notes.find(n => n.id === note.id)) return;
+                this.notes.push(note);
+                this.renderNotes();
+                const modal = document.getElementById('notes-modal');
+                const isOpen = modal && modal.classList.contains('active');
+                if (isOpen) {
+                    this.markNotesSeen();
+                } else if (note.author !== this.currentUser) {
+                    this.updateNotesBadge();
+                    if (window.soundManager && window.soundManager.playNewItem) window.soundManager.playNewItem();
+                    this.showToast(`💬 ${note.author || 'Yeni not'}: ${note.text.slice(0, 60)}`);
+                }
+            });
+
+            this.socket.on('note:deleted', (data) => {
+                this.notes = this.notes.filter(n => n.id !== data.id);
+                this.renderNotes();
+                this.updateNotesBadge();
             });
 
             this.socket.on('supplier:all-deleted', () => {
@@ -3286,7 +3471,7 @@ class App {
         if (loginTitle) loginTitle.textContent = appName;
 
         const printTitle = document.getElementById('print-app-title');
-        if (printTitle) printTitle.textContent = appName.toUpperCase() + ' - SİPARİŞ LİSTESİ';
+        if (printTitle) printTitle.textContent = 'HKC EKSİK LİSTESİ';
 
         const inputAppName = document.getElementById('input-app-name');
         if (inputAppName && document.activeElement !== inputAppName) {

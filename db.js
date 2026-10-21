@@ -122,6 +122,16 @@ async function initDb() {
     `);
     await client.execute('CREATE INDEX IF NOT EXISTS idx_item_events_item ON item_events (itemId)');
 
+    // Sohbet tarzı ortak notlar
+    await client.execute(`
+        CREATE TABLE IF NOT EXISTS notes (
+            id TEXT PRIMARY KEY,
+            text TEXT NOT NULL,
+            author TEXT DEFAULT '',
+            createdAt TEXT NOT NULL
+        )
+    `);
+
     // Mevcut ürünleri geçmişe bir kez aktar (aynı id tekrar eklenmez)
     try {
         const missing = await client.execute(

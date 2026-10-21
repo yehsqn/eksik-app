@@ -38,7 +38,7 @@ class ExportManager {
             <div class="pdf-container">
                 <div class="pdf-header">
                     <div class="pdf-title-block">
-                        <h1>${shopName.toUpperCase()} - EKSİK SİPARİŞ LİSTESİ</h1>
+                        <h1>HKC EKSİK LİSTESİ</h1>
                         <p class="pdf-meta">Tarih: ${dateStr} ${timeStr} | Toplam Çeşit: <strong>${activeItems.length} Ürün</strong></p>
                     </div>
                 </div>
@@ -77,14 +77,20 @@ class ExportManager {
 
         html += `
                 <div class="pdf-footer">
-                    <div>Bu liste Dükkan Eksik Takip uygulaması ile oluşturulmuştur.</div>
+                    <div>Bu liste SQNOVA SOFTWARE-App uygulaması ile oluşturulmuştur.</div>
                 </div>
             </div>
+            
         `;
 
         printArea.innerHTML = html;
 
         // Trigger browser print dialog (Users can select "Save as PDF" / "PDF olarak kaydet" or Print)
+        // "PDF olarak kaydet" dosya adı sayfa başlığından gelir
+        const originalTitle = document.title;
+        document.title = 'HKC Eksik Listesi';
+        window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
+
         setTimeout(() => {
             window.print();
         }, 150);

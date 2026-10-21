@@ -25,7 +25,7 @@
         rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css?v=20261021_stats">
+    <link rel="stylesheet" href="/css/style.css?v=20261021_notes">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -95,6 +95,11 @@
                 </div>
 
                 <div class="header-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-notes" title="Notlar" onclick="window.app.openNotesModal()">
+                        <span>💬</span>
+                        <span>Notlar</span>
+                        <span class="notes-unread-badge" id="notes-unread-badge" style="display: none;">0</span>
+                    </button>
                     <button type="button" class="btn btn-secondary btn-sm" id="btn-open-stats" title="İstatistikler" onclick="window.app.openStatsModal()">
                         <span>📊</span>
                         <span>İstatistik</span>
@@ -345,6 +350,21 @@
         <!-- Mobile Floating Mic Button -->
         <div class="mobile-fab-container">
             <button class="fab-btn fab-mic" id="fab-voice" title="Sesle Ekle">🎙️</button>
+        </div>
+    </div>
+
+    <!-- MODAL: NOTLAR (sohbet tarzı ortak not defteri) -->
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-card notes-modal-card">
+            <div class="modal-header">
+                <h2 class="modal-title"><span>💬</span> Notlar</h2>
+                <button type="button" class="btn-close" onclick="window.app.closeAllModals()">×</button>
+            </div>
+            <div class="notes-list" id="notes-list"></div>
+            <form class="notes-composer" id="notes-form">
+                <textarea id="notes-input" rows="1" maxlength="2000" placeholder="Not yaz…"></textarea>
+                <button type="submit" class="btn btn-primary notes-send-btn" title="Gönder">➤</button>
+            </form>
         </div>
     </div>
 
@@ -1073,8 +1093,8 @@
     <script src="/js/duplicate-detector.js?v=20261017_2358"></script>
     <script src="/js/audio.js?v=20261017_2358"></script>
     <script src="/js/speech.js?v=20261017_2358"></script>
-    <script src="/js/export.js?v=20261017_2358"></script>
-    <script src="/js/app.js?v=20261021_stats"></script>
+    <script src="/js/export.js?v=20261021_notes"></script>
+    <script src="/js/app.js?v=20261021_notes"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

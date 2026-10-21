@@ -779,6 +779,68 @@ app.get('/api/stats/events', async (req, res) => {
     }
 });
 
+// Notlar (sohbet tarzı ortak not defteri)
+app.get('/api/notes', async (req, res) => {
+    try {
+        const result = await db.execute('SELECT * FROM (SELECT * FROM notes ORDER BY createdAt DESC LIMIT 300) ORDER BY createdAt ASC');
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Get notes error:', err);
+        res.status(500).json({ error: 'Notlar yüklenemedi' });
+    }
+});
+
+app.post('/api/notes', async (req, res) => {
+    const text = String((req.body && req.body.text) || '').trim();
+    const author = String((req.body && req.body.author) || '').trim().slice(0, 40);
+    if (!text) {
+        return res.status(400).json({ error: 'Not boş olamaz' });
+    }
+    if (text.length > 2000) {
+        return res.status(400).json({ error: 'Not çok uzun (en fazla 2000 karakter)' });
+    }
+
+    const note = {
+        id: 'note_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        text,
+        author,
+        createdAt: new Date().toISOString()
+    };
+
+    try {
+        await db.execute({
+            sql: 'INSERT INTO notes (id, text, author, createdAt) VALUES (?, ?, ?, ?)',
+            args: [note.id, note.text, note.author, note.createdAt]
+        });
+        io.emit('note:added', note);
+
+        sendPushNotificationToAll({
+            title: `💬 Yeni not${note.author ? ' — ' + note.author : ''}`,
+            body: note.text.length > 120 ? note.text.slice(0, 117) + '...' : note.text,
+            icon: '/icon-192.png',
+            badge: '/icon-192.png',
+            tag: 'note-' + note.id,
+            data: { url: '/' }
+        }).catch(err => console.error('Push send notice:', err));
+
+        res.status(201).json(note);
+    } catch (err) {
+        console.error('Insert note error:', err);
+        res.status(500).json({ error: 'Not kaydedilemedi' });
+    }
+});
+
+app.delete('/api/notes/:id', async (req, res) => {
+    try {
+        await db.execute({ sql: 'DELETE FROM notes WHERE id = ?', args: [req.params.id] });
+        io.emit('note:deleted', { id: req.params.id });
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Delete note error:', err);
+        res.status(500).json({ error: 'Not silinemedi' });
+    }
+});
+
 // Items Delete Endpoint (Supports Soft Delete to 'Silinenler' and Permanent Delete)
 app.delete('/api/items/:id', async (req, res) => {
     const { id } = req.params;

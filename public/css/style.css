@@ -1326,6 +1326,145 @@ input[type="checkbox"], input[type="radio"], input[type="file"], input[type="hid
 }
 
 /* ==========================================================================
+   Notlar (sohbet tarzı)
+   ========================================================================== */
+#btn-open-notes {
+    position: relative;
+}
+.notes-unread-badge {
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9999px;
+    background: var(--status-critical);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+}
+.modal-card.notes-modal-card {
+    max-width: 560px;
+    height: min(720px, 86vh);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 1rem;
+}
+.notes-modal-card .modal-header {
+    margin-bottom: 0;
+}
+.notes-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem 0.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    overscroll-behavior: contain;
+}
+.notes-empty {
+    margin: auto;
+    max-width: 320px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+.notes-empty-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.5rem;
+}
+.notes-day {
+    display: flex;
+    justify-content: center;
+    margin: 0.6rem 0 0.3rem;
+}
+.notes-day span {
+    padding: 0.2rem 0.7rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.05);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+.note-row {
+    display: flex;
+    justify-content: flex-start;
+}
+.note-row.mine {
+    justify-content: flex-end;
+}
+.note-bubble {
+    max-width: 82%;
+    padding: 0.55rem 0.8rem 0.4rem;
+    border-radius: 16px 16px 16px 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--border-subtle);
+}
+.note-row.mine .note-bubble {
+    border-radius: 16px 16px 5px 16px;
+    background: linear-gradient(135deg, rgba(139, 123, 255, 0.32), rgba(106, 88, 245, 0.26));
+    border-color: rgba(124, 108, 255, 0.35);
+}
+.note-author {
+    display: block;
+    margin-bottom: 0.1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #b9adff;
+}
+.note-text {
+    font-size: 0.9rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+.note-meta {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.15rem;
+    font-size: 0.66rem;
+    color: var(--text-muted);
+}
+.note-delete {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--text-muted);
+    font-size: 0.66rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.note-delete:hover {
+    color: #ff8a9a;
+}
+.notes-composer {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.notes-composer textarea {
+    flex: 1;
+    resize: none;
+    max-height: 140px;
+    line-height: 1.4;
+    border-radius: 22px !important;
+    padding: 0.7rem 1rem;
+}
+.notes-send-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    flex-shrink: 0;
+    border-radius: 50%;
+    font-size: 1.05rem;
+}
+
+/* ==========================================================================
    İstatistik Sayfası
    ========================================================================== */
 .modal-card.stats-modal-card {
