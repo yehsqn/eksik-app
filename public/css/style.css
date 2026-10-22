@@ -2585,7 +2585,18 @@ select option {
         border-radius: 24px 24px 0 0;
         padding: 1.5rem 1.15rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
         max-height: 92vh;
+        max-height: 92dvh;
         border-bottom: none !important;
+    }
+    /* iOS Safari: vh araç çubuğunu saymaz, alttaki ad formu kesiliyordu */
+    .modal-card.notes-modal-card {
+        height: min(720px, 86vh);
+        height: min(720px, 86dvh);
+        padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+    }
+    .notes-name-row .btn {
+        flex-shrink: 0;
+        white-space: nowrap;
     }
     .modal-card::before {
         content: '';
