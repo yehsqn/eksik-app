@@ -81,6 +81,7 @@ class App {
         // Çevrimdışı eklenen ürünler ve değişiklikler (bağlantı gelince sunucuya gönderilir)
         this.offlineQueue = this.readJsonStorage('dukkan_offline_queue', []);
         this.offlineMutations = this.readJsonStorage('dukkan_offline_mutations', []);
+        this.pendingItemRequests = new Set();
         this.isFlushingQueue = false;
         this.isHandlingUnauthorized = false;
 
@@ -131,13 +132,13 @@ class App {
         if (this.isAuthenticated()) {
             this.showAppScreen();
             this.initSocket();
+            await this.flushOfflineQueue();
             await this.loadSuppliers();
             await this.loadInitialData();
             await this.loadSettings();
             await this.loadServerInfo();
             this.loadEvents();
             this.loadNotes();
-            this.flushOfflineQueue();
         } else {
             this.showLoginScreen();
         }
@@ -229,6 +230,54 @@ class App {
         this.writeJsonStorage('dukkan_offline_mutations', this.offlineMutations);
         this.saveItemsCache();
         this.refreshConnectionBadge();
+    }
+
+    trackItemRequest(promise) {
+        if (!promise || typeof promise.then !== 'function') return promise;
+        this.pendingItemRequests.add(promise);
+        const cleanup = () => this.pendingItemRequests.delete(promise);
+        promise.then(cleanup, cleanup);
+        return promise;
+    }
+
+    async waitForPendingItemRequests() {
+        if (!this.pendingItemRequests || this.pendingItemRequests.size === 0) return;
+        await Promise.allSettled(Array.from(this.pendingItemRequests));
+    }
+
+    applyPendingOfflineMutations() {
+        if (!Array.isArray(this.offlineMutations) || this.offlineMutations.length === 0) return;
+        for (const mut of this.offlineMutations) {
+            if (!mut || !mut.type) continue;
+            if (mut.type === 'updateItem') {
+                const item = this.items.find(i => i.id === mut.id);
+                if (item && mut.data) Object.assign(item, mut.data);
+            } else if (mut.type === 'softDelete') {
+                const item = this.items.find(i => i.id === mut.id);
+                if (item) item.status = 'deleted';
+            } else if (mut.type === 'permanentDelete') {
+                this.items = this.items.filter(i => i.id !== mut.id);
+                if (this.selectedIds) this.selectedIds.delete(mut.id);
+            } else if (mut.type === 'emptyTrash') {
+                this.items = this.items.filter(i => i.status !== 'deleted');
+            } else if (mut.type === 'restore') {
+                const item = this.items.find(i => i.id === mut.id);
+                if (item) item.status = mut.status || 'pending';
+            } else if (mut.type === 'restoreAll') {
+                this.items.forEach(i => {
+                    if (i.status === 'deleted') i.status = 'pending';
+                });
+            } else if (mut.type === 'clearCompleted') {
+                this.items.forEach(i => {
+                    if (i.status === 'completed') i.status = 'deleted';
+                });
+            } else if (mut.type === 'bulkUpdate' && mut.payload && Array.isArray(mut.payload.ids) && mut.payload.updates) {
+                const idSet = new Set(mut.payload.ids);
+                this.items.forEach(i => {
+                    if (idSet.has(i.id)) Object.assign(i, mut.payload.updates);
+                });
+            }
+        }
     }
 
     readJsonStorage(key, fallback) {
@@ -333,19 +382,37 @@ class App {
                 const mut = this.offlineMutations[0];
                 let res;
                 if (mut.type === 'updateItem') {
-                    res = await this.apiFetch(`/api/items/${mut.id}`, {
+                    res = await this.apiFetch(`/api/items/${encodeURIComponent(mut.id)}`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(mut.data)
                     });
                 } else if (mut.type === 'softDelete') {
-                    res = await this.apiFetch(`/api/items/${mut.id}`, {
+                    res = await this.apiFetch(`/api/items/${encodeURIComponent(mut.id)}`, {
                         method: 'DELETE',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ deletedBy: mut.deletedBy || 'Admin' })
                     });
+                } else if (mut.type === 'permanentDelete') {
+                    res = await this.apiFetch(`/api/items/${encodeURIComponent(mut.id)}?permanent=true`, {
+                        method: 'DELETE'
+                    });
+                } else if (mut.type === 'emptyTrash') {
+                    res = await this.apiFetch('/api/items/trash/empty', {
+                        method: 'DELETE'
+                    });
                 } else if (mut.type === 'restore') {
-                    res = await this.apiFetch(`/api/items/${mut.id}/restore`, {
+                    res = await this.apiFetch(`/api/items/${encodeURIComponent(mut.id)}/restore`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ status: mut.status || 'pending' })
+                    });
+                } else if (mut.type === 'restoreAll') {
+                    res = await this.apiFetch('/api/items/restore-all', {
+                        method: 'POST'
+                    });
+                } else if (mut.type === 'clearCompleted') {
+                    res = await this.apiFetch('/api/items/clear-completed', {
                         method: 'POST'
                     });
                 } else if (mut.type === 'bulkUpdate') {
@@ -358,7 +425,7 @@ class App {
                     res = { ok: false, status: 400 };
                 }
 
-                if (res.status === 503 || res.status === 401) break;
+                if (res.status === 503 || res.status === 401 || res.status >= 500) break;
                 if (res.ok) syncedMutations++;
                 this.offlineMutations.shift();
                 this.writeJsonStorage('dukkan_offline_mutations', this.offlineMutations);
@@ -1030,13 +1097,13 @@ class App {
                 this.isHandlingUnauthorized = false;
                 this.showAppScreen();
                 this.initSocket();
+                await this.flushOfflineQueue();
                 await this.loadSuppliers();
                 await this.loadInitialData();
                 await this.loadSettings();
                 await this.loadServerInfo();
                 this.loadEvents();
                 this.loadNotes();
-                this.flushOfflineQueue();
                 this.showToast(`Hoş geldiniz, ${data.username}!`);
             } else {
                 errorDiv.textContent = data.error || 'Giriş yapılamadı!';
@@ -1351,6 +1418,7 @@ class App {
             this.socket.on('init', (data) => {
                 if (data.items) {
                     this.items = data.items;
+                    this.applyPendingOfflineMutations();
                     this.saveItemsCache(this.items);
                     this.render();
                 }
@@ -1593,6 +1661,7 @@ class App {
             const res = await this.apiFetch('/api/items');
             if (res.ok) {
                 this.items = await res.json();
+                this.applyPendingOfflineMutations();
                 this.saveItemsCache(this.items);
                 this.render();
                 return;
@@ -1605,6 +1674,7 @@ class App {
         const cached = this.readJsonStorage('dukkan_items_cache', null);
         if (Array.isArray(cached)) {
             this.items = cached;
+            this.applyPendingOfflineMutations();
             this.render();
             this.showToast('📦 Çevrimdışı önbellekten liste yüklendi');
         }
@@ -2657,6 +2727,7 @@ class App {
         if (!item) return;
 
         const oldStatus = item.status || 'pending';
+        const oldUpdatedAt = item.updatedAt;
         const deletedBy = (this.deviceName && this.deviceName.trim()) || this.currentUser || 'Admin';
         item.status = 'deleted';
         item.updatedAt = new Date().toISOString();
@@ -2676,13 +2747,19 @@ class App {
         }
 
         try {
-            const res = await this.apiFetch(`/api/items/${id}`, {
+            const res = await this.trackItemRequest(this.apiFetch(`/api/items/${encodeURIComponent(id)}`, {
                 method: 'DELETE',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ deletedBy })
-            });
+                body: JSON.stringify({ deletedBy }),
+                keepalive: true
+            }));
+            if (res.status === 401) return;
             if (res.status === 503) {
                 this.enqueueOfflineMutation({ type: 'softDelete', id, deletedBy });
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Soft delete failed (${res.status})`);
             }
         } catch (e) {
             if (e instanceof TypeError) {
@@ -2690,6 +2767,12 @@ class App {
                 return;
             }
             console.error('Silme hatası:', e);
+            item.status = oldStatus;
+            item.updatedAt = oldUpdatedAt;
+            document.querySelectorAll('.toast-undo-container').forEach(t => t.remove());
+            this.saveItemsCache();
+            this.render();
+            this.showToast('❌ Ürün silinemedi, lütfen tekrar deneyin.');
         }
     }
 
@@ -2729,7 +2812,11 @@ class App {
         const item = this.items.find(i => i.id === id);
         if (!item) return;
 
-        item.status = targetStatus || 'pending';
+        const oldStatus = item.status;
+        const oldUpdatedAt = item.updatedAt;
+        const resolvedStatus = targetStatus || 'pending';
+
+        item.status = resolvedStatus;
         item.updatedAt = new Date().toISOString();
 
         if (window.soundManager && window.soundManager.playCompleted) {
@@ -2739,22 +2826,39 @@ class App {
         this.render();
         this.showToast(`↩️ Geri Yüklendi: ${item.name}`);
 
+        await this.waitForPendingItemRequests();
+
         if (!navigator.onLine) {
-            this.enqueueOfflineMutation({ type: 'restore', id });
+            this.enqueueOfflineMutation({ type: 'restore', id, status: resolvedStatus });
             return;
         }
 
         try {
-            const res = await this.apiFetch(`/api/items/${id}/restore`, { method: 'POST' });
+            const res = await this.trackItemRequest(this.apiFetch(`/api/items/${encodeURIComponent(id)}/restore`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: resolvedStatus }),
+                keepalive: true
+            }));
+            if (res.status === 401) return;
             if (res.status === 503) {
-                this.enqueueOfflineMutation({ type: 'restore', id });
+                this.enqueueOfflineMutation({ type: 'restore', id, status: resolvedStatus });
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Restore failed (${res.status})`);
             }
         } catch (e) {
             if (e instanceof TypeError) {
-                this.enqueueOfflineMutation({ type: 'restore', id });
+                this.enqueueOfflineMutation({ type: 'restore', id, status: resolvedStatus });
                 return;
             }
             console.error('Geri yükleme hatası:', e);
+            item.status = oldStatus;
+            item.updatedAt = oldUpdatedAt;
+            this.saveItemsCache();
+            this.render();
+            this.showToast('❌ Ürün geri yüklenemedi, lütfen tekrar deneyin.');
         }
     }
 
@@ -2766,9 +2870,11 @@ class App {
             return;
         }
 
+        const snapshots = deletedItems.map(i => ({ id: i.id, status: i.status, updatedAt: i.updatedAt }));
+        const now = new Date().toISOString();
         deletedItems.forEach(i => {
             i.status = 'pending';
-            i.updatedAt = new Date().toISOString();
+            i.updatedAt = now;
         });
 
         if (window.soundManager && window.soundManager.playCompleted) {
@@ -2776,12 +2882,48 @@ class App {
         }
         this.saveItemsCache();
         this.render();
-        this.showToast(`✅ ${deletedItems.length} ürün listeye geri yüklendi!`);
+
+        await this.waitForPendingItemRequests();
+
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'restoreAll' });
+            this.showToast(`📴 İnternet yok — ${deletedItems.length} ürünü geri yükleme sıraya alındı`);
+            return;
+        }
 
         try {
-            await this.apiFetch('/api/items/restore-all', { method: 'POST' });
+            const res = await this.trackItemRequest(this.apiFetch('/api/items/restore-all', {
+                method: 'POST',
+                keepalive: true
+            }));
+            if (res.status === 401) return;
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'restoreAll' });
+                this.showToast(`📴 Sunucuya ulaşılamadı — ${deletedItems.length} ürünü geri yükleme sıraya alındı`);
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Restore all failed (${res.status})`);
+            }
+            this.showToast(`✅ ${deletedItems.length} ürün listeye geri yüklendi!`);
         } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'restoreAll' });
+                this.showToast(`📴 Bağlantı kesildi — ${deletedItems.length} ürünü geri yükleme sıraya alındı`);
+                return;
+            }
             console.error('Toplu geri yükleme hatası:', e);
+            const snapMap = new Map(snapshots.map(s => [s.id, s]));
+            this.items.forEach(i => {
+                const snap = snapMap.get(i.id);
+                if (snap) {
+                    i.status = snap.status;
+                    i.updatedAt = snap.updatedAt;
+                }
+            });
+            this.saveItemsCache();
+            this.render();
+            this.showToast('❌ Ürünler geri yüklenemedi, lütfen tekrar deneyin.');
         }
     }
 
@@ -2798,14 +2940,48 @@ class App {
             title: 'Çöp Kutusunu Boşalt',
             desc: `Çöp kutusundaki ${trashCount} adet ürün kalıcı olarak silinecek. Bu işlem geri alınamaz! Kalıcı olarak silinsin mi?`,
             onConfirm: async () => {
+                const trashedSnapshot = this.items.filter(i => i.status === 'deleted').map(i => ({ ...i }));
                 this.items = this.items.filter(i => i.status !== 'deleted');
                 this.saveItemsCache();
                 this.render();
-                this.showToast('Çöp kutusu tamamen boşaltıldı.');
+
+                await this.waitForPendingItemRequests();
+
+                if (!navigator.onLine) {
+                    this.enqueueOfflineMutation({ type: 'emptyTrash' });
+                    this.showToast('📴 İnternet yok — çöp kutusu temizleme sıraya alındı');
+                    return;
+                }
+
                 try {
-                    await this.apiFetch('/api/items/trash/empty', { method: 'DELETE' });
+                    const res = await this.trackItemRequest(this.apiFetch('/api/items/trash/empty', {
+                        method: 'DELETE',
+                        keepalive: true
+                    }));
+                    if (res.status === 401) return;
+                    if (res.status === 503) {
+                        this.enqueueOfflineMutation({ type: 'emptyTrash' });
+                        this.showToast('📴 Sunucuya ulaşılamadı — çöp kutusu temizleme sıraya alındı');
+                        return;
+                    }
+                    if (!res.ok) {
+                        throw new Error(`Empty trash failed (${res.status})`);
+                    }
+                    this.showToast('Çöp kutusu tamamen boşaltıldı.');
                 } catch (e) {
+                    if (e instanceof TypeError) {
+                        this.enqueueOfflineMutation({ type: 'emptyTrash' });
+                        this.showToast('📴 Bağlantı kesildi — çöp kutusu temizleme sıraya alındı');
+                        return;
+                    }
                     console.error('Çöp boşaltma hatası:', e);
+                    const existingIds = new Set(this.items.map(i => i.id));
+                    trashedSnapshot.forEach(s => {
+                        if (!existingIds.has(s.id)) this.items.push(s);
+                    });
+                    this.saveItemsCache();
+                    this.render();
+                    this.showToast('❌ Çöp kutusu temizlenemedi, lütfen tekrar deneyin.');
                 }
             }
         });
@@ -2821,6 +2997,8 @@ class App {
             title: 'Kalıcı Olarak Sil',
             desc: `"${name}" ürünü veritabanından kalıcı olarak silinecektir. Emin misiniz?`,
             onConfirm: async () => {
+                const removedIndex = this.items.findIndex(i => i.id === id);
+                const removedItem = removedIndex !== -1 ? { ...this.items[removedIndex] } : (item ? { ...item } : null);
                 this.items = this.items.filter(i => i.id !== id);
                 if (this.selectedIds) this.selectedIds.delete(id);
                 this.saveItemsCache();
@@ -2828,12 +3006,44 @@ class App {
                     window.soundManager.playDelete();
                 }
                 this.render();
-                this.showToast(`Kalıcı olarak silindi: ${name}`);
+
+                await this.waitForPendingItemRequests();
+
+                if (!navigator.onLine) {
+                    this.enqueueOfflineMutation({ type: 'permanentDelete', id });
+                    this.showToast(`📴 İnternet yok — kalıcı silme sıraya alındı: ${name}`);
+                    return;
+                }
 
                 try {
-                    await this.apiFetch(`/api/items/${id}?permanent=true`, { method: 'DELETE' });
+                    const res = await this.trackItemRequest(this.apiFetch(`/api/items/${encodeURIComponent(id)}?permanent=true`, {
+                        method: 'DELETE',
+                        keepalive: true
+                    }));
+                    if (res.status === 401) return;
+                    if (res.status === 503) {
+                        this.enqueueOfflineMutation({ type: 'permanentDelete', id });
+                        this.showToast(`📴 Sunucuya ulaşılamadı — kalıcı silme sıraya alındı: ${name}`);
+                        return;
+                    }
+                    if (!res.ok) {
+                        throw new Error(`Permanent delete failed (${res.status})`);
+                    }
+                    this.showToast(`Kalıcı olarak silindi: ${name}`);
                 } catch (e) {
+                    if (e instanceof TypeError) {
+                        this.enqueueOfflineMutation({ type: 'permanentDelete', id });
+                        this.showToast(`📴 Bağlantı kesildi — kalıcı silme sıraya alındı: ${name}`);
+                        return;
+                    }
                     console.error('Kalıcı silme hatası:', e);
+                    if (removedItem && !this.items.some(i => i.id === id)) {
+                        const insertAt = removedIndex >= 0 && removedIndex <= this.items.length ? removedIndex : 0;
+                        this.items.splice(insertAt, 0, removedItem);
+                    }
+                    this.saveItemsCache();
+                    this.render();
+                    this.showToast('❌ Kalıcı silme başarısız oldu, lütfen tekrar deneyin.');
                 }
             }
         });
@@ -3187,25 +3397,62 @@ class App {
     }
 
     async clearCompletedItems() {
-
-        const completedCount = this.items.filter(i => i.status === 'completed').length;
+        const completedItems = this.items.filter(i => i.status === 'completed');
+        const completedCount = completedItems.length;
         if (completedCount === 0) {
             this.showToast('Temizlenecek tamamlanmış ürün bulunmuyor.');
             return;
         }
 
+        const snapshots = completedItems.map(i => ({ id: i.id, status: i.status, updatedAt: i.updatedAt }));
+        const now = new Date().toISOString();
         // Soft-delete completed items so they are safe in Çöp Kutusu!
-        this.items.forEach(i => {
-            if (i.status === 'completed') i.status = 'deleted';
+        completedItems.forEach(i => {
+            i.status = 'deleted';
+            i.updatedAt = now;
         });
         this.saveItemsCache();
         this.render();
-        this.showToast(`${completedCount} tamamlanmış ürün çöp kutusuna taşındı (güvende).`);
+
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'clearCompleted' });
+            this.showToast(`📴 İnternet yok — ${completedCount} tamamlanan ürünü taşıma sıraya alındı`);
+            return;
+        }
 
         try {
-            await this.apiFetch('/api/items/clear-completed', { method: 'POST' });
+            const res = await this.trackItemRequest(this.apiFetch('/api/items/clear-completed', {
+                method: 'POST',
+                keepalive: true
+            }));
+            if (res.status === 401) return;
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'clearCompleted' });
+                this.showToast(`📴 Sunucuya ulaşılamadı — ${completedCount} tamamlanan ürünü taşıma sıraya alındı`);
+                return;
+            }
+            if (!res.ok) {
+                throw new Error(`Clear completed failed (${res.status})`);
+            }
+            this.showToast(`${completedCount} tamamlanmış ürün çöp kutusuna taşındı (güvende).`);
         } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'clearCompleted' });
+                this.showToast(`📴 Bağlantı kesildi — ${completedCount} tamamlanan ürünü taşıma sıraya alındı`);
+                return;
+            }
             console.error('Temizleme hatası:', e);
+            const snapMap = new Map(snapshots.map(s => [s.id, s]));
+            this.items.forEach(i => {
+                const snap = snapMap.get(i.id);
+                if (snap) {
+                    i.status = snap.status;
+                    i.updatedAt = snap.updatedAt;
+                }
+            });
+            this.saveItemsCache();
+            this.render();
+            this.showToast('❌ Tamamlananlar temizlenemedi, lütfen tekrar deneyin.');
         }
     }
 
@@ -4169,11 +4416,12 @@ class App {
         }
 
         try {
-            const res = await this.apiFetch('/api/items/bulk-update', {
+            const res = await this.trackItemRequest(this.apiFetch('/api/items/bulk-update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
+                body: JSON.stringify(payload),
+                keepalive: true
+            }));
             if (res.status === 503) {
                 this.enqueueOfflineMutation({ type: 'bulkUpdate', payload });
                 this.showToast(`📴 Sunucuya ulaşılamadı — ${count} ürün işlemi sıraya alındı`);

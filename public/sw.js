@@ -1,6 +1,6 @@
 //  Web Push & Background Service Worker
 // Çevrimdışı çalışma: uygulama kabuğu önbellekte, veriler localStorage önbelleğinde tutulur
-const CACHE_NAME = 'eksik-app-v4-deluxe3';
+const CACHE_NAME = 'eksik-app-v4-deluxe4';
 const APP_SHELL = [
     '/',
     '/css/style.css',

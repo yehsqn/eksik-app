@@ -83,12 +83,12 @@ async function initDb() {
 
     // Migration: add image & addedBy columns if table already existed without them
     try {
-        await client.execute('ALTER TABLE items ADD COLUMN image TEXT DEFAULT ""');
+        await client.execute("ALTER TABLE items ADD COLUMN image TEXT DEFAULT ''");
     } catch (e) {
         // Column already exists, safe to ignore
     }
     try {
-        await client.execute('ALTER TABLE items ADD COLUMN addedBy TEXT DEFAULT ""');
+        await client.execute("ALTER TABLE items ADD COLUMN addedBy TEXT DEFAULT ''");
     } catch (e) {
         // Column already exists, safe to ignore
     }
