@@ -1,3 +1,40 @@
+// Crisp Inline SVG Icons (matched to HKC Ultra Deluxe Design System)
+const UI_ICONS = {
+    check: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>',
+    edit: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>',
+    camera: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>',
+    trash: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>',
+    building: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg>',
+    clock: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
+    smartphone: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>',
+    monitor: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>',
+    note: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>',
+    undo: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>',
+    x: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>',
+    shield: '<svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>',
+    sparkles: '<svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>',
+    download: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>',
+    refresh: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>',
+    bell: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>',
+    bellOff: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><line x1="2" x2="22" y1="2" y2="22"/></svg>',
+    volume: '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>',
+    volumeX: '<svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" x2="16" y1="9" y2="15"/><line x1="16" x2="22" y1="9" y2="15"/></svg>',
+    cloud: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>',
+    database: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>',
+    message: '<svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>',
+    save: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>',
+    package: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.5 4.27 9 5.15"/><path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>',
+    wifiOff: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><line x1="2" x2="22" y1="2" y2="22"/><path d="M8.5 16.5a5 5 0 0 1 7 0"/><path d="M2 8.82a15 15 0 0 1 4.17-2.65"/><path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/><path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/><path d="M5 13a10 10 0 0 1 5.24-2.76"/></svg>',
+    plus: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>',
+    user: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+    hourglass: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/></svg>',
+    chevronDown: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+    checkSquare: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="3"/><path d="m9 12 2 2 4-4"/></svg>',
+    square: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="3"/></svg>',
+    layers: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>',
+    sliders: '<svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true"><line x1="4" x2="4" y1="21" y2="14"/><line x1="4" x2="4" y1="10" y2="3"/><line x1="12" x2="12" y1="21" y2="12"/><line x1="12" x2="12" y1="8" y2="3"/><line x1="20" x2="20" y1="21" y2="16"/><line x1="20" x2="20" y1="12" y2="3"/><line x1="2" x2="6" y1="14" y2="14"/><line x1="10" x2="14" y1="8" y2="8"/><line x1="18" x2="22" y1="16" y2="16"/></svg>'
+};
+
 // Main Application Logic - Turso / LibSQL, Suppliers Management & Photo Support
 class App {
     constructor() {
@@ -5,6 +42,7 @@ class App {
         this.suppliers = [];
         this.currentUser = localStorage.getItem('dukkan_username') || 'admin';
         this.authToken = localStorage.getItem('dukkan_token') || null;
+        this.theme = localStorage.getItem('hkc_theme') || 'dark';
 
         this.filterStatus = 'all';
         this.activeSupplier = 'all';
@@ -40,9 +78,25 @@ class App {
         this.isPushSubscribed = false;
         this.swRegistration = null;
 
-        // Çevrimdışı eklenen ürünler (bağlantı gelince sunucuya gönderilir)
+        // Çevrimdışı eklenen ürünler ve değişiklikler (bağlantı gelince sunucuya gönderilir)
         this.offlineQueue = this.readJsonStorage('dukkan_offline_queue', []);
+        this.offlineMutations = this.readJsonStorage('dukkan_offline_mutations', []);
         this.isFlushingQueue = false;
+        this.isHandlingUnauthorized = false;
+
+        // Daraltılmış toptancı grupları (akordeon)
+        this.collapsedSuppliers = new Set(this.readJsonStorage('dukkan_collapsed_suppliers', []));
+
+        // Toplu işlem modu ve seçim durumu
+        this.isBulkMode = false;
+        this.selectedIds = new Set();
+
+        // Ürün adı otomatik tamamlama durumu
+        this.autocompleteMatches = [];
+        this.autocompleteIndex = -1;
+
+        // Özel dropdown bileşenleri
+        this.customSelectInstances = [];
         // Eksik geçmişi (istatistik & hatırlatma); çevrimdışı da çalışsın diye saklanır
         this.events = this.readJsonStorage('dukkan_events_cache', []);
         this.reminderSnoozes = this.readJsonStorage('dukkan_reminder_snoozes', {});
@@ -62,9 +116,13 @@ class App {
         this.initTheme();
         this.initAuth();
         this.initEventListeners();
+        this.initCustomSelects();
+        this.initAutocomplete();
+        this.initUnitQuickChips();
+        this.initBulkHandlers();
         this.initPhotoHandlers();
         this.renderQuickPills();
-        this.loadSettings();
+        this.loadPublicBranding();
         this.initPushNotifications();
 
         this.initOfflineHandlers();
@@ -75,6 +133,7 @@ class App {
             this.initSocket();
             await this.loadSuppliers();
             await this.loadInitialData();
+            await this.loadSettings();
             await this.loadServerInfo();
             this.loadEvents();
             this.loadNotes();
@@ -82,6 +141,94 @@ class App {
         } else {
             this.showLoginScreen();
         }
+    }
+
+    async apiFetch(url, options = {}) {
+        const headers = { ...(options.headers || {}) };
+        if (this.authToken && !headers.Authorization) {
+            headers.Authorization = `Bearer ${this.authToken}`;
+        }
+        const res = await fetch(url, { ...options, headers });
+        if (res.status === 401) {
+            this.handleUnauthorized();
+        }
+        return res;
+    }
+
+    handleUnauthorized() {
+        if (this.isHandlingUnauthorized) return;
+        this.isHandlingUnauthorized = true;
+        localStorage.removeItem('dukkan_token');
+        localStorage.removeItem('dukkan_username');
+        this.authToken = null;
+        this.isBulkMode = false;
+        if (this.selectedIds) this.selectedIds.clear();
+        if (typeof this.updateBulkBarUI === 'function') this.updateBulkBarUI();
+        if (this.socket) {
+            try { this.socket.disconnect(); } catch (e) {}
+            this.socket = null;
+        }
+        this.showLoginScreen();
+        this.showToast('⚠️ Oturum süresi doldu veya geçersiz, lütfen tekrar giriş yapın');
+    }
+
+    async loadPublicBranding() {
+        try {
+            const res = await fetch('/api/public/branding');
+            if (!res.ok) return;
+            const branding = await res.json();
+            if (branding.app_icon) {
+                this.handleReceivedIconSetting(branding.app_icon);
+            }
+            if (branding.app_name) {
+                this.handleReceivedNameSetting(branding.app_name);
+            }
+        } catch (err) {
+            // Çevrimdışıyken localStorage değerleri kullanılır
+        }
+    }
+
+    saveItemsCache(items = this.items) {
+        if (!Array.isArray(items)) return;
+        try {
+            localStorage.setItem('dukkan_items_cache', JSON.stringify(items));
+        } catch (err) {
+            // Fotoğraflar 5MB kotasını aşarsa fotoğrafsız önbelleğe düş
+            try {
+                const lite = items.map(item => {
+                    if (!item || !item.image) return item;
+                    const { image, ...rest } = item;
+                    return { ...rest, image: '' };
+                });
+                localStorage.setItem('dukkan_items_cache', JSON.stringify(lite));
+            } catch (e2) {
+                console.warn('Çevrimdışı ürün önbelleği kaydedilemedi:', e2);
+            }
+        }
+    }
+
+    enqueueOfflineMutation(entry) {
+        if (!entry || !entry.type) return;
+        if (entry.type === 'updateItem') {
+            const last = this.offlineMutations[this.offlineMutations.length - 1];
+            if (last && last.type === 'updateItem' && last.id === entry.id) {
+                last.data = { ...last.data, ...entry.data };
+                last.updatedAt = entry.updatedAt || Date.now();
+            } else {
+                this.offlineMutations.push({
+                    ...entry,
+                    queuedAt: Date.now()
+                });
+            }
+        } else {
+            this.offlineMutations.push({
+                ...entry,
+                queuedAt: Date.now()
+            });
+        }
+        this.writeJsonStorage('dukkan_offline_mutations', this.offlineMutations);
+        this.saveItemsCache();
+        this.refreshConnectionBadge();
     }
 
     readJsonStorage(key, fallback) {
@@ -119,7 +266,8 @@ class App {
     }
 
     refreshConnectionBadge() {
-        const queued = this.offlineQueue.length;
+        const queued = (this.offlineQueue ? this.offlineQueue.length : 0)
+            + (this.offlineMutations ? this.offlineMutations.length : 0);
         const serverReachable = this.socket && this.socket.connected;
         if (!navigator.onLine) {
             this.updateConnectionStatus(false, queued ? `Çevrimdışı · ${queued} bekliyor` : 'Çevrimdışı');
@@ -156,18 +304,21 @@ class App {
     }
 
     async flushOfflineQueue() {
-        if (this.isFlushingQueue || !this.offlineQueue.length || !navigator.onLine) return;
+        const hasAdds = this.offlineQueue && this.offlineQueue.length > 0;
+        const hasMuts = this.offlineMutations && this.offlineMutations.length > 0;
+        if (this.isFlushingQueue || (!hasAdds && !hasMuts) || !navigator.onLine || !this.isAuthenticated()) return;
         this.isFlushingQueue = true;
         let sent = 0;
+        let syncedMutations = 0;
         try {
             while (this.offlineQueue.length) {
                 const entry = this.offlineQueue[0];
-                const res = await fetch('/api/items', {
+                const res = await this.apiFetch('/api/items', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(entry.data)
                 });
-                if (res.status === 503) break; // hâlâ çevrimdışı (service worker yanıtı)
+                if (res.status === 503 || res.status === 401) break; // hâlâ çevrimdışı veya yetkisiz
                 if (res.ok) {
                     const saved = await res.json();
                     if (!this.items.find(i => i.id === saved.id)) this.items.unshift(saved);
@@ -177,13 +328,52 @@ class App {
                 this.offlineQueue.shift();
                 this.writeJsonStorage('dukkan_offline_queue', this.offlineQueue);
             }
+
+            while (this.offlineMutations.length) {
+                const mut = this.offlineMutations[0];
+                let res;
+                if (mut.type === 'updateItem') {
+                    res = await this.apiFetch(`/api/items/${mut.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(mut.data)
+                    });
+                } else if (mut.type === 'softDelete') {
+                    res = await this.apiFetch(`/api/items/${mut.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ deletedBy: mut.deletedBy || 'Admin' })
+                    });
+                } else if (mut.type === 'restore') {
+                    res = await this.apiFetch(`/api/items/${mut.id}/restore`, {
+                        method: 'POST'
+                    });
+                } else if (mut.type === 'bulkUpdate') {
+                    res = await this.apiFetch('/api/items/bulk-update', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(mut.payload)
+                    });
+                } else {
+                    res = { ok: false, status: 400 };
+                }
+
+                if (res.status === 503 || res.status === 401) break;
+                if (res.ok) syncedMutations++;
+                this.offlineMutations.shift();
+                this.writeJsonStorage('dukkan_offline_mutations', this.offlineMutations);
+            }
         } catch (e) {
             console.warn('Çevrimdışı kuyruk gönderilemedi, sonra tekrar denenecek:', e);
         } finally {
             this.isFlushingQueue = false;
+            this.saveItemsCache();
             this.refreshConnectionBadge();
             this.render();
-            if (sent) this.showToast(`✅ Çevrimdışı eklenen ${sent} ürün gönderildi`);
+            if (sent || syncedMutations) {
+                const total = sent + syncedMutations;
+                this.showToast(`✅ Çevrimdışı bekleyen ${total} işlem senkronize edildi`);
+            }
         }
     }
 
@@ -284,7 +474,7 @@ class App {
 
     async loadNotes() {
         try {
-            const res = await fetch('/api/notes');
+            const res = await this.apiFetch('/api/notes');
             if (!res.ok) return;
             this.notes = await res.json();
             this.renderNotes();
@@ -338,7 +528,7 @@ class App {
         input.value = '';
         this.autoGrowNoteInput();
         try {
-            const res = await fetch('/api/notes', {
+            const res = await this.apiFetch('/api/notes', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ text, author: this.deviceName })
@@ -361,7 +551,8 @@ class App {
             desc: 'Bu not herkes için silinecek. Emin misiniz?',
             onConfirm: async () => {
                 try {
-                    await fetch(`/api/notes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    const res = await this.apiFetch(`/api/notes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+                    if (!res.ok) throw new Error('Not silinemedi');
                     this.notes = this.notes.filter(n => n.id !== id);
                     this.renderNotes();
                 } catch (e) {
@@ -377,7 +568,7 @@ class App {
         if (!this.notes.length) {
             list.innerHTML = `
                 <div class="notes-empty">
-                    <div class="notes-empty-icon">💬</div>
+                    <div class="notes-empty-icon">${UI_ICONS.message}</div>
                     <p>Henüz not yok. Toptancı bilgisi, hatırlatma ya da ekiple paylaşmak istediğin her şeyi buraya yazabilirsin.</p>
                 </div>
             `;
@@ -399,8 +590,10 @@ class App {
                 html += `<div class="notes-day"><span>${label}</span></div>`;
             }
             const mine = this.isMyNote(n);
+            const initials = (n.author || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toLocaleUpperCase('tr-TR') || '?';
             html += `
                 <div class="note-row ${mine ? 'mine' : ''}">
+                    ${!mine ? `<div class="note-avatar" aria-hidden="true">${this.escapeHtml(initials)}</div>` : ''}
                     <div class="note-bubble">
                         ${!mine && n.author ? `<span class="note-author">${this.escapeHtml(n.author)}</span>` : ''}
                         <div class="note-text">${this.escapeHtml(n.text)}</div>
@@ -423,7 +616,7 @@ class App {
     // ==========================================
     async loadEvents() {
         try {
-            const res = await fetch('/api/stats/events');
+            const res = await this.apiFetch('/api/stats/events');
             if (!res.ok) return;
             this.events = await res.json();
             this.writeJsonStorage('dukkan_events_cache', this.events);
@@ -729,7 +922,7 @@ class App {
     }
 
     isAuthenticated() {
-        return !!this.authToken;
+        return typeof this.authToken === 'string' && this.authToken.includes('.');
     }
 
     showLoginScreen() {
@@ -742,6 +935,8 @@ class App {
         document.getElementById('main-app-container').style.display = 'block';
         const userDisplay = document.getElementById('display-username');
         if (userDisplay) userDisplay.textContent = this.currentUser;
+        const avatarEl = document.getElementById('display-user-avatar');
+        if (avatarEl) avatarEl.textContent = (this.currentUser || 'A').trim().charAt(0).toLocaleUpperCase('tr-TR');
     }
 
     initAuth() {
@@ -753,12 +948,29 @@ class App {
             });
         }
 
+        const pwdToggleBtn = document.getElementById('btn-toggle-login-pwd');
+        const loginPwdInput = document.getElementById('login-password');
+        if (pwdToggleBtn && loginPwdInput) {
+            pwdToggleBtn.addEventListener('click', () => {
+                const isPwd = loginPwdInput.type === 'password';
+                loginPwdInput.type = isPwd ? 'text' : 'password';
+                pwdToggleBtn.setAttribute('aria-pressed', isPwd ? 'true' : 'false');
+            });
+        }
+
         const logoutBtn = document.getElementById('btn-logout');
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => {
                 localStorage.removeItem('dukkan_token');
                 localStorage.removeItem('dukkan_username');
                 this.authToken = null;
+                this.isBulkMode = false;
+                if (this.selectedIds) this.selectedIds.clear();
+                if (typeof this.updateBulkBarUI === 'function') this.updateBulkBarUI();
+                if (this.socket) {
+                    try { this.socket.disconnect(); } catch (e) {}
+                    this.socket = null;
+                }
                 this.showLoginScreen();
                 this.showToast('Çıkış yapıldı');
             });
@@ -767,10 +979,7 @@ class App {
         const userSettingsBtn = document.getElementById('btn-open-user-settings');
         if (userSettingsBtn) {
             userSettingsBtn.addEventListener('click', () => {
-                const nameInput = document.getElementById('input-app-name');
-                if (nameInput) nameInput.value = this.appName || 'App';
-                this.updateSoundButtonUI();
-                this.openModal('password-modal');
+                this.openAdminModal();
             });
         }
 
@@ -818,10 +1027,12 @@ class App {
                 localStorage.setItem('dukkan_token', data.token);
                 localStorage.setItem('dukkan_username', data.username);
 
+                this.isHandlingUnauthorized = false;
                 this.showAppScreen();
                 this.initSocket();
                 await this.loadSuppliers();
                 await this.loadInitialData();
+                await this.loadSettings();
                 await this.loadServerInfo();
                 this.loadEvents();
                 this.loadNotes();
@@ -843,7 +1054,7 @@ class App {
         const msg = document.getElementById('pwd-change-msg');
 
         try {
-            const res = await fetch('/api/auth/change-password', {
+            const res = await this.apiFetch('/api/auth/change-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -856,28 +1067,61 @@ class App {
             const data = await res.json();
             if (res.ok) {
                 msg.textContent = 'Şifreniz başarıyla güncellendi!';
+                msg.className = 'pwd-change-msg is-success';
                 msg.style.display = 'block';
-                msg.style.background = 'rgba(16, 185, 129, 0.2)';
-                msg.style.color = '#34d399';
                 setTimeout(() => {
                     this.closeAllModals();
                     msg.style.display = 'none';
                 }, 1500);
             } else {
                 msg.textContent = data.error || 'Şifre güncellenemedi.';
+                msg.className = 'pwd-change-msg is-error';
                 msg.style.display = 'block';
-                msg.style.background = 'rgba(239, 68, 68, 0.2)';
-                msg.style.color = '#f87171';
             }
         } catch (e) {
             msg.textContent = 'Sunucu hatası.';
+            msg.className = 'pwd-change-msg is-error';
             msg.style.display = 'block';
         }
     }
 
     initTheme() {
-        localStorage.setItem('theme_mode', 'dark');
+        localStorage.removeItem('theme_mode');
         document.body.classList.remove('light-theme');
+        const saved = localStorage.getItem('hkc_theme') || 'dark';
+        this.applyTheme(saved, false);
+
+        [document.getElementById('btn-theme-toggle'), document.getElementById('btn-login-theme-toggle')].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => this.toggleTheme());
+            }
+        });
+    }
+
+    applyTheme(theme, persist = true) {
+        const resolved = theme === 'light' ? 'light' : 'dark';
+        this.theme = resolved;
+        document.documentElement.setAttribute('data-theme', resolved);
+        const metaTheme = document.getElementById('meta-theme-color');
+        if (metaTheme) {
+            metaTheme.setAttribute('content', resolved === 'light' ? '#f1f5fa' : '#060b14');
+        }
+        const label = resolved === 'light' ? 'Koyu Temaya Geç' : 'Açık Temaya Geç';
+        [document.getElementById('btn-theme-toggle'), document.getElementById('btn-login-theme-toggle')].forEach(btn => {
+            if (btn) {
+                btn.title = label;
+                btn.setAttribute('aria-label', label);
+            }
+        });
+        if (persist) {
+            localStorage.setItem('hkc_theme', resolved);
+        }
+    }
+
+    toggleTheme() {
+        const next = this.theme === 'light' ? 'dark' : 'light';
+        this.applyTheme(next, true);
+        this.showToast(next === 'light' ? 'Açık tema etkinleştirildi' : 'Koyu tema etkinleştirildi');
     }
 
     fillQuickItem(name, qty) {
@@ -931,6 +1175,30 @@ class App {
         } catch (e) {
             console.warn('Quick pills kaydedilemedi:', e);
         }
+        if (this.isAuthenticated() && navigator.onLine) {
+            this.apiFetch('/api/settings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    key: 'quick_items',
+                    value: JSON.stringify(this.quickItems)
+                })
+            }).catch(() => {});
+        }
+    }
+
+    handleReceivedQuickItemsSetting(rawValue) {
+        if (typeof rawValue !== 'string') return;
+        try {
+            const parsed = JSON.parse(rawValue);
+            if (!Array.isArray(parsed)) return;
+            const cleaned = parsed.map(v => String(v || '').trim()).filter(Boolean);
+            this.quickItems = cleaned;
+            localStorage.setItem('dukkan_quick_items', JSON.stringify(cleaned));
+            this.renderQuickPills();
+        } catch (e) {
+            console.warn('Hızlı ürün ayarları çözümlenemedi:', e);
+        }
     }
 
     renderQuickPills() {
@@ -976,12 +1244,12 @@ class App {
         const btn = document.getElementById('btn-toggle-edit-pills');
 
         if (this.isPillsEditMode) {
-            if (icon) icon.textContent = '✓';
+            if (icon) icon.innerHTML = UI_ICONS.check;
             if (text) text.textContent = 'Tamamla';
             if (btn) btn.classList.add('active');
             this.showToast('Çıkarmak istediğiniz hızlı seçeneğin üzerindeki ✕ butonuna dokunun');
         } else {
-            if (icon) icon.textContent = '🗑️';
+            if (icon) icon.innerHTML = UI_ICONS.trash;
             if (text) text.textContent = 'Çıkar / Düzenle';
             if (btn) btn.classList.remove('active');
         }
@@ -1055,11 +1323,25 @@ class App {
         if (this.socket) return;
         if (typeof io !== 'undefined') {
             // Depoda/çekmeyen yerde uzun kopmalar olabilir: denemeyi hiç bırakma
-            this.socket = io({ reconnectionDelay: 1000, reconnectionDelayMax: 10000, reconnectionAttempts: Infinity });
+            this.socket = io({
+                auth: { token: this.authToken },
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 10000,
+                reconnectionAttempts: Infinity
+            });
 
             this.socket.on('connect', () => {
                 this.updateConnectionStatus(true, 'Canlı Bağlı');
                 this.flushOfflineQueue();
+            });
+
+            this.socket.on('connect_error', (err) => {
+                const msg = err && err.message ? err.message : '';
+                if (/AUTH_REQUIRED|Yetkisiz/i.test(msg)) {
+                    this.handleUnauthorized();
+                } else {
+                    this.updateConnectionStatus(false, navigator.onLine ? 'Bağlantı Hatası' : 'Çevrimdışı');
+                }
             });
 
             this.socket.on('disconnect', () => {
@@ -1069,10 +1351,12 @@ class App {
             this.socket.on('init', (data) => {
                 if (data.items) {
                     this.items = data.items;
+                    this.saveItemsCache(this.items);
                     this.render();
                 }
                 if (data.suppliers) {
                     this.suppliers = data.suppliers;
+                    this.writeJsonStorage('dukkan_suppliers_cache', this.suppliers);
                     this.populateSupplierSelects();
                 }
                 if (data.settings && data.settings.app_icon) {
@@ -1080,6 +1364,9 @@ class App {
                 }
                 if (data.settings && data.settings.app_name) {
                     this.handleReceivedNameSetting(data.settings.app_name);
+                }
+                if (data.settings && data.settings.quick_items) {
+                    this.handleReceivedQuickItemsSetting(data.settings.quick_items);
                 }
                 if (data.lastBackup) {
                     this.updateLastBackupDisplay(data.lastBackup);
@@ -1094,6 +1381,9 @@ class App {
                 }
                 if (data.key === 'app_name') {
                     this.handleReceivedNameSetting(data.value);
+                }
+                if (data.key === 'quick_items') {
+                    this.handleReceivedQuickItemsSetting(data.value);
                 }
             });
 
@@ -1120,6 +1410,7 @@ class App {
                 }
                 if (existingIdx === -1) {
                     this.items.unshift(newItem);
+                    this.saveItemsCache();
                     if (newItem.urgency === 'critical' || newItem.urgency === 'urgent') {
                         window.soundManager.playUrgent();
                     } else {
@@ -1137,6 +1428,7 @@ class App {
                 } else {
                     this.items.unshift(updatedItem);
                 }
+                this.saveItemsCache();
                 this.render();
             });
 
@@ -1148,6 +1440,7 @@ class App {
                     if (data.item) {
                         this.items[idx] = { ...this.items[idx], ...data.item };
                     }
+                    this.saveItemsCache();
                     this.render();
                 }
             });
@@ -1155,16 +1448,44 @@ class App {
             this.socket.on('item:deleted', (data) => {
                 const targetId = typeof data === 'object' ? data.id : data;
                 this.items = this.items.filter(i => i.id !== targetId);
+                if (this.selectedIds) this.selectedIds.delete(targetId);
+                this.saveItemsCache();
                 if (window.soundManager && window.soundManager.playDelete) {
                     window.soundManager.playDelete();
                 }
                 this.render();
             });
 
+            this.socket.on('items:bulk-updated', (data) => {
+                if (data && Array.isArray(data.ids) && data.updates) {
+                    const idSet = new Set(data.ids);
+                    this.items.forEach(item => {
+                        if (idSet.has(item.id)) {
+                            Object.assign(item, data.updates);
+                            if (data.updatedAt) item.updatedAt = data.updatedAt;
+                        }
+                    });
+                    if (data.updates.status === 'deleted' && this.selectedIds) {
+                        data.ids.forEach(id => this.selectedIds.delete(id));
+                    }
+                    this.saveItemsCache();
+                    this.render();
+                } else if (Array.isArray(data)) {
+                    data.forEach(u => {
+                        const idx = this.items.findIndex(i => i.id === u.id);
+                        if (idx !== -1) this.items[idx] = u;
+                        else this.items.unshift(u);
+                    });
+                    this.saveItemsCache();
+                    this.render();
+                }
+            });
+
             this.socket.on('items:bulk-deleted', () => {
                 this.items.forEach(i => {
                     if (i.status === 'completed') i.status = 'deleted';
                 });
+                this.saveItemsCache();
                 this.render();
             });
 
@@ -1172,18 +1493,24 @@ class App {
                 this.items.forEach(i => {
                     if (i.status === 'deleted') i.status = 'pending';
                 });
+                this.saveItemsCache();
                 this.render();
             });
 
             this.socket.on('items:trash-emptied', () => {
                 this.items = this.items.filter(i => i.status !== 'deleted');
+                this.saveItemsCache();
                 this.render();
             });
 
             this.socket.on('backup:imported', (data) => {
-                if (data.items) this.items = data.items;
+                if (data.items) {
+                    this.items = data.items;
+                    this.saveItemsCache();
+                }
                 if (data.suppliers) {
                     this.suppliers = data.suppliers;
+                    this.writeJsonStorage('dukkan_suppliers_cache', this.suppliers);
                     this.populateSupplierSelects();
                 }
                 this.render();
@@ -1256,66 +1583,102 @@ class App {
         const text = document.getElementById('connection-text');
         if (badge && text) {
             text.textContent = label;
-            if (isLive) {
-                badge.className = 'badge-live';
-                badge.style.background = '';
-                badge.style.color = '';
-            } else {
-                badge.className = 'badge-live';
-                badge.style.background = 'rgba(239, 68, 68, 0.15)';
-                badge.style.color = '#ef4444';
-            }
+            badge.classList.toggle('is-offline', !isLive);
         }
     }
 
     // Load Data
     async loadInitialData() {
         try {
-            const res = await fetch('/api/items');
+            const res = await this.apiFetch('/api/items');
             if (res.ok) {
                 this.items = await res.json();
+                this.saveItemsCache(this.items);
                 this.render();
+                return;
             }
+            if (res.status === 401) return;
         } catch (err) {
-            console.warn('API yükleme hatası:', err);
+            console.warn('API yükleme hatası, önbellek kontrol ediliyor:', err);
+        }
+
+        const cached = this.readJsonStorage('dukkan_items_cache', null);
+        if (Array.isArray(cached)) {
+            this.items = cached;
+            this.render();
+            this.showToast('📦 Çevrimdışı önbellekten liste yüklendi');
         }
     }
 
     async loadSuppliers() {
         try {
-            const res = await fetch('/api/suppliers');
+            const res = await this.apiFetch('/api/suppliers');
             if (res.ok) {
                 this.suppliers = await res.json();
+                this.writeJsonStorage('dukkan_suppliers_cache', this.suppliers);
                 this.populateSupplierSelects();
+                return;
             }
+            if (res.status === 401) return;
         } catch (err) {
-            console.warn('Toptancı yükleme hatası:', err);
+            console.warn('Toptancı yükleme hatası, önbellek kontrol ediliyor:', err);
+        }
+
+        const cachedSuppliers = this.readJsonStorage('dukkan_suppliers_cache', null);
+        if (Array.isArray(cachedSuppliers)) {
+            this.suppliers = cachedSuppliers;
+            this.populateSupplierSelects();
         }
     }
 
     populateSupplierSelects() {
         const inputSup = document.getElementById('input-supplier');
         const filterSup = document.getElementById('filter-supplier');
+        const bulkSup = document.getElementById('bulk-supplier-select');
 
         if (inputSup) {
+            const prevInput = inputSup.value;
             inputSup.innerHTML = `<option value="Belirtilmedi">Toptancı Seçiniz (Opsiyonel)</option>` +
-                this.suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                this.suppliers.map(s => `<option value="${this.escapeHtml(s.name)}">${this.escapeHtml(s.name)}</option>`).join('');
+            if (prevInput && Array.from(inputSup.options).some(o => o.value === prevInput)) {
+                inputSup.value = prevInput;
+            }
         }
 
         if (filterSup) {
+            const prevFilter = filterSup.value;
             filterSup.innerHTML = `<option value="all">Tüm Toptancılar</option>` +
-                this.suppliers.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                this.suppliers.map(s => `<option value="${this.escapeHtml(s.name)}">${this.escapeHtml(s.name)}</option>`).join('');
+            if (prevFilter && Array.from(filterSup.options).some(o => o.value === prevFilter)) {
+                filterSup.value = prevFilter;
+            }
+        }
+
+        if (bulkSup) {
+            const prevBulk = bulkSup.value;
+            bulkSup.innerHTML = `<option value="">Toptancı Seç...</option>` +
+                `<option value="Belirtilmedi">Belirtilmedi (Temizle)</option>` +
+                this.suppliers.map(s => `<option value="${this.escapeHtml(s.name)}">${this.escapeHtml(s.name)}</option>`).join('');
+            if (prevBulk && Array.from(bulkSup.options).some(o => o.value === prevBulk)) {
+                bulkSup.value = prevBulk;
+            }
+        }
+
+        if (typeof this.syncAllCustomSelects === 'function') {
+            this.syncAllCustomSelects();
         }
     }
 
     async loadServerInfo() {
         try {
-            const res = await fetch('/api/info');
+            const res = await this.apiFetch('/api/info');
             if (res.ok) {
                 const info = await res.json();
                 const dbIndicator = document.getElementById('header-db-indicator');
                 if (dbIndicator) {
-                    dbIndicator.textContent = info.isTurso ? '☁️ Turso Bulut Veritabanı' : '💾 Yerel SQLite / LibSQL';
+                    dbIndicator.innerHTML = info.isTurso
+                        ? `${UI_ICONS.cloud} <span>Turso Bulut Veritabanı</span>`
+                        : `${UI_ICONS.database} <span>Yerel SQLite / LibSQL</span>`;
                 }
             }
         } catch (e) {
@@ -1329,28 +1692,29 @@ class App {
         if (!container) return;
 
         if (this.suppliers.length === 0) {
-            container.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:0.75rem; text-align:center;">Kayıtlı toptancı bulunmuyor. Yukarıdan istediğiniz toptancıyı ekleyebilirsiniz.</div>';
+            container.innerHTML = '<div class="suppliers-empty-box">Kayıtlı toptancı bulunmuyor. Yukarıdan istediğiniz toptancıyı ekleyebilirsiniz.</div>';
             return;
         }
 
         const itemsHtml = this.suppliers.map(sup => `
             <div class="supplier-manage-item" id="sup-row-${sup.id}">
-                <span class="sup-name" id="sup-name-${sup.id}" style="font-weight:600; font-size:0.9rem; color:var(--text-primary); flex:1; overflow:hidden; text-overflow:ellipsis; margin-right:0.5rem;">🏢 ${this.escapeHtml(sup.name)}</span>
-                <div class="sup-actions" id="sup-actions-${sup.id}" style="display:flex; gap:0.4rem; align-items:center; flex-shrink:0;">
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding:0.25rem 0.6rem; font-size:0.8rem;" title="Toptancı Adını Güncelle" onclick="window.app.startEditSupplier('${sup.id}')">
-                        ✏️ Düzenle
+                <span class="sup-name" id="sup-name-${sup.id}">${UI_ICONS.building} <span>${this.escapeHtml(sup.name)}</span></span>
+                <div class="sup-actions" id="sup-actions-${sup.id}">
+                    <button type="button" class="btn btn-secondary btn-xs" title="Toptancı Adını Güncelle" onclick="window.app.startEditSupplier('${sup.id}')">
+                        ${UI_ICONS.edit} <span>Düzenle</span>
                     </button>
-                    <button type="button" class="btn btn-danger btn-sm" style="padding:0.25rem 0.6rem; font-size:0.8rem;" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}', '${this.escapeHtml(sup.name)}')">
-                        Sil 🗑️
+                    <button type="button" class="btn btn-danger btn-xs" title="Toptancıyı Sil" onclick="window.app.deleteSupplier('${sup.id}')">
+                        ${UI_ICONS.trash} <span>Sil</span>
                     </button>
                 </div>
             </div>
         `).join('');
 
         const clearAllHtml = `
-            <div style="margin-top: 0.85rem; padding-top: 0.65rem; border-top: 1px dashed rgba(255,255,255,0.12);">
-                <button type="button" class="btn btn-danger btn-sm" style="width: 100%; justify-content: center; padding: 0.55rem;" onclick="window.app.clearAllSuppliers()">
-                    🗑️ Tüm Toptancıları Temizle (Boş Bırak)
+            <div class="suppliers-clear-wrap">
+                <button type="button" class="btn btn-danger btn-sm btn-full-center" onclick="window.app.clearAllSuppliers()">
+                    ${UI_ICONS.trash}
+                    <span>Tüm Toptancıları Temizle (Boş Bırak)</span>
                 </button>
             </div>
         `;
@@ -1366,10 +1730,10 @@ class App {
         if (!row) return;
 
         row.innerHTML = `
-            <form onsubmit="event.preventDefault(); window.app.saveEditSupplier('${id}');" style="display:flex; gap:0.4rem; width:100%; align-items:center;">
-                <input type="text" id="sup-edit-input-${id}" value="${this.escapeHtml(sup.name)}" required style="flex:1; padding:0.35rem 0.65rem; font-size:0.85rem;" autocomplete="off">
-                <button type="submit" class="btn btn-primary btn-sm" style="padding:0.35rem 0.65rem; font-size:0.8rem; font-weight:700;">💾 Kaydet</button>
-                <button type="button" class="btn btn-secondary btn-sm" style="padding:0.35rem 0.55rem; font-size:0.8rem;" onclick="window.app.renderSuppliersModal()">✕</button>
+            <form class="supplier-edit-form" onsubmit="event.preventDefault(); window.app.saveEditSupplier('${id}');">
+                <input type="text" id="sup-edit-input-${id}" value="${this.escapeHtml(sup.name)}" required autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-xs">${UI_ICONS.save} <span>Kaydet</span></button>
+                <button type="button" class="btn btn-secondary btn-xs" onclick="window.app.renderSuppliersModal()">${UI_ICONS.x}</button>
             </form>
         `;
 
@@ -1408,7 +1772,7 @@ class App {
         this.showToast(`✅ Toptancı güncellendi: ${newName}`);
 
         try {
-            const res = await fetch(`/api/suppliers/${encodeURIComponent(id)}`, {
+            const res = await this.apiFetch(`/api/suppliers/${encodeURIComponent(id)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: newName })
@@ -1428,7 +1792,7 @@ class App {
         if (!name || !name.trim()) return;
 
         try {
-            const res = await fetch('/api/suppliers', {
+            const res = await this.apiFetch('/api/suppliers', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name.trim() })
@@ -1454,14 +1818,16 @@ class App {
     }
 
     async deleteSupplier(id, name) {
+        const found = this.suppliers.find(s => s.id === id);
+        const resolvedName = name || (found ? found.name : 'Toptancı');
         // Optimistic removal for instant UI feedback
-        this.suppliers = this.suppliers.filter(s => s.id !== id && s.name !== name);
+        this.suppliers = this.suppliers.filter(s => s.id !== id && s.name !== resolvedName);
         this.populateSupplierSelects();
         this.renderSuppliersModal();
-        this.showToast(`Toptancı Silindi: ${name}`);
+        this.showToast(`Toptancı Silindi: ${resolvedName}`);
 
         try {
-            await fetch(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            await this.apiFetch(`/api/suppliers/${encodeURIComponent(id)}`, { method: 'DELETE' });
         } catch (e) {
             console.error('Silme hatası:', e);
         }
@@ -1474,7 +1840,7 @@ class App {
         this.showToast('Tüm toptancılar temizlendi');
 
         try {
-            await fetch('/api/suppliers', { method: 'DELETE' });
+            await this.apiFetch('/api/suppliers', { method: 'DELETE' });
         } catch (e) {
             console.error('Temizleme hatası:', e);
         }
@@ -1638,24 +2004,52 @@ class App {
         if (voiceBtn) voiceBtn.addEventListener('click', () => this.startVoiceInput());
         if (voiceFab) voiceFab.addEventListener('click', () => this.startVoiceInput());
 
-        // Search
+        // Search & Clear Search Button
         const searchInput = document.getElementById('search-input');
+        const clearSearchBtn = document.getElementById('btn-clear-search');
+        const updateSearchClearBtn = () => {
+            if (clearSearchBtn && searchInput) {
+                clearSearchBtn.style.display = searchInput.value ? 'inline-flex' : 'none';
+            }
+        };
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
                 this.searchQuery = e.target.value.toLowerCase();
+                updateSearchClearBtn();
                 this.render();
             });
         }
+        if (clearSearchBtn && searchInput) {
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                this.searchQuery = '';
+                updateSearchClearBtn();
+                this.render();
+                searchInput.focus();
+            });
+        }
+
+        // Interactive KPI Stat Cards Filter
+        document.querySelectorAll('.stat-card[data-stat-filter]').forEach(card => {
+            const triggerStatFilter = () => {
+                const target = card.dataset.statFilter;
+                const nextFilter = (this.filterStatus === target && target !== 'all') ? 'all' : target;
+                this.setFilter(nextFilter);
+            };
+            card.addEventListener('click', triggerStatFilter);
+            card.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    triggerStatFilter();
+                }
+            });
+        });
 
         // Filters
         const statusFilter = document.getElementById('filter-status');
         if (statusFilter) {
             statusFilter.addEventListener('change', (e) => {
-                this.filterStatus = e.target.value;
-                document.querySelectorAll('.chip-filter').forEach(c => {
-                    c.classList.toggle('active', c.dataset.filter === this.filterStatus);
-                });
-                this.render();
+                this.setFilter(e.target.value);
             });
         }
 
@@ -1667,10 +2061,10 @@ class App {
             });
         }
 
-        // Tab Views (Tüm Liste / Toptancıya Göre)
-        document.querySelectorAll('.tab-pill').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                document.querySelectorAll('.tab-pill').forEach(b => b.classList.remove('active'));
+        // Tab Views (Tüm Liste / Toptancıya Göre) — scoped to toolbar
+        document.querySelectorAll('.toolbar-bar .tab-pill[data-view]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.toolbar-bar .tab-pill[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 this.currentView = btn.dataset.view;
                 this.render();
@@ -1686,19 +2080,7 @@ class App {
         // Quick Filter Chips
         document.querySelectorAll('.chip-filter').forEach(chip => {
             chip.addEventListener('click', () => {
-                document.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                this.filterStatus = chip.dataset.filter;
-                
-                // Sync with dropdown filter if applicable
-                const filterDropdown = document.getElementById('filter-status');
-                if (filterDropdown && ['all', 'pending', 'ordered', 'completed', 'trash'].includes(this.filterStatus)) {
-                    filterDropdown.value = this.filterStatus;
-                } else if (filterDropdown) {
-                    filterDropdown.value = 'all';
-                }
-
-                this.render();
+                this.setFilter(chip.dataset.filter);
             });
         });
 
@@ -1706,7 +2088,7 @@ class App {
         const btnPdf = document.getElementById('btn-export-pdf');
         if (btnPdf) {
             btnPdf.addEventListener('click', () => {
-                window.exportManager.printOrderSheet(this.items, 'App');
+                window.exportManager.printOrderSheet(this.items, this.appName || 'HKC');
             });
         }
 
@@ -1952,6 +2334,41 @@ class App {
                 this.closeAllModals();
             });
         });
+
+        // Backdrop click & Escape key to close modals cleanly
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    this.closeAllModals();
+                }
+            });
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && document.querySelector('.modal-overlay.active')) {
+                this.closeAllModals();
+            }
+        });
+    }
+
+    setFilter(filterKey) {
+        this.filterStatus = filterKey || 'all';
+        if (this.filterStatus === 'trash' && this.isBulkMode && typeof this.toggleBulkMode === 'function') {
+            this.toggleBulkMode(false);
+        }
+        document.querySelectorAll('.chip-filter').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === this.filterStatus);
+        });
+        const filterDropdown = document.getElementById('filter-status');
+        if (filterDropdown) {
+            filterDropdown.value = ['all', 'pending', 'ordered', 'completed', 'trash'].includes(this.filterStatus)
+                ? this.filterStatus
+                : 'all';
+        }
+        if (typeof this.syncAllCustomSelects === 'function') {
+            this.syncAllCustomSelects();
+        }
+        this.render();
     }
 
     // Smart Duplicate Check & Item Submission
@@ -1960,6 +2377,7 @@ class App {
         const qtyInput = document.getElementById('input-quantity');
         const supInput = document.getElementById('input-supplier');
         const urgInput = document.getElementById('input-urgency');
+        const notesInput = document.getElementById('input-notes');
 
         const name = nameInput.value.trim();
         if (!name) {
@@ -1967,12 +2385,18 @@ class App {
             return;
         }
 
+        this.closeAutocomplete();
+
+        const authorName = (this.deviceName && this.deviceName.trim()) || this.currentUser || 'Admin';
+
         const candidateItem = {
             name: name,
             quantity: qtyInput.value.trim() || '1 adet',
             category: 'Genel',
             supplier: supInput ? supInput.value : 'Belirtilmedi',
             urgency: urgInput ? urgInput.value : 'normal',
+            notes: notesInput ? notesInput.value.trim() : '',
+            addedBy: authorName,
             image: this.selectedAddPhoto || '',
             source: window.innerWidth < 768 ? 'phone' : 'pc'
         };
@@ -2007,9 +2431,9 @@ class App {
             const btnUpdateQty = document.getElementById('btn-dup-update-qty');
             if (btnUpdateQty) {
                 if (duplicateMatch.item.status === 'deleted') {
-                    btnUpdateQty.innerHTML = '<span>↩️</span> <span>Silinenlerden Geri Yükle ve Listeye Ekle</span>';
+                    btnUpdateQty.innerHTML = `${UI_ICONS.undo} <span>Silinenlerden Geri Yükle ve Listeye Ekle</span>`;
                 } else {
-                    btnUpdateQty.innerHTML = '<span>➕</span> <span>Mevcut Ürünün Miktarını Güncelle / Artır</span>';
+                    btnUpdateQty.innerHTML = `${UI_ICONS.plus} <span>Mevcut Ürünün Miktarını Güncelle / Artır</span>`;
                 }
             }
 
@@ -2036,7 +2460,7 @@ class App {
         const updates = {
             quantity: updatedQty,
             status: 'pending', // Re-activate back to list
-            notes: (existing.notes ? existing.notes + ' | ' : '') + `Eklenen: ${candidate.quantity}`
+            notes: (existing.notes ? existing.notes + ' | ' : '') + `Eklenen: ${candidate.quantity}` + (candidate.notes ? ` (${candidate.notes})` : '')
         };
 
         // If candidate had a photo and existing didn't, attach it!
@@ -2051,9 +2475,8 @@ class App {
         const card = document.getElementById(`card-${existing.id}`);
         if (card) {
             card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            card.style.transition = 'background 0.5s ease';
-            card.style.background = 'rgba(79, 70, 229, 0.4)';
-            setTimeout(() => { card.style.background = ''; }, 1500);
+            card.classList.add('card-flash-highlight');
+            setTimeout(() => { card.classList.remove('card-flash-highlight'); }, 1500);
         }
     }
 
@@ -2071,11 +2494,18 @@ class App {
     resetAddForm() {
         const nameInput = document.getElementById('input-name');
         const qtyInput = document.getElementById('input-quantity');
+        const notesInput = document.getElementById('input-notes');
         if (nameInput) {
             nameInput.value = '';
             nameInput.focus();
         }
-        if (qtyInput) qtyInput.value = '1 adet';
+        if (qtyInput) qtyInput.value = '1 kutu';
+        if (notesInput) notesInput.value = '';
+        this.closeAutocomplete();
+        this.syncActiveUnitChip();
+        if (typeof this.syncAllCustomSelects === 'function') {
+            this.syncAllCustomSelects();
+        }
 
         // Clear photo
         this.selectedAddPhoto = '';
@@ -2094,12 +2524,13 @@ class App {
             return;
         }
         try {
-            const res = await fetch('/api/items', {
+            const res = await this.apiFetch('/api/items', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(itemData)
             });
 
+            if (res.status === 401) return;
             if (res.status === 503) {
                 // Service worker: sunucuya ulaşılamadı
                 this.queueOfflineItem(itemData);
@@ -2127,23 +2558,35 @@ class App {
     }
 
     async updateItemDetails(id, updates) {
-        if (!navigator.onLine) {
-            this.showToast('📴 İnternet yok — değişiklik için bağlantı gerekli');
-            return;
-        }
         const item = this.items.find(i => i.id === id);
         if (item) {
-            Object.assign(item, updates);
+            Object.assign(item, updates, { updatedAt: new Date().toISOString() });
+            this.saveItemsCache();
             this.render();
         }
 
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'updateItem', id, data: updates });
+            this.showToast('📴 İnternet yok — güncelleme sıraya alındı');
+            return;
+        }
+
         try {
-            await fetch(`/api/items/${id}`, {
+            const res = await this.apiFetch(`/api/items/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(updates)
             });
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'updateItem', id, data: updates });
+                this.showToast('📴 Sunucuya ulaşılamadı — güncelleme sıraya alındı');
+            }
         } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'updateItem', id, data: updates });
+                this.showToast('📴 Bağlantı kesildi — güncelleme sıraya alındı');
+                return;
+            }
             console.error('Güncelleme hatası:', e);
         }
     }
@@ -2214,20 +2657,38 @@ class App {
         if (!item) return;
 
         const oldStatus = item.status || 'pending';
+        const deletedBy = (this.deviceName && this.deviceName.trim()) || this.currentUser || 'Admin';
         item.status = 'deleted';
         item.updatedAt = new Date().toISOString();
 
         if (window.soundManager && window.soundManager.playDelete) {
             window.soundManager.playDelete();
         }
+        this.saveItemsCache();
         this.render();
 
         // Show floating Undo toast for 6.5s
         this.showUndoToast(item, oldStatus);
 
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'softDelete', id, deletedBy });
+            return;
+        }
+
         try {
-            await fetch(`/api/items/${id}`, { method: 'DELETE' });
+            const res = await this.apiFetch(`/api/items/${id}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ deletedBy })
+            });
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'softDelete', id, deletedBy });
+            }
         } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'softDelete', id, deletedBy });
+                return;
+            }
             console.error('Silme hatası:', e);
         }
     }
@@ -2239,8 +2700,8 @@ class App {
         const toast = document.createElement('div');
         toast.className = 'toast-undo-container';
         toast.innerHTML = `
-            <span>🗑️ <strong>${this.escapeHtml(item.name)}</strong> silindi.</span>
-            <button type="button" class="toast-undo-btn" id="btn-undo-delete">↩️ Geri Al</button>
+            <span><strong>${this.escapeHtml(item.name)}</strong> silindi.</span>
+            <button type="button" class="toast-undo-btn" id="btn-undo-delete">${UI_ICONS.undo} <span>Geri Al</span></button>
         `;
 
         document.body.appendChild(toast);
@@ -2274,12 +2735,25 @@ class App {
         if (window.soundManager && window.soundManager.playCompleted) {
             window.soundManager.playCompleted();
         }
+        this.saveItemsCache();
         this.render();
         this.showToast(`↩️ Geri Yüklendi: ${item.name}`);
 
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'restore', id });
+            return;
+        }
+
         try {
-            await fetch(`/api/items/${id}/restore`, { method: 'POST' });
+            const res = await this.apiFetch(`/api/items/${id}/restore`, { method: 'POST' });
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'restore', id });
+            }
         } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'restore', id });
+                return;
+            }
             console.error('Geri yükleme hatası:', e);
         }
     }
@@ -2300,11 +2774,12 @@ class App {
         if (window.soundManager && window.soundManager.playCompleted) {
             window.soundManager.playCompleted();
         }
+        this.saveItemsCache();
         this.render();
         this.showToast(`✅ ${deletedItems.length} ürün listeye geri yüklendi!`);
 
         try {
-            await fetch('/api/items/restore-all', { method: 'POST' });
+            await this.apiFetch('/api/items/restore-all', { method: 'POST' });
         } catch (e) {
             console.error('Toplu geri yükleme hatası:', e);
         }
@@ -2324,10 +2799,11 @@ class App {
             desc: `Çöp kutusundaki ${trashCount} adet ürün kalıcı olarak silinecek. Bu işlem geri alınamaz! Kalıcı olarak silinsin mi?`,
             onConfirm: async () => {
                 this.items = this.items.filter(i => i.status !== 'deleted');
+                this.saveItemsCache();
                 this.render();
                 this.showToast('Çöp kutusu tamamen boşaltıldı.');
                 try {
-                    await fetch('/api/items/trash/empty', { method: 'DELETE' });
+                    await this.apiFetch('/api/items/trash/empty', { method: 'DELETE' });
                 } catch (e) {
                     console.error('Çöp boşaltma hatası:', e);
                 }
@@ -2346,6 +2822,8 @@ class App {
             desc: `"${name}" ürünü veritabanından kalıcı olarak silinecektir. Emin misiniz?`,
             onConfirm: async () => {
                 this.items = this.items.filter(i => i.id !== id);
+                if (this.selectedIds) this.selectedIds.delete(id);
+                this.saveItemsCache();
                 if (window.soundManager && window.soundManager.playDelete) {
                     window.soundManager.playDelete();
                 }
@@ -2353,7 +2831,7 @@ class App {
                 this.showToast(`Kalıcı olarak silindi: ${name}`);
 
                 try {
-                    await fetch(`/api/items/${id}?permanent=true`, { method: 'DELETE' });
+                    await this.apiFetch(`/api/items/${id}?permanent=true`, { method: 'DELETE' });
                 } catch (e) {
                     console.error('Kalıcı silme hatası:', e);
                 }
@@ -2452,11 +2930,11 @@ class App {
         const btnConfirm = document.getElementById('btn-confirm-import-backup');
         if (btnConfirm) {
             btnConfirm.disabled = true;
-            btnConfirm.innerHTML = '<span>⏳</span><span>Yükleniyor...</span>';
+            btnConfirm.innerHTML = `${UI_ICONS.refresh}<span>Yükleniyor...</span>`;
         }
 
         try {
-            const res = await fetch('/api/backup/import', {
+            const res = await this.apiFetch('/api/backup/import', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
@@ -2465,7 +2943,7 @@ class App {
             const data = await res.json();
             if (res.ok && data.success) {
                 this.closeAllModals();
-                this.showToast(`✅ ${data.importedItemsCount} ürün başarıyla içe aktarıldı!`);
+                this.showToast(`${data.importedItemsCount} ürün başarıyla içe aktarıldı!`);
                 if (window.soundManager && window.soundManager.playCompleted) {
                     window.soundManager.playCompleted();
                 }
@@ -2480,7 +2958,7 @@ class App {
         } finally {
             if (btnConfirm) {
                 btnConfirm.disabled = false;
-                btnConfirm.innerHTML = '<span>📥</span><span>Yedeği Şimdi Yükle</span>';
+                btnConfirm.innerHTML = `${UI_ICONS.download}<span>Yedeği Şimdi Yükle</span>`;
             }
             this.pendingImportData = null;
         }
@@ -2502,7 +2980,7 @@ class App {
 
     async fetchAndDisplayLastBackup() {
         try {
-            const res = await fetch('/api/backups');
+            const res = await this.apiFetch('/api/backups');
             if (res.ok) {
                 const data = await res.json();
                 if (data.lastBackup) {
@@ -2518,24 +2996,27 @@ class App {
     async triggerInstantBackup() {
         const btn1 = document.getElementById('btn-trigger-instant-backup');
         const btn2 = document.getElementById('btn-modal-instant-backup');
-        
+
         const setButtons = (loading) => {
-            [btn1, btn2].forEach(btn => {
-                if (btn) {
-                    btn.disabled = loading;
-                    btn.innerHTML = loading
-                        ? '<span>⏳</span><span>Yedekleniyor...</span>'
-                        : '<span>💾</span><span>Şimdi Yedek Al</span>';
-                }
-            });
+            if (btn1) {
+                btn1.disabled = loading;
+                const strong = btn1.querySelector('.tool-text strong');
+                if (strong) strong.textContent = loading ? 'Yedekleniyor...' : 'Şimdi Yedek Al';
+            }
+            if (btn2) {
+                btn2.disabled = loading;
+                btn2.innerHTML = loading
+                    ? `${UI_ICONS.refresh} <span>Yedekleniyor...</span>`
+                    : `${UI_ICONS.save} <span>Şimdi Yeni Yedek Al</span>`;
+            }
         };
 
         setButtons(true);
         try {
-            const res = await fetch('/api/backups/create', { method: 'POST' });
+            const res = await this.apiFetch('/api/backups/create', { method: 'POST' });
             if (res.ok) {
                 const data = await res.json();
-                this.showToast(`🛡️ ${data.backup ? data.backup.totalItems : this.items.length} ürünün anlık yedeği sunucuya başarıyla kaydedildi!`);
+                this.showToast(`${data.backup ? data.backup.totalItems : this.items.length} ürünün anlık yedeği sunucuya başarıyla kaydedildi!`);
                 if (data.backup) {
                     this.updateLastBackupDisplay(data.backup);
                 }
@@ -2563,20 +3044,12 @@ class App {
         const container = document.getElementById('server-backups-list');
         if (!container) return;
 
-        container.innerHTML = `
-            <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.88rem;">
-                ⏳ Yedekler sunucudan çekiliyor...
-            </div>
-        `;
+        container.innerHTML = `<div class="backups-empty-state">Yedekler sunucudan çekiliyor...</div>`;
 
         try {
-            const res = await fetch('/api/backups');
+            const res = await this.apiFetch('/api/backups');
             if (!res.ok) {
-                container.innerHTML = `
-                    <div style="text-align: center; padding: 2rem; color: #f87171; font-size: 0.88rem;">
-                        ⚠️ Yedekler yüklenemedi.
-                    </div>
-                `;
+                container.innerHTML = `<div class="backups-empty-state" style="color: var(--status-critical);">Yedekler yüklenemedi.</div>`;
                 return;
             }
 
@@ -2589,10 +3062,10 @@ class App {
 
             if (backups.length === 0) {
                 container.innerHTML = `
-                    <div style="text-align: center; padding: 2.5rem 1rem; color: #94a3b8; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1);">
-                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">🛡️</div>
-                        <div style="font-weight: 700; color: #f8fafc; margin-bottom: 0.35rem;">Henüz Yedek Kaydı Yok</div>
-                        <div style="font-size: 0.82rem;">"Şimdi Yeni Yedek Al" butonuna basarak ilk güvenli yedeğinizi hemen alabilirsiniz.</div>
+                    <div class="backups-empty-state">
+                        <div style="margin-bottom: 0.5rem; color: var(--accent-cyan);">${UI_ICONS.shield}</div>
+                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.35rem;">Henüz Yedek Kaydı Yok</div>
+                        <div>"Şimdi Yeni Yedek Al" butonuna basarak ilk güvenli yedeğinizi hemen alabilirsiniz.</div>
                     </div>
                 `;
                 return;
@@ -2606,27 +3079,27 @@ class App {
                 const reasonBadge = b.reasonLabel || b.reason;
 
                 html += `
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem 0.9rem; background: ${isLatest ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.03)'}; border: 1px solid ${isLatest ? 'rgba(99, 102, 241, 0.3)' : 'rgba(255, 255, 255, 0.08)'}; border-radius: var(--radius-sm); transition: all 0.2s ease;">
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                    <div class="backup-item-card ${isLatest ? 'is-latest' : ''}">
+                        <div class="backup-item-top">
                             <div>
-                                <div style="display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;">
-                                    <strong style="font-size: 0.9rem; color: #f8fafc;">📅 ${dateDisplay}</strong>
-                                    ${isLatest ? '<span style="background: rgba(16, 185, 129, 0.2); color: #34d399; font-size: 0.68rem; padding: 0.15rem 0.45rem; border-radius: 4px; font-weight: 800;">EN SON YEDEK</span>' : ''}
-                                    <span style="background: rgba(255, 255, 255, 0.08); color: #cbd5e1; font-size: 0.7rem; padding: 0.15rem 0.45rem; border-radius: 4px;">${this.escapeHtml(reasonBadge)}</span>
+                                <div class="backup-item-title-row">
+                                    <strong class="backup-item-date">${this.escapeHtml(dateDisplay)}</strong>
+                                    ${isLatest ? '<span class="backup-badge-latest">EN SON YEDEK</span>' : ''}
+                                    <span class="backup-badge-reason">${this.escapeHtml(reasonBadge)}</span>
                                 </div>
-                                <div style="display: flex; gap: 0.6rem; margin-top: 0.3rem; font-size: 0.78rem; color: #94a3b8; flex-wrap: wrap;">
-                                    <span>📦 <strong>${b.totalItems}</strong> Ürün</span>
-                                    <span>🏢 <strong>${b.suppliersCount || 0}</strong> Toptancı</span>
-                                    <span>💾 ${formattedSize}</span>
+                                <div class="backup-meta-row">
+                                    <span>${UI_ICONS.package} <strong>${b.totalItems}</strong> Ürün</span>
+                                    <span>${UI_ICONS.building} <strong>${b.suppliersCount || 0}</strong> Toptancı</span>
+                                    <span>${formattedSize}</span>
                                 </div>
                             </div>
 
-                            <div style="display: flex; gap: 0.45rem; align-items: center; flex-shrink: 0;">
-                                <a href="/api/backups/download/${encodeURIComponent(b.filename)}" download class="btn btn-secondary btn-sm" style="padding: 0.35rem 0.65rem; font-size: 0.78rem; text-decoration: none;" title="JSON Dosyasını Bilgisayara İndir">
-                                    📥 İndir
-                                </a>
-                                <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 700; background: linear-gradient(135deg, #4f46e5, #7c3aed);" title="Dükkan Verilerini Bu Tarihe Geri Döndür" onclick="window.app.confirmRestoreServerBackup('${this.escapeHtml(b.filename)}', '${this.escapeHtml(dateDisplay)}', ${b.totalItems})">
-                                    🔄 Geri Yükle
+                            <div class="backup-item-actions">
+                                <button type="button" class="btn btn-secondary btn-xs" title="JSON Dosyasını Bilgisayara İndir" onclick="window.app.downloadServerBackup('${this.escapeHtml(b.filename)}')">
+                                    ${UI_ICONS.download} <span>İndir</span>
+                                </button>
+                                <button type="button" class="btn btn-primary btn-xs" title="Dükkan Verilerini Bu Tarihe Geri Döndür" onclick="window.app.confirmRestoreServerBackup('${this.escapeHtml(b.filename)}', '${this.escapeHtml(dateDisplay)}', ${b.totalItems})">
+                                    ${UI_ICONS.refresh} <span>Geri Yükle</span>
                                 </button>
                             </div>
                         </div>
@@ -2637,11 +3110,7 @@ class App {
             container.innerHTML = html;
         } catch (e) {
             console.error('Render backups error:', e);
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #f87171; font-size: 0.88rem;">
-                    ⚠️ Yedekler listelenirken hata oluştu.
-                </div>
-            `;
+            container.innerHTML = `<div class="backups-empty-state" style="color: var(--status-critical);">Yedekler listelenirken hata oluştu.</div>`;
         }
     }
 
@@ -2656,10 +3125,32 @@ class App {
         });
     }
 
+    async downloadServerBackup(filename) {
+        try {
+            const res = await this.apiFetch(`/api/backups/download/${encodeURIComponent(filename)}`);
+            if (!res.ok) {
+                this.showToast('Yedek dosyası indirilemedi.');
+                return;
+            }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        } catch (e) {
+            console.error('Yedek indirme hatası:', e);
+            this.showToast('Yedek indirilemedi.');
+        }
+    }
+
     async executeRestoreServerBackup(filename) {
         this.showToast('⏳ Yedek geri yükleniyor...');
         try {
-            const res = await fetch(`/api/backups/${encodeURIComponent(filename)}/restore`, {
+            const res = await this.apiFetch(`/api/backups/${encodeURIComponent(filename)}/restore`, {
                 method: 'POST'
             });
 
@@ -2707,11 +3198,12 @@ class App {
         this.items.forEach(i => {
             if (i.status === 'completed') i.status = 'deleted';
         });
+        this.saveItemsCache();
         this.render();
         this.showToast(`${completedCount} tamamlanmış ürün çöp kutusuna taşındı (güvende).`);
 
         try {
-            await fetch('/api/items/clear-completed', { method: 'POST' });
+            await this.apiFetch('/api/items/clear-completed', { method: 'POST' });
         } catch (e) {
             console.error('Temizleme hatası:', e);
         }
@@ -2755,67 +3247,78 @@ class App {
         const badge = document.getElementById('push-status-badge');
         const btnText = document.getElementById('push-btn-text');
         const btnIcon = document.getElementById('push-btn-icon');
+        const quickBtn = document.getElementById('btn-quick-push-toggle');
         const quickIcon = document.getElementById('quick-push-icon');
         const quickLabel = document.getElementById('quick-push-label');
         const hint = document.getElementById('push-info-hint');
 
         if (!supported) {
             if (badge) {
-                badge.textContent = '⚪ Desteklenmiyor';
-                badge.style.background = 'rgba(148, 163, 184, 0.15)';
-                badge.style.color = '#94a3b8';
+                badge.textContent = 'Desteklenmiyor';
+                badge.className = 'admin-status-pill is-muted';
             }
             if (btnText) btnText.textContent = 'Tarayıcı Desteklemiyor';
+            if (btnIcon) btnIcon.innerHTML = UI_ICONS.bellOff;
+            if (quickIcon) quickIcon.innerHTML = UI_ICONS.bellOff;
             if (quickLabel) quickLabel.textContent = 'Desteklenmiyor';
+            if (quickBtn) quickBtn.classList.remove('is-active', 'is-denied');
             if (hint) {
                 hint.style.display = 'block';
-                hint.innerHTML = '💡 <em>iPhone kullanıyorsanız Safari\'de "Paylaş > Ana Ekrana Ekle" yaparak telefon bildirimlerini açabilirsiniz.</em>';
+                hint.innerHTML = '<em>iPhone kullanıyorsanız Safari\'de "Paylaş &gt; Ana Ekrana Ekle" yaparak telefon bildirimlerini açabilirsiniz.</em>';
             }
             return;
         }
 
         if (Notification.permission === 'denied') {
             if (badge) {
-                badge.textContent = '🔴 Engellendi';
-                badge.style.background = 'rgba(239, 68, 68, 0.15)';
-                badge.style.color = '#f87171';
+                badge.textContent = 'Engellendi';
+                badge.className = 'admin-status-pill is-danger';
             }
             if (btnText) btnText.textContent = 'Bildirim İzni Engellenmiş';
+            if (btnIcon) btnIcon.innerHTML = UI_ICONS.bellOff;
+            if (quickIcon) quickIcon.innerHTML = UI_ICONS.bellOff;
             if (quickLabel) quickLabel.textContent = 'Engellendi';
+            if (quickBtn) {
+                quickBtn.classList.remove('is-active');
+                quickBtn.classList.add('is-denied');
+            }
             if (hint) {
                 hint.style.display = 'block';
-                hint.innerHTML = '⚠️ <em>Bildirim izni engellenmiş. Tarayıcı adres çubuğundaki kilit simgesine dokunup Bildirimlere İzin Verin.</em>';
+                hint.innerHTML = '<em>Bildirim izni engellenmiş. Tarayıcı adres çubuğundaki kilit simgesine dokunup Bildirimlere İzin Verin.</em>';
             }
             return;
         }
 
         if (this.isPushSubscribed) {
             if (badge) {
-                badge.textContent = '🟢 Açık (Aktif)';
-                badge.style.background = 'rgba(16, 185, 129, 0.15)';
-                badge.style.color = '#34d399';
+                badge.textContent = 'Açık (Aktif)';
+                badge.className = 'admin-status-pill is-active';
             }
             if (btnText) btnText.textContent = 'Bu Telefonda Bildirimleri Kapat';
-            if (btnIcon) btnIcon.textContent = '🔕';
-            if (quickIcon) quickIcon.textContent = '🔔';
+            if (btnIcon) btnIcon.innerHTML = UI_ICONS.bellOff;
+            if (quickIcon) quickIcon.innerHTML = UI_ICONS.bell;
             if (quickLabel) quickLabel.textContent = 'Bildirim Açık';
+            if (quickBtn) {
+                quickBtn.classList.remove('is-denied');
+                quickBtn.classList.add('is-active');
+            }
             if (hint) {
                 hint.style.display = 'block';
-                hint.innerHTML = '✅ <em>Bu telefonda bildirimler aktif! Başka biri yeni ürün eklediğinde telefonunuza sesli/titreşimli bildirim gelecektir.</em>';
+                hint.innerHTML = '<em>Bu telefonda bildirimler aktif! Başka biri yeni ürün eklediğinde telefonunuza sesli/titreşimli bildirim gelecektir.</em>';
             }
         } else {
             if (badge) {
-                badge.textContent = '⚪ Kapalı';
-                badge.style.background = 'rgba(148, 163, 184, 0.15)';
-                badge.style.color = '#94a3b8';
+                badge.textContent = 'Kapalı';
+                badge.className = 'admin-status-pill is-muted';
             }
             if (btnText) btnText.textContent = 'Bu Telefonda Bildirimleri Aç';
-            if (btnIcon) btnIcon.textContent = '🔔';
-            if (quickIcon) quickIcon.textContent = '🔕';
+            if (btnIcon) btnIcon.innerHTML = UI_ICONS.bell;
+            if (quickIcon) quickIcon.innerHTML = UI_ICONS.bellOff;
             if (quickLabel) quickLabel.textContent = 'Bildirim Aç';
+            if (quickBtn) quickBtn.classList.remove('is-active', 'is-denied');
             if (hint) {
                 hint.style.display = 'block';
-                hint.innerHTML = '💡 <em>Yeni ürünler eklendiğinde telefonunuzun çalması için "Bildirimleri Aç" butonuna dokunun.</em>';
+                hint.innerHTML = '<em>Yeni ürünler eklendiğinde telefonunuzun çalması için "Bildirimleri Aç" butonuna dokunun.</em>';
             }
         }
     }
@@ -2834,7 +3337,7 @@ class App {
                 // Unsubscribe
                 const sub = await this.swRegistration.pushManager.getSubscription();
                 if (sub) {
-                    await fetch('/api/push/unsubscribe', {
+                    await this.apiFetch('/api/push/unsubscribe', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ endpoint: sub.endpoint })
@@ -2854,7 +3357,7 @@ class App {
                 }
 
                 // Get VAPID public key
-                const keyRes = await fetch('/api/push/public-key');
+                const keyRes = await this.apiFetch('/api/push/public-key');
                 if (!keyRes.ok) {
                     throw new Error('Push sunucusu anahtarı alınamadı');
                 }
@@ -2868,7 +3371,7 @@ class App {
                 });
 
                 // Send to backend
-                const subRes = await fetch('/api/push/subscribe', {
+                const subRes = await this.apiFetch('/api/push/subscribe', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -2884,7 +3387,7 @@ class App {
                     
                     // Trigger a test notification automatically
                     setTimeout(() => {
-                        fetch('/api/push/test', { method: 'POST' }).catch(() => {});
+                        this.apiFetch('/api/push/test', { method: 'POST' }).catch(() => {});
                     }, 500);
                 } else {
                     throw new Error('Abonelik sunucuya kaydedilemedi');
@@ -2908,13 +3411,13 @@ class App {
         const btn = document.getElementById('btn-test-push');
         if (btn) {
             btn.disabled = true;
-            btn.textContent = '⏳ Gönderiliyor...';
+            btn.textContent = 'Gönderiliyor...';
         }
 
         try {
-            const res = await fetch('/api/push/test', { method: 'POST' });
+            const res = await this.apiFetch('/api/push/test', { method: 'POST' });
             if (res.ok) {
-                this.showToast('🧪 Test bildirimi telefonunuza gönderildi! Üst bildirim çubuğunu kontrol edin.');
+                this.showToast('Test bildirimi telefonunuza gönderildi! Üst bildirim çubuğunu kontrol edin.');
             } else {
                 this.showToast('Test bildirimi gönderilemedi.');
             }
@@ -2923,7 +3426,7 @@ class App {
         } finally {
             if (btn) {
                 btn.disabled = false;
-                btn.innerHTML = '<span>🧪</span><span>Test Bildirimi Gönder</span>';
+                btn.innerHTML = `${UI_ICONS.bell}<span>Test Bildirimi Gönder</span>`;
             }
         }
     }
@@ -2970,6 +3473,10 @@ class App {
                 if (nameInput) nameInput.value = parsed.name;
                 if (qtyInput && parsed.quantity) qtyInput.value = parsed.quantity;
                 if (urgInput && parsed.urgency) urgInput.value = parsed.urgency;
+                this.syncActiveUnitChip();
+                if (typeof this.syncAllCustomSelects === 'function') {
+                    this.syncAllCustomSelects();
+                }
 
                 setTimeout(() => {
                     this.closeAllModals();
@@ -2978,7 +3485,7 @@ class App {
                 }, 900);
             },
             (errorMsg, rawCode) => {
-                if (voiceText) voiceText.innerHTML = `<span style="color: #f87171; font-weight: 600;">⚠️ ${this.escapeHtml(errorMsg)}</span>`;
+                if (voiceText) voiceText.innerHTML = `<span class="voice-transcript-error">${this.escapeHtml(errorMsg)}</span>`;
                 if (micBtn) micBtn.classList.remove('listening');
                 if (voiceActions) voiceActions.style.display = 'flex';
             },
@@ -2995,49 +3502,39 @@ class App {
             }
         });
         const modal = document.getElementById(modalId);
-        if (modal) modal.classList.add('active');
+        if (modal) {
+            modal.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
     }
 
     openAdminModal() {
         const nameInput = document.getElementById('input-app-name');
-        if (nameInput) nameInput.value = this.appName || 'App';
+        if (nameInput) nameInput.value = this.appName || 'HKC';
         this.updateSoundButtonUI();
         this.updatePushUI(!!('serviceWorker' in navigator && 'PushManager' in window));
         this.fetchAndDisplayLastBackup();
         this.openModal('password-modal');
     }
 
-
-
     closeAllModals() {
         document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active'));
+        document.body.classList.remove('modal-open');
         window.speechManager.stop();
     }
 
     showToast(message) {
+        document.querySelectorAll('.app-toast').forEach(t => t.remove());
         const toast = document.createElement('div');
-        toast.textContent = message;
-        toast.style.cssText = `
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: #f8fafc;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 0.65rem 1.25rem;
-            border-radius: 9999px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-            font-size: 0.875rem;
-            font-weight: 600;
-            z-index: 200;
-        `;
+        toast.className = 'app-toast';
+        toast.innerHTML = `<span class="app-toast-dot"></span><span>${this.escapeHtml(message)}</span>`;
         document.body.appendChild(toast);
         setTimeout(() => {
+            if (!document.body.contains(toast)) return;
             toast.style.opacity = '0';
             toast.style.transition = 'opacity 0.3s ease';
             setTimeout(() => toast.remove(), 300);
-        }, 2500);
+        }, 2600);
     }
 
     getFilteredItems() {
@@ -3055,6 +3552,8 @@ class App {
                         if (item.urgency !== 'critical' || item.status === 'completed') return false;
                     } else if (this.filterStatus === 'urgent') {
                         if (item.urgency !== 'urgent' || item.status === 'completed') return false;
+                    } else if (this.filterStatus === 'priority') {
+                        if ((item.urgency !== 'critical' && item.urgency !== 'urgent') || item.status === 'completed') return false;
                     } else if (item.status !== this.filterStatus) {
                         return false;
                     }
@@ -3098,11 +3597,33 @@ class App {
         if (statUrgent) statUrgent.textContent = urgent;
         if (statCompleted) statCompleted.textContent = completed;
 
-        // Progress Bar
+        const subTotal = document.getElementById('stat-total-sub');
+        const subPending = document.getElementById('stat-pending-sub');
+        const subUrgent = document.getElementById('stat-urgent-sub');
+        const subCompleted = document.getElementById('stat-completed-sub');
+
+        if (subTotal) subTotal.textContent = `${ordered} siparişte · ${pending} bekliyor`;
+        if (subPending) subPending.textContent = pending ? 'Tedarik bekliyor' : 'Bekleyen yok';
+        if (subUrgent) subUrgent.textContent = `${critical} yok satan · ${urgentOnly} acil`;
+        if (subCompleted) subCompleted.textContent = total ? `%${Math.round((completed / total) * 100)} karşılandı` : 'Liste hazır';
+
+        document.querySelectorAll('.stat-card[data-stat-filter]').forEach(card => {
+            const key = card.dataset.statFilter;
+            const active = (key === this.filterStatus) ||
+                (key === 'priority' && (this.filterStatus === 'critical' || this.filterStatus === 'urgent'));
+            card.classList.toggle('is-active-filter', active && (this.filterStatus !== 'all' || key === 'all'));
+        });
+
+        // Segmented Progress Bar
         const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const orderedPercent = total > 0 ? Math.round((ordered / total) * 100) : 0;
         const fillBar = document.getElementById('progress-fill-bar');
+        const fillOrdered = document.getElementById('progress-fill-ordered');
+        const breakdown = document.getElementById('progress-breakdown');
         const percentText = document.getElementById('progress-percent-text');
         if (fillBar) fillBar.style.width = `${percent}%`;
+        if (fillOrdered) fillOrdered.style.width = `${orderedPercent}%`;
+        if (breakdown) breakdown.textContent = `${completed} alındı · ${ordered} siparişte · ${pending} bekliyor`;
         if (percentText) percentText.textContent = `%${percent} Tamamlandı (${completed}/${total})`;
 
         // Quick Chips Count Badges
@@ -3123,6 +3644,606 @@ class App {
         if (chipTrash) chipTrash.textContent = trashCount;
     }
 
+    // ==========================================
+    // CUSTOM SELECT DROPDOWNS (ZERO DOUBLE ARROWS)
+    // ==========================================
+    initCustomSelects() {
+        const selects = document.querySelectorAll('select');
+        selects.forEach(select => {
+            if (!select || select.dataset.hkcEnhanced === '1') return;
+            select.dataset.hkcEnhanced = '1';
+
+            const wrapper = document.createElement('div');
+            wrapper.className = 'hkc-select-wrapper';
+            if (select.id) wrapper.dataset.for = select.id;
+
+            const parent = select.parentNode;
+            if (!parent) return;
+            parent.insertBefore(wrapper, select);
+            wrapper.appendChild(select);
+            select.classList.add('hkc-native-select');
+            select.tabIndex = -1;
+            select.setAttribute('aria-hidden', 'true');
+
+            const trigger = document.createElement('button');
+            trigger.type = 'button';
+            trigger.className = 'hkc-select-trigger';
+            trigger.setAttribute('aria-haspopup', 'listbox');
+            trigger.setAttribute('aria-expanded', 'false');
+
+            const valueEl = document.createElement('span');
+            valueEl.className = 'hkc-select-value';
+
+            const chevronEl = document.createElement('span');
+            chevronEl.className = 'hkc-select-chevron';
+            chevronEl.setAttribute('aria-hidden', 'true');
+            chevronEl.innerHTML = UI_ICONS.chevronDown;
+
+            trigger.appendChild(valueEl);
+            trigger.appendChild(chevronEl);
+
+            const menu = document.createElement('div');
+            menu.className = 'hkc-select-menu';
+            menu.setAttribute('role', 'listbox');
+
+            wrapper.appendChild(trigger);
+            wrapper.appendChild(menu);
+
+            const entry = { select, wrapper, trigger, valueEl, menu };
+            this.customSelectInstances.push(entry);
+
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const wasOpen = wrapper.classList.contains('is-open');
+                this.closeAllCustomSelects();
+                if (!wasOpen) {
+                    const rect = trigger.getBoundingClientRect();
+                    const inBottomBar = !!wrapper.closest('#bulk-action-bar');
+                    const notEnoughBelow = (rect.bottom + 260 > window.innerHeight) && rect.top > 180;
+                    wrapper.classList.toggle('is-dropup', inBottomBar || notEnoughBelow);
+                    wrapper.classList.add('is-open');
+                    trigger.setAttribute('aria-expanded', 'true');
+                }
+            });
+
+            menu.addEventListener('click', (e) => {
+                const optBtn = e.target.closest('.hkc-select-option');
+                if (!optBtn) return;
+                e.preventDefault();
+                e.stopPropagation();
+                const val = optBtn.dataset.value ?? '';
+                if (select.value !== val) {
+                    select.value = val;
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+                this.syncCustomSelect(select);
+                this.closeAllCustomSelects();
+                trigger.focus();
+            });
+
+            select.addEventListener('change', () => {
+                this.syncCustomSelect(select);
+            });
+
+            this.syncCustomSelect(select);
+        });
+
+        if (!this._customSelectDocBound) {
+            this._customSelectDocBound = true;
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.hkc-select-wrapper')) {
+                    this.closeAllCustomSelects();
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.querySelector('.hkc-select-wrapper.is-open')) {
+                    e.stopPropagation();
+                    this.closeAllCustomSelects();
+                }
+            }, true);
+        }
+    }
+
+    closeAllCustomSelects() {
+        (this.customSelectInstances || []).forEach(({ wrapper, trigger }) => {
+            wrapper.classList.remove('is-open');
+            trigger.setAttribute('aria-expanded', 'false');
+        });
+    }
+
+    syncCustomSelect(select) {
+        if (!select) return;
+        const entry = (this.customSelectInstances || []).find(item => item.select === select);
+        if (!entry) return;
+        const { valueEl, menu } = entry;
+        const options = Array.from(select.options || []);
+        const selectedOption = options[select.selectedIndex] || options.find(o => o.value === select.value) || options[0];
+        valueEl.textContent = selectedOption ? selectedOption.textContent.trim() : 'Seçiniz';
+
+        menu.innerHTML = options.map(opt => {
+            const isSelected = opt.value === select.value;
+            return `
+                <button type="button" class="hkc-select-option ${isSelected ? 'is-selected' : ''}" role="option" aria-selected="${isSelected}" data-value="${this.escapeHtml(opt.value)}">
+                    <span class="hkc-select-option-label">${this.escapeHtml(opt.textContent.trim())}</span>
+                    <span class="hkc-select-option-check" aria-hidden="true">${UI_ICONS.check}</span>
+                </button>
+            `;
+        }).join('');
+    }
+
+    syncAllCustomSelects() {
+        (this.customSelectInstances || []).forEach(({ select }) => this.syncCustomSelect(select));
+    }
+
+    // ==========================================
+    // PRODUCT NAME AUTOCOMPLETE & UNIT CHIPS
+    // ==========================================
+    initAutocomplete() {
+        const input = document.getElementById('input-name');
+        const listEl = document.getElementById('name-autocomplete-list');
+        if (!input || !listEl) return;
+
+        input.addEventListener('input', () => {
+            this.autocompleteIndex = -1;
+            this.renderAutocomplete();
+        });
+
+        input.addEventListener('focus', () => {
+            if (input.value.trim().length >= 1) {
+                this.renderAutocomplete();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            if (!listEl || listEl.style.display === 'none' || !this.autocompleteMatches.length) return;
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                this.autocompleteIndex = (this.autocompleteIndex + 1) % this.autocompleteMatches.length;
+                this.renderAutocomplete();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                this.autocompleteIndex = (this.autocompleteIndex - 1 + this.autocompleteMatches.length) % this.autocompleteMatches.length;
+                this.renderAutocomplete();
+            } else if (e.key === 'Enter' && this.autocompleteIndex >= 0) {
+                e.preventDefault();
+                this.selectAutocompleteSuggestion(this.autocompleteIndex);
+            } else if (e.key === 'Escape') {
+                this.closeAutocomplete();
+            }
+        });
+
+        listEl.addEventListener('mousedown', (e) => {
+            const btn = e.target.closest('.autocomplete-item');
+            if (!btn) return;
+            e.preventDefault();
+            const idx = Number(btn.dataset.index);
+            if (!Number.isNaN(idx)) {
+                this.selectAutocompleteSuggestion(idx);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.autocomplete-field')) {
+                this.closeAutocomplete();
+            }
+        });
+    }
+
+    getAutocompleteSuggestions(rawQuery) {
+        const q = this.nameKey(rawQuery);
+        if (!q) return [];
+
+        const catalog = new Map();
+        const touchEntry = (name, meta = {}) => {
+            const key = this.nameKey(name);
+            if (!key) return;
+            if (!catalog.has(key)) {
+                catalog.set(key, {
+                    name: String(name).trim(),
+                    key,
+                    supplier: 'Belirtilmedi',
+                    quantity: '',
+                    urgency: 'normal',
+                    count: 0,
+                    lastTime: 0,
+                    seenIds: new Set()
+                });
+            }
+            const rec = catalog.get(key);
+            if (meta.itemId) {
+                if (!rec.seenIds.has(meta.itemId)) {
+                    rec.seenIds.add(meta.itemId);
+                    rec.count += 1;
+                }
+            } else if (meta.fromQuick && rec.count === 0) {
+                rec.count = 1;
+            }
+            const ts = meta.createdAt ? new Date(meta.createdAt).getTime() : 0;
+            if (ts >= rec.lastTime) {
+                rec.lastTime = ts;
+                if (name) rec.name = String(name).trim();
+                if (meta.supplier && meta.supplier !== 'Belirtilmedi') rec.supplier = meta.supplier;
+                if (meta.quantity) rec.quantity = meta.quantity;
+                if (meta.urgency) rec.urgency = meta.urgency;
+            } else {
+                if (rec.supplier === 'Belirtilmedi' && meta.supplier && meta.supplier !== 'Belirtilmedi') {
+                    rec.supplier = meta.supplier;
+                }
+                if (!rec.quantity && meta.quantity) rec.quantity = meta.quantity;
+            }
+        };
+
+        (this.events || []).forEach(ev => {
+            touchEntry(ev.name, {
+                itemId: ev.itemId,
+                supplier: ev.supplier,
+                urgency: ev.urgency,
+                createdAt: ev.createdAt
+            });
+        });
+
+        (this.items || []).forEach(item => {
+            touchEntry(item.name, {
+                itemId: item.id,
+                supplier: item.supplier,
+                quantity: item.quantity,
+                urgency: item.urgency,
+                createdAt: item.updatedAt || item.createdAt
+            });
+        });
+
+        (this.quickItems || []).forEach(label => {
+            const clean = String(label || '').replace(/^[^\p{L}\p{N}]+/u, '').trim();
+            if (clean) touchEntry(clean, { fromQuick: true });
+        });
+
+        const matches = [];
+        catalog.forEach(entry => {
+            if (!entry.key.includes(q)) return;
+            const startsWith = entry.key.startsWith(q) ? 1 : 0;
+            const wordMatch = entry.key.split(/\s+/).some(w => w.startsWith(q)) ? 1 : 0;
+            matches.push({ ...entry, score: startsWith * 2 + wordMatch });
+        });
+
+        matches.sort((a, b) => {
+            if (b.score !== a.score) return b.score - a.score;
+            if (b.count !== a.count) return b.count - a.count;
+            return b.lastTime - a.lastTime;
+        });
+
+        return matches.slice(0, 7);
+    }
+
+    renderAutocomplete() {
+        const input = document.getElementById('input-name');
+        const listEl = document.getElementById('name-autocomplete-list');
+        if (!input || !listEl) return;
+
+        const suggestions = this.getAutocompleteSuggestions(input.value);
+        this.autocompleteMatches = suggestions;
+
+        if (!suggestions.length) {
+            listEl.style.display = 'none';
+            listEl.innerHTML = '';
+            return;
+        }
+
+        if (this.autocompleteIndex >= suggestions.length) {
+            this.autocompleteIndex = 0;
+        }
+
+        listEl.innerHTML = suggestions.map((s, idx) => {
+            const metaParts = [];
+            if (s.supplier && s.supplier !== 'Belirtilmedi') metaParts.push(s.supplier);
+            if (s.quantity) metaParts.push(s.quantity);
+            const metaText = metaParts.join(' · ') || 'Geçmiş kayıt';
+            return `
+                <button type="button" class="autocomplete-item ${idx === this.autocompleteIndex ? 'is-active' : ''}" role="option" data-index="${idx}">
+                    <span class="autocomplete-item-main">
+                        <span class="autocomplete-item-name">${this.escapeHtml(s.name)}</span>
+                        <span class="autocomplete-item-meta">${this.escapeHtml(metaText)}</span>
+                    </span>
+                    ${s.count > 1 ? `<span class="autocomplete-count-pill">${s.count}×</span>` : ''}
+                </button>
+            `;
+        }).join('');
+
+        listEl.style.display = 'block';
+    }
+
+    selectAutocompleteSuggestion(index) {
+        const item = this.autocompleteMatches[index];
+        if (!item) return;
+
+        const nameInput = document.getElementById('input-name');
+        const qtyInput = document.getElementById('input-quantity');
+        const supSelect = document.getElementById('input-supplier');
+
+        if (nameInput) nameInput.value = item.name;
+        if (supSelect && item.supplier && item.supplier !== 'Belirtilmedi') {
+            if (Array.from(supSelect.options).some(o => o.value === item.supplier)) {
+                supSelect.value = item.supplier;
+            }
+        }
+        if (qtyInput && item.quantity && (!qtyInput.value.trim() || qtyInput.value.trim() === '1 kutu' || qtyInput.value.trim() === '1 adet')) {
+            qtyInput.value = item.quantity;
+        }
+
+        this.syncActiveUnitChip();
+        this.syncAllCustomSelects();
+        this.closeAutocomplete();
+    }
+
+    closeAutocomplete() {
+        this.autocompleteMatches = [];
+        this.autocompleteIndex = -1;
+        const listEl = document.getElementById('name-autocomplete-list');
+        if (listEl) {
+            listEl.style.display = 'none';
+            listEl.innerHTML = '';
+        }
+    }
+
+    initUnitQuickChips() {
+        const container = document.getElementById('unit-quick-chips');
+        const qtyInput = document.getElementById('input-quantity');
+        if (!container || !qtyInput) return;
+
+        container.addEventListener('click', (e) => {
+            const btn = e.target.closest('.unit-chip[data-unit]');
+            if (!btn) return;
+            const unit = btn.dataset.unit;
+            const current = qtyInput.value.trim();
+            const numMatch = current.match(/^(\d+(?:[.,]\d+)?)/);
+            const countPart = numMatch ? numMatch[1] : '1';
+            qtyInput.value = `${countPart} ${unit}`;
+            this.syncActiveUnitChip();
+        });
+
+        qtyInput.addEventListener('input', () => {
+            this.syncActiveUnitChip();
+        });
+
+        this.syncActiveUnitChip();
+    }
+
+    syncActiveUnitChip() {
+        const qtyInput = document.getElementById('input-quantity');
+        const chips = document.querySelectorAll('#unit-quick-chips .unit-chip[data-unit]');
+        if (!qtyInput || !chips.length) return;
+
+        const val = qtyInput.value.toLocaleLowerCase('tr-TR').trim();
+        chips.forEach(chip => {
+            const unit = (chip.dataset.unit || '').toLocaleLowerCase('tr-TR');
+            const matched = new RegExp(`(^|\\s|\\d)${unit}$`).test(val);
+            chip.classList.toggle('active', matched);
+        });
+    }
+
+    // ==========================================
+    // BULK SELECTION & ACTIONS
+    // ==========================================
+    initBulkHandlers() {
+        const btnToggle = document.getElementById('btn-toggle-bulk');
+        const btnSelectAll = document.getElementById('btn-bulk-select-all');
+        const btnClearSel = document.getElementById('btn-bulk-clear-selection');
+        const btnExit = document.getElementById('btn-bulk-exit');
+        const btnCancel = document.getElementById('btn-bulk-cancel');
+        const btnAssignSup = document.getElementById('btn-bulk-assign-supplier');
+        const btnPending = document.getElementById('btn-bulk-pending');
+        const btnOrdered = document.getElementById('btn-bulk-ordered');
+        const btnCompleted = document.getElementById('btn-bulk-completed');
+        const btnDelete = document.getElementById('btn-bulk-delete');
+
+        if (btnToggle) btnToggle.addEventListener('click', () => this.toggleBulkMode());
+        if (btnSelectAll) btnSelectAll.addEventListener('click', () => this.selectAllVisibleItems());
+        if (btnClearSel) btnClearSel.addEventListener('click', () => this.clearBulkSelection());
+        if (btnExit) btnExit.addEventListener('click', () => this.toggleBulkMode(false));
+        if (btnCancel) btnCancel.addEventListener('click', () => this.toggleBulkMode(false));
+        if (btnAssignSup) {
+            btnAssignSup.addEventListener('click', () => {
+                const supSel = document.getElementById('bulk-supplier-select');
+                const sup = supSel ? supSel.value : '';
+                if (!sup) {
+                    this.showToast('Lütfen önce atanacak toptancıyı seçin.');
+                    return;
+                }
+                this.executeBulkUpdate({ supplier: sup });
+            });
+        }
+        if (btnPending) btnPending.addEventListener('click', () => this.executeBulkUpdate({ status: 'pending' }));
+        if (btnOrdered) btnOrdered.addEventListener('click', () => this.executeBulkUpdate({ status: 'ordered' }));
+        if (btnCompleted) btnCompleted.addEventListener('click', () => this.executeBulkUpdate({ status: 'completed' }));
+        if (btnDelete) btnDelete.addEventListener('click', () => this.executeBulkUpdate({ status: 'deleted' }));
+    }
+
+    toggleBulkMode(forceState) {
+        if (this.filterStatus === 'trash' && forceState !== false) {
+            this.showToast('Çöp kutusunda toplu seçim devre dışıdır.');
+            return;
+        }
+        this.isBulkMode = typeof forceState === 'boolean' ? forceState : !this.isBulkMode;
+        if (!this.isBulkMode) {
+            this.selectedIds.clear();
+        }
+        this.updateBulkBarUI();
+        this.render();
+    }
+
+    toggleSelectItem(id) {
+        if (!id) return;
+        if (!this.isBulkMode) this.isBulkMode = true;
+        if (this.selectedIds.has(id)) {
+            this.selectedIds.delete(id);
+        } else {
+            this.selectedIds.add(id);
+        }
+        this.updateBulkBarUI();
+        const card = document.getElementById(`card-${id}`);
+        if (card) {
+            const checked = this.selectedIds.has(id);
+            card.classList.toggle('is-selected', checked);
+            const box = card.querySelector('.bulk-checkbox-btn');
+            if (box) {
+                box.classList.toggle('is-checked', checked);
+                box.innerHTML = checked ? UI_ICONS.check : '';
+            }
+        } else {
+            this.render();
+        }
+    }
+
+    handleCardBulkClick(id, event) {
+        if (!this.isBulkMode) return;
+        if (event && event.target.closest('button, a, input, select, .item-photo-thumb, .item-title')) {
+            return;
+        }
+        this.toggleSelectItem(id);
+    }
+
+    selectAllVisibleItems() {
+        const visible = this.getFilteredItems().filter(i => !i.offline && i.status !== 'deleted');
+        visible.forEach(i => this.selectedIds.add(i.id));
+        this.updateBulkBarUI();
+        this.render();
+    }
+
+    clearBulkSelection() {
+        this.selectedIds.clear();
+        this.updateBulkBarUI();
+        this.render();
+    }
+
+    updateBulkBarUI() {
+        const toggleBtn = document.getElementById('btn-toggle-bulk');
+        const strip = document.getElementById('bulk-select-strip');
+        const bar = document.getElementById('bulk-action-bar');
+        const stripCount = document.getElementById('bulk-strip-count');
+        const barCount = document.getElementById('bulk-selected-count');
+
+        const active = this.isBulkMode && this.filterStatus !== 'trash';
+        const count = this.selectedIds ? this.selectedIds.size : 0;
+
+        if (toggleBtn) toggleBtn.classList.toggle('active', active);
+        if (strip) strip.style.display = active ? 'flex' : 'none';
+        if (bar) bar.style.display = (active && count > 0) ? 'block' : 'none';
+        if (stripCount) stripCount.textContent = count;
+        if (barCount) barCount.textContent = count;
+        document.body.classList.toggle('has-bulk-bar', active && count > 0);
+    }
+
+    async executeBulkUpdate(updates) {
+        const ids = Array.from(this.selectedIds || []);
+        if (!ids.length) {
+            this.showToast('Lütfen en az bir ürün seçin.');
+            return;
+        }
+
+        const now = new Date().toISOString();
+        const idSet = new Set(ids);
+        this.items.forEach(item => {
+            if (idSet.has(item.id)) {
+                Object.assign(item, updates, { updatedAt: now });
+            }
+        });
+        this.saveItemsCache();
+
+        if (updates.status === 'completed' && window.soundManager && window.soundManager.playCompleted) {
+            window.soundManager.playCompleted();
+        } else if (updates.status === 'deleted' && window.soundManager && window.soundManager.playDelete) {
+            window.soundManager.playDelete();
+        }
+
+        const count = ids.length;
+        this.selectedIds.clear();
+        this.isBulkMode = false;
+        this.updateBulkBarUI();
+        this.render();
+
+        const payload = { ids, updates };
+        if (!navigator.onLine) {
+            this.enqueueOfflineMutation({ type: 'bulkUpdate', payload });
+            this.showToast(`📴 İnternet yok — ${count} ürün için toplu işlem sıraya alındı`);
+            return;
+        }
+
+        try {
+            const res = await this.apiFetch('/api/items/bulk-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.status === 503) {
+                this.enqueueOfflineMutation({ type: 'bulkUpdate', payload });
+                this.showToast(`📴 Sunucuya ulaşılamadı — ${count} ürün işlemi sıraya alındı`);
+                return;
+            }
+            if (res.ok) {
+                const msg = updates.supplier
+                    ? `✅ ${count} ürüne toptancı atandı: ${updates.supplier}`
+                    : updates.status === 'deleted'
+                        ? `🗑️ ${count} ürün çöp kutusuna taşındı`
+                        : `✅ ${count} ürün toplu olarak güncellendi`;
+                this.showToast(msg);
+            } else {
+                const err = await res.json().catch(() => ({}));
+                this.showToast(err.error || 'Toplu işlem tamamlanamadı.');
+            }
+        } catch (e) {
+            if (e instanceof TypeError) {
+                this.enqueueOfflineMutation({ type: 'bulkUpdate', payload });
+                this.showToast(`📴 Bağlantı kesildi — ${count} ürün işlemi sıraya alındı`);
+                return;
+            }
+            console.error('Bulk update error:', e);
+            this.showToast('Toplu işlem sırasında hata oluştu.');
+        }
+    }
+
+    // ==========================================
+    // WAITING AGE & COLLAPSIBLE SUPPLIER ACCORDION
+    // ==========================================
+    getWaitingAgeBadge(item) {
+        if (!item || item.status !== 'pending' || !item.createdAt) return '';
+        const createdMs = new Date(item.createdAt).getTime();
+        if (Number.isNaN(createdMs)) return '';
+        const days = Math.floor((Date.now() - createdMs) / 86400000);
+        if (days >= 10) {
+            return `<span class="waiting-age-badge is-overdue" title="Bekleme süresi">${UI_ICONS.hourglass} ${days} gün bekliyor</span>`;
+        }
+        if (days >= 5) {
+            return `<span class="waiting-age-badge is-warning" title="Bekleme süresi">${UI_ICONS.hourglass} ${days} gün bekliyor</span>`;
+        }
+        return '';
+    }
+
+    toggleSupplierGroup(encodedSupplier) {
+        const supplier = decodeURIComponent(encodedSupplier || '');
+        const key = this.nameKey(supplier);
+        if (!key) return;
+        if (this.collapsedSuppliers.has(key)) {
+            this.collapsedSuppliers.delete(key);
+        } else {
+            this.collapsedSuppliers.add(key);
+        }
+        this.writeJsonStorage('dukkan_collapsed_suppliers', Array.from(this.collapsedSuppliers));
+        this.render();
+    }
+
+    toggleAllSupplierGroups() {
+        const filtered = this.getFilteredItems();
+        const keys = [...new Set(filtered.map(i => this.nameKey(i.supplier || 'Belirtilmedi')))].filter(Boolean);
+        const allCollapsed = keys.length > 0 && keys.every(k => this.collapsedSuppliers.has(k));
+        if (allCollapsed) {
+            keys.forEach(k => this.collapsedSuppliers.delete(k));
+        } else {
+            keys.forEach(k => this.collapsedSuppliers.add(k));
+        }
+        this.writeJsonStorage('dukkan_collapsed_suppliers', Array.from(this.collapsedSuppliers));
+        this.render();
+    }
+
     render() {
         this.saveOfflineBackup();
         this.renderStats();
@@ -3131,22 +4252,29 @@ class App {
         if (!container) return;
 
         const filtered = this.getFilteredItems();
+        if (this.selectedIds && this.selectedIds.size > 0) {
+            const validIds = new Set(this.items.filter(i => i.status !== 'deleted').map(i => i.id));
+            Array.from(this.selectedIds).forEach(id => {
+                if (!validIds.has(id)) this.selectedIds.delete(id);
+            });
+        }
+        this.updateBulkBarUI();
 
         if (filtered.length === 0) {
             if (this.filterStatus === 'trash') {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">🛡️</div>
-                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Silinen Ürün Yok</h3>
-                        <p style="font-size:0.875rem;">Silinmiş herhangi bir ürün bulunmuyor. Tüm ürünleriniz ana listede güvende!</p>
+                        <div class="empty-icon">${UI_ICONS.shield}</div>
+                        <h3>Silinen Ürün Yok</h3>
+                        <p>Silinmiş herhangi bir ürün bulunmuyor. Tüm ürünleriniz ana listede güvende!</p>
                     </div>
                 `;
             } else {
                 container.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-icon">✨</div>
-                        <h3 style="font-weight:700; margin-bottom:0.35rem;">Eksik Ürün Bulunamadı</h3>
-                        <p style="font-size:0.875rem;">Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
+                        <div class="empty-icon">${UI_ICONS.sparkles}</div>
+                        <h3>Eksik Ürün Bulunamadı</h3>
+                        <p>Harika! Listede filtrelere uyan bir eksik yok veya tüm siparişler tamamlandı.</p>
                     </div>
                 `;
             }
@@ -3167,19 +4295,19 @@ class App {
             bannerHtml = `
                 <div class="trash-banner">
                     <div class="trash-banner-info">
-                        <span style="font-size: 1.8rem;">🛡️</span>
+                        <div class="trash-banner-icon">${UI_ICONS.shield}</div>
                         <div>
-                            <div class="trash-banner-title">Silinenler & Çöp Kutusu (${trashCount} Ürün)</div>
+                            <div class="trash-banner-title">Silinenler &amp; Çöp Kutusu (${trashCount} Ürün)</div>
                             <div class="trash-banner-desc">Sildiğiniz hiçbir ürün kaybolmaz! Buradan dilediğiniz zaman tek tıkla geri yükleyebilir veya kalıcı olarak silebilirsiniz.</div>
                         </div>
                     </div>
                     <div class="trash-banner-actions">
                         <button type="button" class="btn btn-primary btn-sm" onclick="window.app.restoreAllDeleted()" ${trashCount === 0 ? 'disabled' : ''}>
-                            <span>↩️</span>
+                            ${UI_ICONS.undo}
                             <span>Tümünü Geri Yükle</span>
                         </button>
                         <button type="button" class="btn btn-danger btn-sm" onclick="window.app.emptyTrash()" ${trashCount === 0 ? 'disabled' : ''}>
-                            <span>🧹</span>
+                            ${UI_ICONS.trash}
                             <span>Silinenleri Kalıcı Temizle</span>
                         </button>
                     </div>
@@ -3197,15 +4325,36 @@ class App {
             groups[sup].push(item);
         });
 
-        let html = '';
-        Object.keys(groups).forEach(supplier => {
+        const suppliersList = Object.keys(groups);
+        const allCollapsed = suppliersList.length > 0 && suppliersList.every(sup => this.collapsedSuppliers.has(this.nameKey(sup)));
+
+        let html = `
+            <div class="supplier-accordion-controls">
+                <span class="supplier-accordion-summary">${suppliersList.length} Toptancı Grubu · ${items.length} Kalem</span>
+                <button type="button" class="btn btn-secondary btn-xs" onclick="window.app.toggleAllSupplierGroups()">
+                    ${UI_ICONS.layers} <span>${allCollapsed ? 'Tümünü Aç' : 'Tümünü Daralt'}</span>
+                </button>
+            </div>
+        `;
+
+        suppliersList.forEach(supplier => {
             const groupItems = groups[supplier];
+            const supKey = this.nameKey(supplier);
+            const isCollapsed = this.collapsedSuppliers.has(supKey);
+            const urgentCount = groupItems.filter(i => i.status !== 'completed' && i.status !== 'deleted' && (i.urgency === 'critical' || i.urgency === 'urgent')).length;
+            const initial = (supplier || 'T').trim().charAt(0).toLocaleUpperCase('tr-TR') || 'T';
+            const encodedSup = encodeURIComponent(supplier);
             html += `
-                <div class="supplier-group-card">
-                    <div class="supplier-group-header">
+                <div class="supplier-group-card ${isCollapsed ? 'is-collapsed' : ''}">
+                    <div class="supplier-group-header is-clickable" onclick="window.app.toggleSupplierGroup('${encodedSup}')" role="button" tabindex="0" aria-expanded="${!isCollapsed}" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.app.toggleSupplierGroup('${encodedSup}')}">
                         <div class="supplier-group-info">
-                            <span class="supplier-name">👤 ${supplier}</span>
+                            <span class="supplier-avatar-chip" aria-hidden="true">${this.escapeHtml(initial)}</span>
+                            <span class="supplier-name">${this.escapeHtml(supplier)}</span>
                             <span class="supplier-count-badge">${groupItems.length} Çeşit</span>
+                        </div>
+                        <div class="supplier-group-right">
+                            ${urgentCount > 0 ? `<span class="supplier-urgent-pill">${urgentCount} Acil</span>` : ''}
+                            <span class="supplier-chevron" aria-hidden="true">${UI_ICONS.chevronDown}</span>
                         </div>
                     </div>
                     <div class="supplier-group-items">
@@ -3230,10 +4379,12 @@ class App {
                                 <span class="urgency-badge offline">Gönderilmeyi bekliyor</span>
                             </div>
                             <div class="item-meta-row">
-                                <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
-                                <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
-                                <span class="meta-tag">📴 Çevrimdışı eklendi</span>
+                                <span class="meta-tag supplier">${UI_ICONS.building} ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                                <span class="meta-tag time">${UI_ICONS.clock} ${this.formatDateTime(item.createdAt)}</span>
+                                ${item.addedBy ? `<span class="meta-tag author" title="Ekleyen">${UI_ICONS.user} ${this.escapeHtml(item.addedBy)}</span>` : ''}
+                                <span class="meta-tag">${UI_ICONS.wifiOff} Çevrimdışı eklendi</span>
                             </div>
+                            ${item.notes ? `<div class="item-note-text">${UI_ICONS.note} ${this.escapeHtml(item.notes)}</div>` : ''}
                         </div>
                     </div>
                     <div class="card-body-bottom">
@@ -3249,30 +4400,31 @@ class App {
         // Special Trash Card if item is soft-deleted
         if (item.status === 'deleted') {
             return `
-                <div class="item-card" id="card-${item.id}" style="opacity: 0.9; border-color: rgba(239, 68, 68, 0.35);">
+                <div class="item-card trash-card" id="card-${item.id}">
                     <div class="card-body-top">
                         <div class="item-main-info" style="width: 100%;">
                             <div class="item-title-row">
-                                <span class="urgency-badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171;">🗑️ Silinenlerde</span>
-                                <h3 class="item-title" style="text-decoration: line-through; color: #94a3b8;">${this.escapeHtml(item.name)}</h3>
+                                <span class="urgency-badge deleted">Silinenlerde</span>
+                                <h3 class="item-title">${this.escapeHtml(item.name)}</h3>
                             </div>
                             <div class="item-meta-row">
-                                <span class="meta-tag quantity">📦 ${this.escapeHtml(item.quantity || '1 adet')}</span>
-                                <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
-                                <span class="meta-tag time">🕒 ${this.formatTime(item.updatedAt || item.createdAt)}</span>
+                                <span class="meta-tag quantity">${UI_ICONS.package} ${this.escapeHtml(item.quantity || '1 adet')}</span>
+                                <span class="meta-tag supplier">${UI_ICONS.building} ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                                <span class="meta-tag time">${UI_ICONS.clock} ${this.formatDateTime(item.updatedAt || item.createdAt)}</span>
+                                ${item.addedBy ? `<span class="meta-tag author" title="Ekleyen">${UI_ICONS.user} ${this.escapeHtml(item.addedBy)}</span>` : ''}
                             </div>
-                            ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
+                            ${item.notes ? `<div class="item-note-text">${UI_ICONS.note} ${this.escapeHtml(item.notes)}</div>` : ''}
                         </div>
                     </div>
 
-                    <div class="card-body-bottom" style="border-top: 1px solid rgba(239, 68, 68, 0.15); padding-top: 0.6rem;">
-                        <span style="font-size: 0.78rem; color: #94a3b8;">🛡️ Silinenler listesinde güvende</span>
+                    <div class="card-body-bottom trash-card-bottom">
+                        <span class="trash-card-hint">${UI_ICONS.shield} Silinenler listesinde güvende</span>
                         <div class="item-actions">
-                            <button type="button" class="btn btn-primary btn-sm" style="padding: 0.35rem 0.75rem; font-weight: 700;" title="Listeye Geri Yükle" onclick="event.stopPropagation(); window.app.restoreItem('${item.id}')">
-                                ↩️ Geri Yükle
+                            <button type="button" class="btn btn-primary btn-sm" title="Listeye Geri Yükle" onclick="event.stopPropagation(); window.app.restoreItem('${item.id}')">
+                                ${UI_ICONS.undo} <span>Geri Yükle</span>
                             </button>
-                            <button type="button" class="btn btn-danger btn-sm" style="padding: 0.35rem 0.65rem;" title="Kalıcı Olarak Sil" onclick="event.stopPropagation(); window.app.permanentDeleteItem('${item.id}')">
-                                ❌ Kalıcı Sil
+                            <button type="button" class="btn btn-danger btn-sm" title="Kalıcı Olarak Sil" onclick="event.stopPropagation(); window.app.permanentDeleteItem('${item.id}')">
+                                ${UI_ICONS.trash} <span>Kalıcı Sil</span>
                             </button>
                         </div>
                     </div>
@@ -3284,12 +4436,20 @@ class App {
         const urgencyLabels = { critical: 'Yok Satıyor', urgent: 'Acil', normal: 'Normal' };
         const isCompleted = item.status === 'completed';
         const hasPhoto = !!item.image;
+        const isBulkActive = this.isBulkMode && this.filterStatus !== 'trash';
+        const isSelected = isBulkActive && this.selectedIds && this.selectedIds.has(item.id);
+        const waitingBadge = this.getWaitingAgeBadge(item);
 
         return `
-            <div class="item-card ${urgencyClass} ${isCompleted ? 'completed' : ''} ${hasPhoto ? 'item-card-with-photo' : ''}" id="card-${item.id}">
+            <div class="item-card ${urgencyClass} ${isCompleted ? 'completed' : ''} ${hasPhoto ? 'item-card-with-photo' : ''} ${isBulkActive ? 'bulk-selectable' : ''} ${isSelected ? 'is-selected' : ''}" id="card-${item.id}" ${isBulkActive ? `onclick="window.app.handleCardBulkClick('${item.id}', event)"` : ''}>
                 <div class="card-body-top">
-                    <button class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
-                        ✓
+                    ${isBulkActive ? `
+                        <button type="button" class="bulk-checkbox-btn ${isSelected ? 'is-checked' : ''}" title="Seç / Kaldır" aria-label="Ürünü Seç" onclick="event.stopPropagation(); window.app.toggleSelectItem('${item.id}')">
+                            ${isSelected ? UI_ICONS.check : ''}
+                        </button>
+                    ` : ''}
+                    <button type="button" class="status-toggle-btn" title="${isCompleted ? 'Tekrar Bekliyor Yap' : 'Alındı / Tamamlandı Olarak İşaretle'}" onclick="window.app.updateStatus('${item.id}', '${isCompleted ? 'pending' : 'completed'}')">
+                        ${UI_ICONS.check}
                     </button>
 
                     ${hasPhoto ? `
@@ -3298,43 +4458,45 @@ class App {
 
                     <div class="item-main-info">
                         <div class="item-title-row">
-                            <span class="item-title" title="Düzenlemek için tıklayın" style="cursor: pointer;" onclick="event.stopPropagation(); window.app.openEditItemModal('${item.id}')">${this.escapeHtml(item.name)}</span>
+                            <span class="item-title" title="Düzenlemek için tıklayın" onclick="event.stopPropagation(); window.app.openEditItemModal('${item.id}')">${this.escapeHtml(item.name)}</span>
                             <div class="qty-control-group">
                                 <button type="button" class="btn-qty-step" title="Miktarı 1 Azalt" onclick="window.app.quickAdjustQuantity('${item.id}', -1)">−</button>
                                 <span class="item-qty-badge">${this.escapeHtml(item.quantity)}</span>
                                 <button type="button" class="btn-qty-step" title="Miktarı 1 Artır" onclick="window.app.quickAdjustQuantity('${item.id}', 1)">+</button>
                             </div>
                             <span class="urgency-badge ${urgencyClass}">${urgencyLabels[item.urgency] || 'Normal'}</span>
+                            ${waitingBadge}
                         </div>
                         <div class="item-meta-row">
-                            <span class="meta-tag supplier">🏢 ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
-                            <span class="meta-tag time">🕒 ${this.formatTime(item.createdAt)}</span>
-                            ${item.source === 'phone' ? '<span class="meta-tag" title="Telefondan Eklendi">📱 Mobil</span>' : '<span class="meta-tag" title="Bilgisayardan Eklendi">💻 PC</span>'}
+                            <span class="meta-tag supplier">${UI_ICONS.building} ${this.escapeHtml(item.supplier || 'Belirtilmedi')}</span>
+                            <span class="meta-tag time">${UI_ICONS.clock} ${this.formatDateTime(item.createdAt)}</span>
+                            ${item.addedBy ? `<span class="meta-tag author" title="Ekleyen">${UI_ICONS.user} ${this.escapeHtml(item.addedBy)}</span>` : ''}
+                            ${item.source === 'phone' ? `<span class="meta-tag" title="Telefondan Eklendi">${UI_ICONS.smartphone} Mobil</span>` : `<span class="meta-tag" title="Bilgisayardan Eklendi">${UI_ICONS.monitor} PC</span>`}
                         </div>
-                        ${item.notes ? `<div class="item-note-text">📝 ${this.escapeHtml(item.notes)}</div>` : ''}
+                        ${item.notes ? `<div class="item-note-text">${UI_ICONS.note} ${this.escapeHtml(item.notes)}</div>` : ''}
                     </div>
                 </div>
 
                 <div class="card-body-bottom">
                     <div class="status-pill-group">
-                        <button class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
-                        <button class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
-                        <button class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
+                        <button type="button" class="status-pill-btn ${item.status === 'pending' ? 'active pending' : ''}" onclick="window.app.updateStatus('${item.id}', 'pending')">Bekliyor</button>
+                        <button type="button" class="status-pill-btn ${item.status === 'ordered' ? 'active ordered' : ''}" onclick="window.app.updateStatus('${item.id}', 'ordered')">Sipariş Edildi</button>
+                        <button type="button" class="status-pill-btn ${item.status === 'completed' ? 'active completed' : ''}" onclick="window.app.updateStatus('${item.id}', 'completed')">Alındı</button>
                     </div>
 
                     <div class="item-actions">
                         <button type="button" class="btn btn-secondary btn-icon-only" title="Ürünü Düzenle" onclick="event.stopPropagation(); window.app.openEditItemModal('${item.id}')">
-                            ✏️
+                            ${UI_ICONS.edit}
                         </button>
                         <button type="button" class="btn btn-secondary btn-icon-only" title="Fotoğraf Ekle / Değiştir" onclick="event.stopPropagation(); window.app.triggerCardPhotoUpload('${item.id}')">
-                            📷
+                            ${UI_ICONS.camera}
                         </button>
-                        <button type="button" 
+                        <button type="button"
                                 id="delete-btn-${item.id}"
-                                class="btn btn-danger btn-icon-only" 
-                                title="Sil" 
+                                class="btn btn-danger btn-icon-only"
+                                title="Sil"
                                 onclick="event.stopPropagation(); window.app.deleteItem('${item.id}', event)">
-                            🗑️
+                            ${UI_ICONS.trash}
                         </button>
                     </div>
                 </div>
@@ -3365,14 +4527,15 @@ class App {
     }
 
     async copyListToClipboard() {
-        const pendingItems = this.items.filter(i => i.status !== 'completed');
+        const pendingItems = this.items.filter(i => i.status !== 'completed' && i.status !== 'deleted');
         if (pendingItems.length === 0) {
             this.showToast('Kopyalanacak bekleyen eksik ürün bulunmuyor.');
             return;
         }
 
         const dateStr = new Date().toLocaleDateString('tr-TR');
-        let text = `📦 APP - EKSİK & SİPARİŞ LİSTESİ (${dateStr})\n\n`;
+        const label = (this.appName || 'HKC').toLocaleUpperCase('tr-TR');
+        let text = `${label} - EKSİK & SİPARİŞ LİSTESİ (${dateStr})\n\n`;
 
         pendingItems.forEach((item, idx) => {
             const urgTag = item.urgency === 'critical' ? ' [YOK SATAN]' : (item.urgency === 'urgent' ? ' [ACİL]' : '');
@@ -3381,7 +4544,7 @@ class App {
 
         try {
             await navigator.clipboard.writeText(text);
-            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+            this.showToast(`${pendingItems.length} eksik panoya kopyalandı!`);
             window.soundManager.playCompleted();
         } catch (e) {
             const textarea = document.createElement('textarea');
@@ -3390,7 +4553,7 @@ class App {
             textarea.select();
             document.execCommand('copy');
             textarea.remove();
-            this.showToast(`📋 ${pendingItems.length} eksik panoya kopyalandı!`);
+            this.showToast(`${pendingItems.length} eksik panoya kopyalandı!`);
         }
     }
 
@@ -3422,6 +4585,9 @@ class App {
         if (urgEl) urgEl.value = item.urgency || 'normal';
         if (statEl) statEl.value = item.status || 'pending';
         if (notesEl) notesEl.value = item.notes || '';
+        if (typeof this.syncAllCustomSelects === 'function') {
+            this.syncAllCustomSelects();
+        }
 
         this.updateEditPhotoUI();
         this.openModal('edit-item-modal');
@@ -3441,7 +4607,7 @@ class App {
             }
             if (text) text.textContent = 'Fotoğraf eklendi';
             if (removeBtn) removeBtn.style.display = 'inline-flex';
-            if (changeBtn) changeBtn.textContent = '📷 Değiştir';
+            if (changeBtn) changeBtn.textContent = 'Değiştir';
         } else {
             if (preview) {
                 preview.src = '';
@@ -3449,7 +4615,7 @@ class App {
             }
             if (text) text.textContent = 'Fotoğraf yok';
             if (removeBtn) removeBtn.style.display = 'none';
-            if (changeBtn) changeBtn.textContent = '📷 Fotoğraf Ekle';
+            if (changeBtn) changeBtn.textContent = 'Fotoğraf Ekle';
         }
     }
 
@@ -3471,7 +4637,8 @@ class App {
         const notes = notesInput ? notesInput.value.trim() : '';
 
         if (!name) {
-            alert('Ürün adı boş bırakılamaz.');
+            this.showToast('Ürün adı boş bırakılamaz.');
+            if (nameInput) nameInput.focus();
             return;
         }
 
@@ -3510,7 +4677,7 @@ class App {
 
     async loadSettings() {
         try {
-            const res = await fetch('/api/settings');
+            const res = await this.apiFetch('/api/settings');
             if (res.ok) {
                 const settings = await res.json();
                 if (settings.app_icon) {
@@ -3519,6 +4686,9 @@ class App {
                 if (settings.app_name) {
                     this.handleReceivedNameSetting(settings.app_name);
                 }
+                if (settings.quick_items) {
+                    this.handleReceivedQuickItemsSetting(settings.quick_items);
+                }
             }
         } catch (err) {
             console.warn('Ayarlar yüklenemedi:', err);
@@ -3526,7 +4696,7 @@ class App {
     }
 
     applyAppName(name) {
-        const appName = (name || 'App').trim();
+        const appName = (name || 'HKC').trim();
         this.appName = appName;
 
         const titleText = document.getElementById('app-title-text');
@@ -3536,7 +4706,7 @@ class App {
         if (loginTitle) loginTitle.textContent = appName;
 
         const printTitle = document.getElementById('print-app-title');
-        if (printTitle) printTitle.textContent = 'HKC EKSİK LİSTESİ';
+        if (printTitle) printTitle.textContent = `${appName.toLocaleUpperCase('tr-TR')} - EKSİK LİSTESİ`;
 
         const inputAppName = document.getElementById('input-app-name');
         if (inputAppName && document.activeElement !== inputAppName) {
@@ -3561,7 +4731,7 @@ class App {
         this.applyAppName(name);
 
         try {
-            const res = await fetch('/api/settings', {
+            const res = await this.apiFetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ key: 'app_name', value: name })
@@ -3584,7 +4754,7 @@ class App {
         const soundSub = document.getElementById('sound-tool-subtitle');
         const isMuted = window.soundManager && window.soundManager.muted;
 
-        if (soundIcon) soundIcon.textContent = isMuted ? '🔇' : '🔔';
+        if (soundIcon) soundIcon.innerHTML = isMuted ? UI_ICONS.volumeX : UI_ICONS.volume;
         if (soundTitle) soundTitle.textContent = isMuted ? 'Sesler Kapalı' : 'Ses Bildirimleri';
         if (soundSub) soundSub.textContent = isMuted ? 'Açmak için tıklayın' : 'Açık (Sessize al)';
     }
@@ -3619,7 +4789,7 @@ class App {
             faviconUrl = iconValue;
         } else {
             const char = iconValue || '⚡';
-            const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="%236366f1"/><text x="50" y="68" font-size="56" text-anchor="middle">' + char + '</text></svg>';
+            const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="%230f294a"/><text x="50" y="68" font-size="56" text-anchor="middle">' + char + '</text></svg>';
             faviconUrl = 'data:image/svg+xml,' + encodeURIComponent(svg);
         }
         let link = document.querySelector("link[rel*='icon']");
@@ -3686,7 +4856,7 @@ class App {
         this.showToast('Uygulama ikonu başarıyla güncellendi!');
 
         try {
-            await fetch('/api/settings', {
+            await this.apiFetch('/api/settings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -3703,6 +4873,15 @@ class App {
         if (!isoString) return '';
         const d = new Date(isoString);
         return d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    }
+
+    formatDateTime(isoString) {
+        if (!isoString) return '';
+        const d = new Date(isoString);
+        if (Number.isNaN(d.getTime())) return '';
+        const date = d.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const time = d.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+        return `${date} · ${time}`;
     }
 
     escapeHtml(str) {

@@ -3,8 +3,109 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
+const crypto = require('crypto');
 const cors = require('cors');
-const { client: db, initDb, isTurso, normalizeNameKey } = require('./db');
+const { client: db, initDb, isTurso, normalizeNameKey, hashPassword, verifyPassword } = require('./db');
+
+const SECRET_SETTING_KEYS = new Set(['vapid_private_key', 'auth_secret']);
+const TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+let authSecret = process.env.AUTH_SECRET || null;
+
+async function initAuthSecret() {
+    try {
+        if (!authSecret) {
+            const res = await db.execute({
+                sql: "SELECT value FROM settings WHERE key = 'auth_secret' LIMIT 1",
+                args: []
+            });
+            if (res.rows && res.rows.length > 0 && res.rows[0].value) {
+                authSecret = String(res.rows[0].value);
+            } else {
+                authSecret = crypto.randomBytes(32).toString('hex');
+                await db.execute({
+                    sql: "INSERT OR REPLACE INTO settings (key, value) VALUES ('auth_secret', ?)",
+                    args: [authSecret]
+                });
+            }
+        }
+        console.log('🔐 API & Socket Oturum Anahtarı Hazır');
+    } catch (e) {
+        console.error('Auth secret initialization error:', e);
+        if (!authSecret) authSecret = crypto.randomBytes(32).toString('hex');
+    }
+}
+
+function signAuthToken(user) {
+    const payload = {
+        uid: user.id,
+        username: user.username,
+        role: user.role || 'admin',
+        iat: Date.now(),
+        exp: Date.now() + TOKEN_TTL_MS
+    };
+    const payloadB64 = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+    const sig = crypto.createHmac('sha256', authSecret).update(payloadB64).digest('base64url');
+    return `${payloadB64}.${sig}`;
+}
+
+function verifyAuthToken(token) {
+    if (!token || typeof token !== 'string' || !authSecret) return null;
+    const dotIdx = token.indexOf('.');
+    if (dotIdx <= 0) return null;
+    const payloadB64 = token.slice(0, dotIdx);
+    const sig = token.slice(dotIdx + 1);
+    if (!payloadB64 || !sig || sig.includes('.')) return null;
+
+    try {
+        const expectedSig = crypto.createHmac('sha256', authSecret).update(payloadB64).digest('base64url');
+        const sigBuf = Buffer.from(sig, 'utf8');
+        const expectedBuf = Buffer.from(expectedSig, 'utf8');
+        if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+            return null;
+        }
+        const payload = JSON.parse(Buffer.from(payloadB64, 'base64url').toString('utf8'));
+        if (!payload || !payload.username || !payload.exp || Number(payload.exp) <= Date.now()) {
+            return null;
+        }
+        return payload;
+    } catch (e) {
+        return null;
+    }
+}
+
+function extractRequestToken(req) {
+    const authHeader = req.headers && req.headers.authorization;
+    if (authHeader && typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
+        return authHeader.slice(7).trim();
+    }
+    if (req.query && typeof req.query.token === 'string' && req.query.token.trim()) {
+        return req.query.token.trim();
+    }
+    return null;
+}
+
+function requireAuth(req, res, next) {
+    const token = extractRequestToken(req);
+    const user = verifyAuthToken(token);
+    if (!user) {
+        return res.status(401).json({
+            error: 'Oturum geçersiz veya süresi dolmuş. Lütfen tekrar giriş yapın.',
+            code: 'AUTH_REQUIRED'
+        });
+    }
+    req.user = user;
+    next();
+}
+
+function filterPublicSettingsRows(rows) {
+    const map = {};
+    (rows || []).forEach(r => {
+        if (!SECRET_SETTING_KEYS.has(r.key)) {
+            map[r.key] = r.value;
+        }
+    });
+    return map;
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -81,8 +182,7 @@ async function createServerBackup(reason = 'auto') {
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         const settingsRes = await db.execute('SELECT * FROM settings');
 
-        const settingsMap = {};
-        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+        const settingsMap = filterPublicSettingsRows(settingsRes.rows);
 
         const items = itemsRes.rows || [];
         const suppliers = supsRes.rows || [];
@@ -293,86 +393,19 @@ app.use((req, res, next) => {
 });
 
 
-// Helper to find the newest existing file among candidate paths
-function findBestFile(filePaths) {
-    let bestPath = null;
-    let bestMtime = -1;
-    for (const p of filePaths) {
-        try {
-            if (fs.existsSync(p)) {
-                const stat = fs.statSync(p);
-                if (stat.isFile() && stat.mtimeMs > bestMtime) {
-                    bestMtime = stat.mtimeMs;
-                    bestPath = p;
-                }
-            }
-        } catch (e) { }
-    }
-    return bestPath;
-}
+const PUBLIC_DIR = path.join(__dirname, 'public');
 
-// Explicit routes: whether files were uploaded directly to root or in public/
+// Serve strictly from public/ directory (never expose root server/db files)
 app.get(['/', '/index.html'], (req, res) => {
-    const file = findBestFile([
-        path.join(__dirname, 'public', 'index.html'),
-        path.join(__dirname, 'index.html')
-    ]);
-    if (file) return res.sendFile(file);
-    res.send('Dükkan Eksik Takip: index.html bulunamadı.');
-});
-
-app.get(['/js/app.js', '/app.js'], (req, res) => {
-    const file = findBestFile([
-        path.join(__dirname, 'public', 'js', 'app.js'),
-        path.join(__dirname, 'js', 'app.js'),
-        path.join(__dirname, 'app.js')
-    ]);
-    if (file) {
-        res.setHeader('Content-Type', 'application/javascript');
-        return res.sendFile(file);
-    }
-    res.status(404).send('app.js not found');
-});
-
-app.get(['/css/style.css', '/style.css'], (req, res) => {
-    const file = findBestFile([
-        path.join(__dirname, 'public', 'css', 'style.css'),
-        path.join(__dirname, 'css', 'style.css'),
-        path.join(__dirname, 'style.css')
-    ]);
-    if (file) {
-        res.setHeader('Content-Type', 'text/css');
-        return res.sendFile(file);
-    }
-    res.status(404).send('style.css not found');
-});
-
-['duplicate-detector.js', 'audio.js', 'speech.js', 'export.js', 'sw.js', 'manifest.json'].forEach(filename => {
-    app.get([`/js/${filename}`, `/${filename}`], (req, res) => {
-        const file = findBestFile([
-            path.join(__dirname, 'public', 'js', filename),
-            path.join(__dirname, 'public', filename),
-            path.join(__dirname, 'js', filename),
-            path.join(__dirname, filename)
-        ]);
-        if (file) {
-            if (filename.endsWith('.js')) res.setHeader('Content-Type', 'application/javascript');
-            if (filename.endsWith('.json')) res.setHeader('Content-Type', 'application/json');
-            return res.sendFile(file);
-        }
-        res.status(404).send(`${filename} not found`);
-    });
+    const file = path.join(PUBLIC_DIR, 'index.html');
+    if (fs.existsSync(file)) return res.sendFile(file);
+    res.status(404).send('Dükkan Eksik Takip: public/index.html bulunamadı.');
 });
 
 // App Logo, Favicon & Apple Touch Icons
-app.get(['/images/logo.jpg', '/logo.jpg', '/apple-touch-icon.png', '/icon-192.png', '/favicon.ico', '/favicon.png'], (req, res) => {
-    const file = findBestFile([
-        path.join(__dirname, 'public', 'images', 'logo.jpg'),
-        path.join(__dirname, 'images', 'logo.jpg'),
-        path.join(__dirname, 'public', 'logo.jpg'),
-        path.join(__dirname, 'logo.jpg')
-    ]);
-    if (file) {
+app.get(['/images/logo.jpg', '/logo.jpg', '/apple-touch-icon.png', '/icon-192.png', '/img/icon-192.png', '/favicon.ico', '/favicon.png'], (req, res) => {
+    const file = path.join(PUBLIC_DIR, 'images', 'logo.jpg');
+    if (fs.existsSync(file)) {
         res.setHeader('Content-Type', 'image/jpeg');
         res.setHeader('Cache-Control', 'public, max-age=86400');
         return res.sendFile(file);
@@ -380,20 +413,43 @@ app.get(['/images/logo.jpg', '/logo.jpg', '/apple-touch-icon.png', '/icon-192.pn
     res.status(404).send('Logo not found');
 });
 
-// Support both public/ directory and root directory for any assets
-if (fs.existsSync(path.join(__dirname, 'public'))) {
-    app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
-}
-app.use(express.static(__dirname, { etag: false, maxAge: 0 }));
+app.use(express.static(PUBLIC_DIR, { etag: false, maxAge: 0 }));
 
-// Authentication Helper
+// Authentication Helper (supports scrypt hashes + transparent legacy migration)
 async function verifyUser(username, password) {
     const result = await db.execute({
-        sql: 'SELECT * FROM users WHERE username = ? AND password = ? LIMIT 1',
-        args: [username, password]
+        sql: 'SELECT * FROM users WHERE username = ? LIMIT 1',
+        args: [username]
     });
-    return result.rows.length > 0 ? result.rows[0] : null;
+    if (!result.rows || result.rows.length === 0) return null;
+    const user = result.rows[0];
+    const check = verifyPassword(password, user.password);
+    if (!check.valid) return null;
+
+    if (check.needsMigration) {
+        try {
+            await db.execute({
+                sql: 'UPDATE users SET password = ? WHERE id = ?',
+                args: [hashPassword(password), user.id]
+            });
+        } catch (e) {
+            console.warn('Password migration notice:', e.message);
+        }
+    }
+    return user;
 }
+
+// Public Branding Endpoint (non-sensitive display name & icon for login screen)
+app.get('/api/public/branding', async (req, res) => {
+    try {
+        const result = await db.execute("SELECT key, value FROM settings WHERE key IN ('app_name', 'app_icon')");
+        const branding = {};
+        (result.rows || []).forEach(r => { branding[r.key] = r.value; });
+        res.json(branding);
+    } catch (err) {
+        res.json({});
+    }
+});
 
 // Auth API Endpoints
 app.post('/api/auth/login', async (req, res) => {
@@ -408,7 +464,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(401).json({ error: 'Hatalı kullanıcı adı veya şifre!' });
         }
 
-        const token = Buffer.from(`${user.id}:${user.username}:${Date.now()}`).toString('base64');
+        const token = signAuthToken(user);
         res.json({
             success: true,
             token,
@@ -421,21 +477,22 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-app.post('/api/auth/change-password', async (req, res) => {
+app.post('/api/auth/change-password', requireAuth, async (req, res) => {
     const { username, currentPassword, newPassword } = req.body;
-    if (!username || !currentPassword || !newPassword) {
+    const targetUsername = (req.user && req.user.username) || (username && username.trim());
+    if (!targetUsername || !currentPassword || !newPassword) {
         return res.status(400).json({ error: 'Tüm alanları doldurunuz' });
     }
 
     try {
-        const user = await verifyUser(username.trim(), currentPassword.trim());
+        const user = await verifyUser(targetUsername, currentPassword.trim());
         if (!user) {
             return res.status(401).json({ error: 'Mevcut şifreniz hatalı!' });
         }
 
         await db.execute({
             sql: 'UPDATE users SET password = ? WHERE id = ?',
-            args: [newPassword.trim(), user.id]
+            args: [hashPassword(newPassword.trim()), user.id]
         });
 
         res.json({ success: true, message: 'Şifreniz başarıyla güncellendi!' });
@@ -446,7 +503,7 @@ app.post('/api/auth/change-password', async (req, res) => {
 });
 
 // App Info
-app.get('/api/info', async (req, res) => {
+app.get('/api/info', requireAuth, async (req, res) => {
     try {
         const countRes = await db.execute('SELECT COUNT(*) as total, SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending FROM items WHERE status != "deleted"');
         const row = countRes.rows[0] || {};
@@ -463,7 +520,7 @@ app.get('/api/info', async (req, res) => {
 });
 
 // Suppliers CRUD
-app.get('/api/suppliers', async (req, res) => {
+app.get('/api/suppliers', requireAuth, async (req, res) => {
     try {
         const result = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         res.json(result.rows);
@@ -473,7 +530,7 @@ app.get('/api/suppliers', async (req, res) => {
     }
 });
 
-app.post('/api/suppliers', async (req, res) => {
+app.post('/api/suppliers', requireAuth, async (req, res) => {
     const { name } = req.body;
     if (!name || !name.trim()) {
         return res.status(400).json({ error: 'Toptancı adı zorunludur' });
@@ -500,7 +557,7 @@ app.post('/api/suppliers', async (req, res) => {
     }
 });
 
-app.put('/api/suppliers/:id', async (req, res) => {
+app.put('/api/suppliers/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { name } = req.body;
     if (!name || !name.trim()) {
@@ -548,7 +605,7 @@ app.put('/api/suppliers/:id', async (req, res) => {
     }
 });
 
-app.delete('/api/suppliers/:id', async (req, res) => {
+app.delete('/api/suppliers/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     try {
         await db.execute({
@@ -565,24 +622,36 @@ app.delete('/api/suppliers/:id', async (req, res) => {
     }
 });
 
+app.delete('/api/suppliers', requireAuth, async (req, res) => {
+    try {
+        await db.execute('DELETE FROM suppliers');
+        io.emit('supplier:all-deleted', {});
+        scheduleAutoBackup('supplier-delete');
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Clear all suppliers error:', err);
+        res.status(500).json({ error: 'Toptancılar temizlenemedi' });
+    }
+});
 
 // Settings Endpoints (App icon, customization, etc.)
-app.get('/api/settings', async (req, res) => {
+app.get('/api/settings', requireAuth, async (req, res) => {
     try {
         const result = await db.execute('SELECT * FROM settings');
-        const settings = {};
-        result.rows.forEach(r => { settings[r.key] = r.value; });
-        res.json(settings);
+        res.json(filterPublicSettingsRows(result.rows));
     } catch (err) {
         console.error('Get settings error:', err);
         res.status(500).json({ error: 'Ayarlar yüklenemedi' });
     }
 });
 
-app.post('/api/settings', async (req, res) => {
+app.post('/api/settings', requireAuth, async (req, res) => {
     const { key, value } = req.body;
     if (!key) {
         return res.status(400).json({ error: 'Ayar anahtarı zorunludur' });
+    }
+    if (SECRET_SETTING_KEYS.has(String(key))) {
+        return res.status(403).json({ error: 'Bu sistem ayarı değiştirilemez' });
     }
 
     try {
@@ -620,7 +689,7 @@ async function recordItemEvent(item, eventId) {
 }
 
 // Items Endpoints (Turso / SQLite)
-app.get('/api/items', async (req, res) => {
+app.get('/api/items', requireAuth, async (req, res) => {
     try {
         const result = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         res.json(result.rows);
@@ -630,11 +699,13 @@ app.get('/api/items', async (req, res) => {
     }
 });
 
-app.post('/api/items', async (req, res) => {
-    const { name, quantity, supplier, urgency, notes, image, source } = req.body;
+app.post('/api/items', requireAuth, async (req, res) => {
+    const { name, quantity, supplier, urgency, notes, image, source, addedBy } = req.body;
     if (!name || !name.trim()) {
         return res.status(400).json({ error: 'Ürün adı zorunludur' });
     }
+
+    const resolvedAddedBy = String(addedBy || (req.user && req.user.username) || '').trim().slice(0, 40);
 
     const newItem = {
         id: 'item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
@@ -647,6 +718,7 @@ app.post('/api/items', async (req, res) => {
         notes: (notes || '').trim(),
         image: image || '',
         barcode: '',
+        addedBy: resolvedAddedBy,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         source: source || 'web'
@@ -654,8 +726,8 @@ app.post('/api/items', async (req, res) => {
 
     try {
         await db.execute({
-            sql: `INSERT INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
-                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            sql: `INSERT INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, addedBy, createdAt, updatedAt, source)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             args: [
                 newItem.id,
                 newItem.name,
@@ -667,6 +739,7 @@ app.post('/api/items', async (req, res) => {
                 newItem.notes,
                 newItem.image,
                 newItem.barcode,
+                newItem.addedBy,
                 newItem.createdAt,
                 newItem.updatedAt,
                 newItem.source
@@ -696,10 +769,74 @@ app.post('/api/items', async (req, res) => {
         console.error('Insert item error:', err);
         res.status(500).json({ error: 'Ürün kaydedilemedi' });
     }
-
 });
 
-app.put('/api/items/:id', async (req, res) => {
+// Bulk update selected items (status, supplier, urgency)
+app.post('/api/items/bulk-update', requireAuth, async (req, res) => {
+    const { ids, updates } = req.body || {};
+    if (!Array.isArray(ids) || ids.length === 0 || ids.length > 500) {
+        return res.status(400).json({ error: 'Geçerli ürün seçimi gereklidir (1–500)' });
+    }
+
+    const cleanIds = [...new Set(ids.map(id => String(id || '').trim()).filter(Boolean))];
+    if (cleanIds.length === 0) {
+        return res.status(400).json({ error: 'Geçerli ürün ID bulunamadı' });
+    }
+
+    const allowedStatuses = new Set(['pending', 'ordered', 'completed', 'deleted']);
+    const allowedUrgencies = new Set(['normal', 'urgent', 'critical']);
+    const cleanUpdates = {};
+    const setClauses = [];
+    const setArgs = [];
+
+    if (updates && updates.status !== undefined) {
+        if (!allowedStatuses.has(updates.status)) {
+            return res.status(400).json({ error: 'Geçersiz sipariş durumu' });
+        }
+        cleanUpdates.status = updates.status;
+        setClauses.push('status = ?');
+        setArgs.push(updates.status);
+    }
+    if (updates && updates.supplier !== undefined) {
+        const sup = String(updates.supplier || 'Belirtilmedi').trim() || 'Belirtilmedi';
+        cleanUpdates.supplier = sup;
+        setClauses.push('supplier = ?');
+        setArgs.push(sup);
+    }
+    if (updates && updates.urgency !== undefined) {
+        if (!allowedUrgencies.has(updates.urgency)) {
+            return res.status(400).json({ error: 'Geçersiz aciliyet seviyesi' });
+        }
+        cleanUpdates.urgency = updates.urgency;
+        setClauses.push('urgency = ?');
+        setArgs.push(updates.urgency);
+    }
+
+    if (setClauses.length === 0) {
+        return res.status(400).json({ error: 'Güncellenecek alan belirtilmedi' });
+    }
+
+    const now = new Date().toISOString();
+    setClauses.push('updatedAt = ?');
+    setArgs.push(now);
+
+    try {
+        const stmts = cleanIds.map(id => ({
+            sql: `UPDATE items SET ${setClauses.join(', ')} WHERE id = ?`,
+            args: [...setArgs, id]
+        }));
+        await db.batch(stmts, 'write');
+
+        io.emit('items:bulk-updated', { ids: cleanIds, updates: cleanUpdates, updatedAt: now });
+        scheduleAutoBackup('item-update');
+        res.json({ success: true, count: cleanIds.length, updates: cleanUpdates, updatedAt: now });
+    } catch (err) {
+        console.error('Bulk update error:', err);
+        res.status(500).json({ error: 'Toplu güncelleme başarısız' });
+    }
+});
+
+app.put('/api/items/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const { name, status, quantity, notes, urgency, supplier, image } = req.body;
 
@@ -769,7 +906,7 @@ app.put('/api/items/:id', async (req, res) => {
 });
 
 // Eksik geçmişi: istatistik sayfası ve sık bitenler hatırlatması (hesaplama tarayıcıda, yerel saatle yapılır)
-app.get('/api/stats/events', async (req, res) => {
+app.get('/api/stats/events', requireAuth, async (req, res) => {
     try {
         const result = await db.execute('SELECT itemId, name, nameKey, supplier, urgency, createdAt FROM item_events ORDER BY createdAt ASC');
         res.json(result.rows);
@@ -780,7 +917,7 @@ app.get('/api/stats/events', async (req, res) => {
 });
 
 // Notlar (sohbet tarzı ortak not defteri)
-app.get('/api/notes', async (req, res) => {
+app.get('/api/notes', requireAuth, async (req, res) => {
     try {
         const result = await db.execute('SELECT * FROM (SELECT * FROM notes ORDER BY createdAt DESC LIMIT 300) ORDER BY createdAt ASC');
         res.json(result.rows);
@@ -790,7 +927,7 @@ app.get('/api/notes', async (req, res) => {
     }
 });
 
-app.post('/api/notes', async (req, res) => {
+app.post('/api/notes', requireAuth, async (req, res) => {
     const text = String((req.body && req.body.text) || '').trim();
     const author = String((req.body && req.body.author) || '').trim().slice(0, 40);
     if (!text) {
@@ -830,7 +967,7 @@ app.post('/api/notes', async (req, res) => {
     }
 });
 
-app.delete('/api/notes/:id', async (req, res) => {
+app.delete('/api/notes/:id', requireAuth, async (req, res) => {
     try {
         await db.execute({ sql: 'DELETE FROM notes WHERE id = ?', args: [req.params.id] });
         io.emit('note:deleted', { id: req.params.id });
@@ -842,7 +979,7 @@ app.delete('/api/notes/:id', async (req, res) => {
 });
 
 // Items Delete Endpoint (Supports Soft Delete to 'Silinenler' and Permanent Delete)
-app.delete('/api/items/:id', async (req, res) => {
+app.delete('/api/items/:id', requireAuth, async (req, res) => {
     const { id } = req.params;
     const isPermanent = req.query.permanent === 'true';
 
@@ -882,7 +1019,7 @@ app.delete('/api/items/:id', async (req, res) => {
 });
 
 // Restore single item from Silinenler back to active
-app.post('/api/items/:id/restore', async (req, res) => {
+app.post('/api/items/:id/restore', requireAuth, async (req, res) => {
     const { id } = req.params;
     const targetStatus = (req.body && req.body.status) || 'pending';
     const now = new Date().toISOString();
@@ -909,7 +1046,7 @@ app.post('/api/items/:id/restore', async (req, res) => {
 });
 
 // Restore all items from Silinenler back to active
-app.post('/api/items/restore-all', async (req, res) => {
+app.post('/api/items/restore-all', requireAuth, async (req, res) => {
     const now = new Date().toISOString();
     try {
         await db.execute({
@@ -926,7 +1063,7 @@ app.post('/api/items/restore-all', async (req, res) => {
 });
 
 // Empty trash (Silinenleri kalıcı olarak temizle)
-app.delete('/api/items/trash/empty', async (req, res) => {
+app.delete('/api/items/trash/empty', requireAuth, async (req, res) => {
     try {
         await db.execute('DELETE FROM items WHERE status = "deleted"');
         io.emit('items:trash-emptied', {});
@@ -939,7 +1076,7 @@ app.delete('/api/items/trash/empty', async (req, res) => {
 });
 
 // Clear completed items (moves them to Silinenler safely)
-app.post('/api/items/clear-completed', async (req, res) => {
+app.post('/api/items/clear-completed', requireAuth, async (req, res) => {
     const now = new Date().toISOString();
     try {
         await db.execute({
@@ -960,7 +1097,7 @@ app.post('/api/items/clear-completed', async (req, res) => {
 // ==========================================
 
 // Get list of all available backups (from Turso Cloud DB + Disk fallback)
-app.get('/api/backups', async (req, res) => {
+app.get('/api/backups', requireAuth, async (req, res) => {
     try {
         let backupList = [];
 
@@ -1026,7 +1163,7 @@ app.get('/api/backups', async (req, res) => {
 });
 
 // Trigger instant manual backup
-app.post('/api/backups/create', async (req, res) => {
+app.post('/api/backups/create', requireAuth, async (req, res) => {
     try {
         const backup = await createServerBackup('manual');
         res.json({ success: true, backup });
@@ -1037,7 +1174,7 @@ app.post('/api/backups/create', async (req, res) => {
 });
 
 // Download a specific backup file (Disk + Turso Cloud fallback)
-app.get('/api/backups/download/:filename', async (req, res) => {
+app.get('/api/backups/download/:filename', requireAuth, async (req, res) => {
     const rawFilename = path.basename(req.params.filename);
     const filePath = path.join(BACKUP_DIR, rawFilename);
 
@@ -1066,7 +1203,7 @@ app.get('/api/backups/download/:filename', async (req, res) => {
 });
 
 // Restore database from selected server backup file (Disk + Turso Cloud fallback)
-app.post('/api/backups/:filename/restore', async (req, res) => {
+app.post('/api/backups/:filename/restore', requireAuth, async (req, res) => {
     const rawFilename = path.basename(req.params.filename);
     const filePath = path.join(BACKUP_DIR, rawFilename);
     let content = null;
@@ -1106,8 +1243,8 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
         await db.execute('DELETE FROM items');
         for (const item of items) {
             await db.execute({
-                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, addedBy, createdAt, updatedAt, source)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 args: [
                     item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
                     item.name,
@@ -1119,6 +1256,7 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
                     item.notes || '',
                     item.image || '',
                     item.barcode || '',
+                    item.addedBy || '',
                     item.createdAt || new Date().toISOString(),
                     item.updatedAt || new Date().toISOString(),
                     item.source || 'backup-restore'
@@ -1138,9 +1276,10 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
             }
         }
 
-        // Restore settings if present
+        // Restore non-secret settings if present
         if (settings && typeof settings === 'object') {
             for (const [k, v] of Object.entries(settings)) {
+                if (SECRET_SETTING_KEYS.has(String(k))) continue;
                 await db.execute({
                     sql: 'INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)',
                     args: [String(k), String(v || '')]
@@ -1151,8 +1290,7 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
         const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         const settingsRes = await db.execute('SELECT * FROM settings');
-        const settingsMap = {};
-        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+        const settingsMap = filterPublicSettingsRows(settingsRes.rows);
 
         io.emit('init', {
             items: itemsRes.rows,
@@ -1172,7 +1310,7 @@ app.post('/api/backups/:filename/restore', async (req, res) => {
 });
 
 // Import from uploaded file/JSON (Browser manual upload)
-app.post('/api/backup/import', async (req, res) => {
+app.post('/api/backup/import', requireAuth, async (req, res) => {
     try {
         const { items = [], suppliers = [], mode = 'merge' } = req.body;
 
@@ -1189,8 +1327,8 @@ app.post('/api/backup/import', async (req, res) => {
 
         for (const item of items) {
             await db.execute({
-                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, createdAt, updatedAt, source)
-                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                sql: `INSERT OR REPLACE INTO items (id, name, quantity, category, supplier, urgency, status, notes, image, barcode, addedBy, createdAt, updatedAt, source)
+                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
                 args: [
                     item.id || ('item_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6)),
                     item.name,
@@ -1202,6 +1340,7 @@ app.post('/api/backup/import', async (req, res) => {
                     item.notes || '',
                     item.image || '',
                     item.barcode || '',
+                    item.addedBy || '',
                     item.createdAt || new Date().toISOString(),
                     item.updatedAt || new Date().toISOString(),
                     item.source || 'backup-import'
@@ -1225,8 +1364,7 @@ app.post('/api/backup/import', async (req, res) => {
         const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         const settingsRes = await db.execute('SELECT * FROM settings');
-        const settingsMap = {};
-        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+        const settingsMap = filterPublicSettingsRows(settingsRes.rows);
 
         io.emit('init', {
             items: itemsRes.rows,
@@ -1250,7 +1388,7 @@ app.post('/api/backup/import', async (req, res) => {
 // ==========================================
 
 // Get VAPID public key for frontend subscription
-app.get('/api/push/public-key', (req, res) => {
+app.get('/api/push/public-key', requireAuth, (req, res) => {
     if (!vapidPublicKey) {
         return res.status(503).json({ error: 'Push bildirim anahtarı henüz hazır değil' });
     }
@@ -1258,7 +1396,7 @@ app.get('/api/push/public-key', (req, res) => {
 });
 
 // Save client subscription
-app.post('/api/push/subscribe', async (req, res) => {
+app.post('/api/push/subscribe', requireAuth, async (req, res) => {
     try {
         const { subscription, userAgent } = req.body;
         if (!subscription || !subscription.endpoint || !subscription.keys) {
@@ -1286,7 +1424,7 @@ app.post('/api/push/subscribe', async (req, res) => {
 });
 
 // Remove client subscription
-app.post('/api/push/unsubscribe', async (req, res) => {
+app.post('/api/push/unsubscribe', requireAuth, async (req, res) => {
     try {
         const { endpoint } = req.body;
         if (endpoint) {
@@ -1304,7 +1442,7 @@ app.post('/api/push/unsubscribe', async (req, res) => {
 });
 
 // Send a test notification to all subscribed phones
-app.post('/api/push/test', async (req, res) => {
+app.post('/api/push/test', requireAuth, async (req, res) => {
     try {
         await sendPushNotificationToAll({
             title: '🔔 Bildirim Testi Başarılı!',
@@ -1321,7 +1459,7 @@ app.post('/api/push/test', async (req, res) => {
 });
 
 // Get push subscriptions status
-app.get('/api/push/status', async (req, res) => {
+app.get('/api/push/status', requireAuth, async (req, res) => {
     try {
         const countRes = await db.execute('SELECT COUNT(*) as count FROM push_subscriptions');
         const count = (countRes.rows[0] && Number(countRes.rows[0].count)) || 0;
@@ -1334,10 +1472,21 @@ app.get('/api/push/status', async (req, res) => {
     }
 });
 
-// Notification icon endpoint
-app.get(['/icon-192.png', '/icon.svg', '/img/icon-192.png'], (req, res) => {
+// Notification SVG fallback icon endpoint
+app.get('/icon.svg', (req, res) => {
     res.setHeader('Content-Type', 'image/svg+xml');
-    res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="#2563eb"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">🛍️</text></svg>`);
+    res.send(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="25" fill="#0f294a"/><text x="50" y="65" font-size="50" text-anchor="middle" fill="white">HKC</text></svg>`);
+});
+
+// Socket.io authentication middleware
+io.use((socket, next) => {
+    const token = socket.handshake && socket.handshake.auth && socket.handshake.auth.token;
+    const user = verifyAuthToken(token);
+    if (!user) {
+        return next(new Error('AUTH_REQUIRED'));
+    }
+    socket.user = user;
+    next();
 });
 
 // Socket.io connection handling
@@ -1346,8 +1495,7 @@ io.on('connection', async (socket) => {
         const itemsRes = await db.execute('SELECT * FROM items ORDER BY createdAt DESC');
         const supsRes = await db.execute('SELECT * FROM suppliers ORDER BY name ASC');
         const settingsRes = await db.execute('SELECT * FROM settings');
-        const settingsMap = {};
-        settingsRes.rows.forEach(r => { settingsMap[r.key] = r.value; });
+        const settingsMap = filterPublicSettingsRows(settingsRes.rows);
         socket.emit('init', {
             items: itemsRes.rows,
             suppliers: supsRes.rows,
@@ -1363,6 +1511,7 @@ io.on('connection', async (socket) => {
 (async () => {
     try {
         await initDb();
+        await initAuthSecret();
         await initVapidKeys();
 
         // Automatic initial backup on startup
@@ -1388,7 +1537,7 @@ io.on('connection', async (socket) => {
             console.log('🛍️  DÜKKAN EKSİK TAKİP - WEB & TURSO HAZIR');
             console.log('====================================================');
             console.log(`🚀 Port: ${PORT}`);
-            console.log(`🔐 Giriş: admin / 123`);
+            console.log(`🔐 API & Socket Oturum Doğrulaması (HMAC-SHA256): AKTİF`);
             console.log(`🛡️ Otomatik Yedekleme (Auto-Backup): 7/24 AKTİF`);
             console.log(`📱 Web Push Bildirim Servisi: 7/24 AKTİF`);
             console.log('====================================================\n');

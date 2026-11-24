@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
     <link rel="icon" type="image/jpeg" href="/images/logo.jpg">
     <link rel="shortcut icon" href="/images/logo.jpg">
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#0a2240">
+    <meta name="theme-color" content="#060b14" id="meta-theme-color">
 
     <!-- iOS / Apple Web App Support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,6 +16,16 @@
     <meta name="apple-mobile-web-app-title" content="HKC">
     <link rel="apple-touch-icon" href="/images/logo.jpg">
     <link rel="apple-touch-icon" sizes="180x180" href="/images/logo.jpg">
+
+    <!-- Prevent theme flash -->
+    <script>
+        (function () {
+            var t = localStorage.getItem('hkc_theme') || 'dark';
+            document.documentElement.setAttribute('data-theme', t);
+            var m = document.getElementById('meta-theme-color');
+            if (m) m.setAttribute('content', t === 'light' ? '#f1f5fa' : '#060b14');
+        })();
+    </script>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +35,7 @@
         rel="stylesheet">
 
     <!-- Styles -->
-    <link rel="stylesheet" href="/css/style.css?v=20261022_mobilename">
+    <link rel="stylesheet" href="/css/style.css?v=20261124_deluxe3">
 
     <!-- Socket.io -->
     <script src="/socket.io/socket.io.js"></script>
@@ -37,32 +47,63 @@
     <!-- LOGIN SCREEN -->
     <div id="login-container" class="login-wrapper" style="display: none;">
         <div class="login-card">
+            <button type="button" class="btn btn-secondary btn-icon-only theme-toggle-btn login-theme-toggle"
+                id="btn-login-theme-toggle" title="Tema Değiştir" aria-label="Tema Değiştir">
+                <svg class="ui-icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4" />
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                </svg>
+                <svg class="ui-icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                </svg>
+            </button>
+
             <div class="login-brand">
-                <div class="brand-avatar-glow" id="login-brand-icon" title="Uygulama İkonu"><img src="/images/logo.jpg" alt="HKC Logo"></div>
+                <div class="brand-avatar-glow" id="login-brand-icon" title="Uygulama İkonu">
+                    <img src="/images/logo.jpg" alt="HKC Logo">
+                </div>
                 <h2 id="login-title-text">HKC</h2>
-                <p>Devam etmek için giriş yapınız</p>
+                <p class="login-subtitle">Güvenle Sizinle · Eksik &amp; Sipariş Yönetimi</p>
             </div>
 
             <form id="login-form">
                 <div id="login-error" class="login-error-msg" style="display: none;"></div>
 
-                <div class="form-group" style="margin-bottom: 1.1rem;">
-                    <label
-                        style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Kullanıcı
-                        Adı</label>
+                <div class="form-group login-form-group">
+                    <label class="form-label" for="login-username">Kullanıcı Adı</label>
                     <input type="text" id="login-username" placeholder="Kullanıcı adı" required autocomplete="username">
                 </div>
 
-                <div class="form-group" style="margin-bottom: 1.5rem;">
-                    <label
-                        style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem; color: var(--text-secondary); display: block;">Şifre</label>
-                    <input type="password" id="login-password" placeholder="••••••••" required
-                        autocomplete="current-password">
+                <div class="form-group login-form-group-last">
+                    <label class="form-label" for="login-password">Şifre</label>
+                    <div class="password-input-wrap">
+                        <input type="password" id="login-password" placeholder="••••••••" required
+                            autocomplete="current-password">
+                        <button type="button" class="btn-pwd-toggle" id="btn-toggle-login-pwd"
+                            title="Şifreyi Göster / Gizle" aria-label="Şifreyi Göster / Gizle" aria-pressed="false">
+                            <svg class="ui-icon icon-eye" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
+                            <svg class="ui-icon icon-eye-off" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+                                <path
+                                    d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+                                <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+                                <line x1="2" x2="22" y1="2" y2="22" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary"
-                    style="width: 100%; padding: 0.85rem; font-size: 1rem; font-weight: 700; border-radius: var(--radius-md);">
-                    Giriş Yap
+                <button type="submit" class="btn btn-primary login-submit-btn">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+                        <polyline points="10 17 15 12 10 7" />
+                        <line x1="15" x2="3" y1="12" y2="12" />
+                    </svg>
+                    <span>Giriş Yap</span>
                 </button>
             </form>
         </div>
@@ -72,16 +113,17 @@
     <div id="main-app-container" style="display: none;">
         <!-- Print Header -->
         <div class="print-only-header">
-            <h1 style="font-size:24px; margin-bottom:4px; font-weight:800;" id="print-app-title">APP - SİPARİŞ LİSTESİ
-            </h1>
-            <p style="font-size:13px; color:#555;">Yazdırma Tarihi: <span id="print-date"></span></p>
+            <h1 id="print-app-title">HKC EKSİK LİSTESİ</h1>
+            <p>Yazdırma Tarihi: <span id="print-date"></span></p>
         </div>
 
         <div class="app-container">
             <!-- Header -->
             <header class="header">
                 <div class="brand-wrapper">
-                    <div class="brand-icon" id="app-brand-icon" title="Uygulama İkonunu Değiştir (Tıklayın)"><img src="/images/logo.jpg" alt="HKC Logo"></div>
+                    <div class="brand-icon" id="app-brand-icon" title="Uygulama İkonunu Değiştir (Tıklayın)">
+                        <img src="/images/logo.jpg" alt="HKC Logo">
+                    </div>
                     <div class="brand-info">
                         <h1>
                             <span id="app-title-text">HKC</span>
@@ -90,86 +132,172 @@
                                 <span id="connection-text">Canlı</span>
                             </span>
                         </h1>
-                        <p id="header-db-indicator">Bulut Veritabanı</p>
+                        <p id="header-db-indicator" class="db-indicator">Bulut Veritabanı</p>
                     </div>
                 </div>
 
                 <div class="header-actions">
-                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-notes" title="Notlar" onclick="window.app.openNotesModal()">
-                        <span>💬</span>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-notes" title="Notlar"
+                        onclick="window.app.openNotesModal()">
+                        <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
                         <span>Notlar</span>
                         <span class="notes-unread-badge" id="notes-unread-badge" style="display: none;">0</span>
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-stats" title="İstatistikler" onclick="window.app.openStatsModal()">
-                        <span>📊</span>
+
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-open-stats" title="İstatistikler"
+                        onclick="window.app.openStatsModal()">
+                        <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 3v18h18" />
+                            <path d="M18 17V9" />
+                            <path d="M13 17V5" />
+                            <path d="M8 17v-3" />
+                        </svg>
                         <span>İstatistik</span>
                     </button>
-                    <button type="button" class="btn btn-secondary btn-sm" id="btn-quick-push-toggle" title="Telefon Bildirimlerini Aç/Kapat" style="font-weight: 700; display: inline-flex; align-items: center; gap: 0.35rem; border-color: rgba(99, 102, 241, 0.3);">
-                        <span id="quick-push-icon">🔔</span>
+
+                    <button type="button" class="btn btn-secondary btn-sm btn-push-toggle" id="btn-quick-push-toggle"
+                        title="Telefon Bildirimlerini Aç/Kapat">
+                        <span id="quick-push-icon">
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
+                        </span>
                         <span id="quick-push-label">Bildirim Aç</span>
                     </button>
+
+                    <button type="button" class="btn btn-secondary btn-sm btn-icon-only theme-toggle-btn"
+                        id="btn-theme-toggle" title="Tema Değiştir" aria-label="Tema Değiştir">
+                        <svg class="ui-icon icon-sun" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="4" />
+                            <path
+                                d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                        </svg>
+                        <svg class="ui-icon icon-moon" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+                        </svg>
+                    </button>
+
                     <div class="user-menu-pill">
-                        <button class="btn btn-secondary btn-sm" id="btn-open-user-settings" title="Yönetim & Ayarlar">
-                            👤 <span id="display-username">admin</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-open-user-settings"
+                            title="Yönetim &amp; Ayarlar">
+                            <span class="user-avatar-chip" id="display-user-avatar">A</span>
+                            <span id="display-username">admin</span>
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                    d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                                <circle cx="12" cy="12" r="3" />
+                            </svg>
                         </button>
-                        <button class="btn btn-danger btn-sm" id="btn-logout" title="Çıkış Yap">
-                            Çıkış
+                        <button type="button" class="btn btn-danger btn-sm btn-logout-icon" id="btn-logout"
+                            title="Çıkış Yap" aria-label="Çıkış Yap">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <polyline points="16 17 21 12 16 7" />
+                                <line x1="21" x2="9" y1="12" y2="12" />
+                            </svg>
                         </button>
                     </div>
                 </div>
-
             </header>
 
-            <!-- Stats -->
-            <section class="stats-grid">
-                <div class="stat-card">
+            <!-- Interactive KPI Cockpit -->
+            <section class="stats-grid" aria-label="Özet İstatistikler">
+                <div class="stat-card" data-stat-filter="all" role="button" tabindex="0"
+                    title="Tüm aktif eksikleri göster">
                     <div class="stat-content">
                         <div class="stat-label">Toplam Eksik</div>
                         <div class="stat-value" id="stat-total">0</div>
+                        <span class="stat-sub" id="stat-total-sub">Aktif liste</span>
                     </div>
-                    <div class="stat-icon blue">📦</div>
+                    <div class="stat-icon blue">
+                        <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m7.5 4.27 9 5.15" />
+                            <path
+                                d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                            <path d="m3.3 7 8.7 5 8.7-5" />
+                            <path d="M12 22V12" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="stat-card">
+
+                <div class="stat-card" data-stat-filter="pending" role="button" tabindex="0"
+                    title="Sadece bekleyenleri filtrele">
                     <div class="stat-content">
                         <div class="stat-label">Bekleyen</div>
                         <div class="stat-value" id="stat-pending">0</div>
+                        <span class="stat-sub" id="stat-pending-sub">Sipariş bekliyor</span>
                     </div>
-                    <div class="stat-icon amber">⏳</div>
+                    <div class="stat-icon amber">
+                        <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                            <circle cx="12" cy="12" r="10" />
+                            <polyline points="12 6 12 12 16 14" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="stat-card">
+
+                <div class="stat-card" data-stat-filter="priority" role="button" tabindex="0"
+                    title="Acil ve yok satanları filtrele">
                     <div class="stat-content">
                         <div class="stat-label">Acil / Yok Satıyor</div>
-                        <div class="stat-value" id="stat-urgent" style="color: #f87171;">0</div>
+                        <div class="stat-value is-critical" id="stat-urgent">0</div>
+                        <span class="stat-sub" id="stat-urgent-sub">Öncelikli tedarik</span>
                     </div>
-                    <div class="stat-icon red">🚨</div>
+                    <div class="stat-icon red">
+                        <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                            <line x1="12" x2="12" y1="9" y2="13" />
+                            <line x1="12" x2="12.01" y1="17" y2="17" />
+                        </svg>
+                    </div>
                 </div>
-                <div class="stat-card">
+
+                <div class="stat-card" data-stat-filter="completed" role="button" tabindex="0"
+                    title="Temin edilen ürünleri filtrele">
                     <div class="stat-content">
                         <div class="stat-label">Temin Edilen</div>
-                        <div class="stat-value" id="stat-completed" style="color: #34d399;">0</div>
+                        <div class="stat-value is-success" id="stat-completed">0</div>
+                        <span class="stat-sub" id="stat-completed-sub">Listeden karşılandı</span>
                     </div>
-                    <div class="stat-icon emerald">✅</div>
+                    <div class="stat-icon emerald">
+                        <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
+                    </div>
                 </div>
             </section>
 
-            <!-- Progress Bar Card -->
+            <!-- Segmented Progress Telemetry Card -->
             <section class="progress-bar-card">
                 <div class="progress-header">
-                    <div class="progress-title">
-                        <span class="progress-indicator-dot"></span>
-                        <span style="font-weight: 700;">Günlük Eksik Tamamlama Oranı</span>
+                    <div class="progress-title-group">
+                        <div class="progress-title">
+                            <span class="progress-indicator-dot"></span>
+                            <span>Günlük Eksik Tamamlama Oranı</span>
+                        </div>
+                        <span class="progress-breakdown" id="progress-breakdown">0 alındı · 0 siparişte · 0
+                            bekliyor</span>
                     </div>
                     <span class="progress-percent" id="progress-percent-text">%0 Tamamlandı (0/0)</span>
                 </div>
                 <div class="progress-track">
                     <div class="progress-fill" id="progress-fill-bar" style="width: 0%;"></div>
+                    <div class="progress-fill-ordered" id="progress-fill-ordered" style="width: 0%;"></div>
                 </div>
             </section>
 
             <!-- Sık Bitenler Hatırlatması (geçmişe göre hesaplanır) -->
             <section class="reminders-card" id="reminders-card" style="display: none;">
                 <div class="reminders-head">
-                    <span class="reminders-icon">🔔</span>
+                    <span class="reminders-icon">
+                        <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                            <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                        </svg>
+                    </span>
                     <div>
                         <h3>Kontrol edilecekler</h3>
                         <p>Sık biten ama bu dönem eklenmemiş ürünler</p>
@@ -178,37 +306,58 @@
                 <div class="reminders-list" id="reminders-list"></div>
             </section>
 
-            <!-- Quick Add Card -->
+            <!-- Quick Add Studio -->
             <section class="quick-add-card">
                 <div class="quick-add-header">
                     <div class="quick-add-title">
-                        <span>✨</span>
+                        <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" />
+                        </svg>
                         <span>Hızlı Eksik Ekle</span>
                     </div>
-                    <span class="voice-status-pill" id="voice-indicator">
-                        <span class="pulse-dot" style="background:#ef4444;"></span>
-                        Dinleniyor...
-                    </span>
+                    <div class="quick-add-meta">
+                        <span class="kbd-hint">Enter ile ekle</span>
+                        <span class="voice-status-pill" id="voice-indicator">
+                            <span class="pulse-dot is-danger"></span>
+                            Dinleniyor...
+                        </span>
+                    </div>
                 </div>
 
                 <form id="quick-add-form" class="quick-add-form-vertical">
-                    <!-- Row 1: Product Name -->
-                    <div class="form-group-vertical">
+                    <!-- Row 1: Product Name with Autocomplete -->
+                    <div class="form-group-vertical autocomplete-field">
                         <label class="input-label" for="input-name">Ürün Adı ve Modeli</label>
                         <div class="input-icon-wrapper">
-                            <span class="input-icon">🔍</span>
+                            <span class="input-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="11" cy="11" r="8" />
+                                    <path d="m21 21-4.3-4.3" />
+                                </svg>
+                            </span>
                             <input type="text" id="input-name"
                                 placeholder="Ürün adı (Örn: 4x50 Sunta Vidası, Şeffaf Silikon, 115mm Taşlama Taşı)"
-                                required autocomplete="off">
+                                required autocomplete="off" aria-autocomplete="list" aria-controls="name-autocomplete-list">
                         </div>
+                        <div id="name-autocomplete-list" class="autocomplete-dropdown" role="listbox" style="display: none;"></div>
                     </div>
 
                     <!-- Row 2: Responsive 3-box Grid -->
                     <div class="form-row-responsive">
                         <div class="form-group-vertical">
-                            <label class="input-label" for="input-quantity">Miktar & Birim</label>
+                            <label class="input-label" for="input-quantity">Miktar &amp; Birim</label>
                             <input type="text" id="input-quantity" placeholder="Miktar (örn: 10 kutu, 2 koli)"
                                 value="1 kutu">
+                            <div class="unit-quick-chips" id="unit-quick-chips" aria-label="Hızlı Birim Seçimi">
+                                <button type="button" class="unit-chip" data-unit="adet">adet</button>
+                                <button type="button" class="unit-chip active" data-unit="kutu">kutu</button>
+                                <button type="button" class="unit-chip" data-unit="koli">koli</button>
+                                <button type="button" class="unit-chip" data-unit="paket">paket</button>
+                                <button type="button" class="unit-chip" data-unit="kg">kg</button>
+                                <button type="button" class="unit-chip" data-unit="metre">metre</button>
+                                <button type="button" class="unit-chip" data-unit="boy">boy</button>
+                            </div>
                         </div>
 
                         <div class="form-group-vertical">
@@ -222,9 +371,24 @@
                             <label class="input-label" for="input-urgency">Aciliyet Durumu</label>
                             <select id="input-urgency">
                                 <option value="normal">Normal</option>
-                                <option value="urgent">🚨 Acil</option>
-                                <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                                <option value="urgent">Acil</option>
+                                <option value="critical">Yok Satıyor (Kritik)</option>
                             </select>
+                        </div>
+                    </div>
+
+                    <!-- Row 2b: Optional Quick Note -->
+                    <div class="form-group-vertical">
+                        <label class="input-label" for="input-notes">Not / Açıklama (Opsiyonel)</label>
+                        <div class="input-icon-wrapper">
+                            <span class="input-icon">
+                                <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                    <polyline points="14 2 14 8 20 8" />
+                                </svg>
+                            </span>
+                            <input type="text" id="input-notes"
+                                placeholder="Örn: Marka tercihi, raf bilgisi, müşteri siparişi..." autocomplete="off">
                         </div>
                     </div>
 
@@ -235,47 +399,67 @@
                     <div class="form-actions-vertical">
                         <button type="button" class="btn btn-secondary action-btn-extra" id="btn-trigger-photo"
                             title="Fotoğraf Çek / Yükle">
-                            <span>📷</span>
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path
+                                    d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" />
+                                <circle cx="12" cy="13" r="3" />
+                            </svg>
                             <span id="photo-btn-text">Fotoğraf</span>
                         </button>
                         <button type="button" class="btn-mic action-btn-extra" id="btn-voice-input"
                             title="Sesle Söyle (Türkçe)">
-                            <span>🎙️</span>
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                                <line x1="12" x2="12" y1="19" y2="22" />
+                            </svg>
                             <span>Sesle Söyle</span>
                         </button>
                         <button type="submit" class="btn btn-primary action-btn-submit" id="btn-submit-add">
-                            <span>➕</span>
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M5 12h14" />
+                                <path d="M12 5v14" />
+                            </svg>
                             <span>Eksik Listesine Ekle</span>
                         </button>
                     </div>
                 </form>
 
                 <!-- Selected Photo Preview Strip -->
-                <div id="add-photo-preview-container"
-                    style="display: none; align-items: center; gap: 0.75rem; margin-top: 0.85rem; padding: 0.5rem 0.75rem; background: var(--bg-surface-elevated); border-radius: var(--radius-md); border: 1px dashed var(--border-subtle);">
-                    <img id="add-photo-preview-img" src="" alt="Önizleme"
-                        style="width: 44px; height: 44px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.2);">
-                    <span style="font-size: 0.85rem; color: #38bdf8; font-weight: 600;">Fotoğraf eklendi</span>
-                    <button type="button" id="btn-remove-selected-photo" class="btn btn-secondary btn-sm"
-                        style="padding: 0.2rem 0.5rem; margin-left: auto;">Kaldır ✕</button>
+                <div id="add-photo-preview-container" class="photo-preview-strip">
+                    <img id="add-photo-preview-img" class="photo-preview-thumb" src="" alt="Önizleme">
+                    <span class="photo-preview-label">Fotoğraf eklendi</span>
+                    <button type="button" id="btn-remove-selected-photo"
+                        class="btn btn-secondary btn-sm photo-preview-remove">Kaldır</button>
                 </div>
 
                 <!-- Hardware Quick Selection Bar with Add / Remove Capability -->
                 <div class="quick-pills-section">
                     <div class="quick-pills-header">
                         <div class="quick-pills-title">
-                            <span>⚡</span>
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                            </svg>
                             <span>Hızlı Seçenekler (Sık Bitenler)</span>
                         </div>
                         <div class="quick-pills-controls">
                             <button type="button" class="btn-pill-action danger" id="btn-toggle-edit-pills"
                                 title="Listeden Ürün Çıkar">
-                                <span id="edit-pills-icon">🗑️</span>
+                                <span id="edit-pills-icon">
+                                    <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M3 6h18" />
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                    </svg>
+                                </span>
                                 <span id="edit-pills-text">Çıkar / Düzenle</span>
                             </button>
                             <button type="button" class="btn-pill-action primary" id="btn-open-add-pill"
                                 title="Yeni Hızlı Ürün Ekle">
-                                <span>➕</span>
+                                <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M5 12h14" />
+                                    <path d="M12 5v14" />
+                                </svg>
                                 <span>Yeni Ekle</span>
                             </button>
                         </div>
@@ -288,35 +472,74 @@
 
             <!-- Quick Filter Chips Bar -->
             <div class="quick-chips-bar">
-                <button class="chip-filter active" data-filter="all">Tümü <span class="chip-badge"
-                        id="chip-total">0</span></button>
-                <button class="chip-filter" data-filter="critical">🔴 Yok Satıyor <span class="chip-badge"
-                        id="chip-critical">0</span></button>
-                <button class="chip-filter" data-filter="urgent">🚨 Acil <span class="chip-badge"
-                        id="chip-urgent">0</span></button>
-                <button class="chip-filter" data-filter="pending">⏳ Bekleyen <span class="chip-badge"
-                        id="chip-pending">0</span></button>
-                <button class="chip-filter" data-filter="ordered">🚚 Sipariş Edildi <span class="chip-badge"
-                        id="chip-ordered">0</span></button>
-                <button class="chip-filter" data-filter="completed">✅ Alındı <span class="chip-badge"
-                        id="chip-completed">0</span></button>
-                <button class="chip-filter chip-trash" data-filter="trash"
-                    style="border-color: rgba(239, 68, 68, 0.35); color: #f87171;">🗑️ Silinenler <span
-                        class="chip-badge" id="chip-trash"
-                        style="background: rgba(239, 68, 68, 0.25); color: #fca5a5;">0</span></button>
+                <button type="button" class="chip-filter active" data-filter="all">
+                    <span class="status-dot all"></span>
+                    <span>Tümü</span>
+                    <span class="chip-badge" id="chip-total">0</span>
+                </button>
+                <button type="button" class="chip-filter" data-filter="critical">
+                    <span class="status-dot critical"></span>
+                    <span>Yok Satıyor</span>
+                    <span class="chip-badge" id="chip-critical">0</span>
+                </button>
+                <button type="button" class="chip-filter" data-filter="urgent">
+                    <span class="status-dot urgent"></span>
+                    <span>Acil</span>
+                    <span class="chip-badge" id="chip-urgent">0</span>
+                </button>
+                <button type="button" class="chip-filter" data-filter="pending">
+                    <span class="status-dot pending"></span>
+                    <span>Bekleyen</span>
+                    <span class="chip-badge" id="chip-pending">0</span>
+                </button>
+                <button type="button" class="chip-filter" data-filter="ordered">
+                    <span class="status-dot ordered"></span>
+                    <span>Sipariş Edildi</span>
+                    <span class="chip-badge" id="chip-ordered">0</span>
+                </button>
+                <button type="button" class="chip-filter" data-filter="completed">
+                    <span class="status-dot completed"></span>
+                    <span>Alındı</span>
+                    <span class="chip-badge" id="chip-completed">0</span>
+                </button>
+                <button type="button" class="chip-filter chip-trash" data-filter="trash">
+                    <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 6h18" />
+                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
+                    <span>Silinenler</span>
+                    <span class="chip-badge" id="chip-trash">0</span>
+                </button>
             </div>
 
             <!-- Toolbar & Filters -->
             <section class="toolbar-bar">
                 <div class="toolbar-left">
-                    <input type="text" id="search-input" class="search-input" placeholder="Ürün veya toptancı ara...">
+                    <div class="search-input-wrap">
+                        <span class="search-input-icon">
+                            <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="11" cy="11" r="8" />
+                                <path d="m21 21-4.3-4.3" />
+                            </svg>
+                        </span>
+                        <input type="text" id="search-input" class="search-input"
+                            placeholder="Ürün veya toptancı ara...">
+                        <button type="button" class="btn-clear-search" id="btn-clear-search" style="display: none;"
+                            title="Aramayı temizle" aria-label="Aramayı temizle">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M18 6 6 18" />
+                                <path d="m6 6 12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
                     <select id="filter-status" class="filter-select">
                         <option value="all">Tüm Durumlar</option>
                         <option value="pending">Sadece Bekleyenler</option>
                         <option value="ordered">Sipariş Edilenler</option>
                         <option value="completed">Alınanlar / Tamamlananlar</option>
-                        <option value="trash">🗑️ Silinenler (Çöp Kutusu)</option>
+                        <option value="trash">Silinenler (Çöp Kutusu)</option>
                     </select>
 
                     <select id="filter-supplier" class="filter-select">
@@ -326,30 +549,100 @@
 
                 <div class="toolbar-right">
                     <div class="tab-pills">
-                        <button class="tab-pill active" data-view="list">📋 Tüm Liste</button>
-                        <button class="tab-pill" data-view="bySupplier">👤 Toptancıya Göre</button>
+                        <button type="button" class="tab-pill active" data-view="list">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <line x1="8" x2="21" y1="6" y2="6" />
+                                <line x1="8" x2="21" y1="12" y2="12" />
+                                <line x1="8" x2="21" y1="18" y2="18" />
+                                <line x1="3" x2="3.01" y1="6" y2="6" />
+                                <line x1="3" x2="3.01" y1="12" y2="12" />
+                                <line x1="3" x2="3.01" y1="18" y2="18" />
+                            </svg>
+                            <span>Tüm Liste</span>
+                        </button>
+                        <button type="button" class="tab-pill" data-view="bySupplier">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                                <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+                                <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+                                <path d="M10 6h4" />
+                                <path d="M10 10h4" />
+                                <path d="M10 14h4" />
+                                <path d="M10 18h4" />
+                            </svg>
+                            <span>Toptancıya Göre</span>
+                        </button>
                     </div>
-                    <button class="btn btn-secondary btn-sm" id="btn-clear-completed" title="Tamamlananları temizle">
-                        <span>🧹</span>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-bulk"
+                        title="Toplu işlem için çoklu seçim aç/kapat">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect width="18" height="18" x="3" y="3" rx="2" />
+                            <path d="m9 12 2 2 4-4" />
+                        </svg>
+                        <span>Toplu Seç</span>
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-clear-completed"
+                        title="Tamamlananları temizle">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                            <polyline points="22 4 12 14.01 9 11.01" />
+                        </svg>
                         <span>Tamamlananları Temizle</span>
                     </button>
                 </div>
             </section>
 
+            <!-- Bulk Selection Strip (visible in bulk mode) -->
+            <div class="bulk-select-strip" id="bulk-select-strip" style="display: none;">
+                <div class="bulk-strip-info">
+                    <span class="bulk-count-pill"><strong id="bulk-strip-count">0</strong> ürün seçildi</span>
+                    <span class="bulk-strip-hint">Seçmek için kartlara dokunun</span>
+                </div>
+                <div class="bulk-strip-actions">
+                    <button type="button" class="btn btn-secondary btn-xs" id="btn-bulk-select-all">Tümünü Seç</button>
+                    <button type="button" class="btn btn-secondary btn-xs" id="btn-bulk-clear-selection">Seçimi Temizle</button>
+                    <button type="button" class="btn btn-danger btn-xs" id="btn-bulk-exit">Kapat</button>
+                </div>
+            </div>
+
             <!-- Items List -->
             <main class="items-container" id="items-container">
                 <!-- Injected via JS -->
             </main>
+        </div>
 
-            <!-- Footer -->
-            <footer class="app-footer">
-                <a href="https://www.yehsqn.com" target="_blank" rel="noopener">© Copyright by <strong>yehsqn</strong></a>
-            </footer>
+        <!-- Floating Bulk Action Bar -->
+        <div class="bulk-action-bar" id="bulk-action-bar" style="display: none;">
+            <div class="bulk-bar-inner">
+                <div class="bulk-bar-summary">
+                    <span class="bulk-count-pill"><strong id="bulk-selected-count">0</strong> seçili</span>
+                </div>
+                <div class="bulk-supplier-assign">
+                    <select id="bulk-supplier-select" class="filter-select" aria-label="Toplu Toptancı Seç">
+                        <option value="Belirtilmedi">Toptancı Seç...</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-bulk-assign-supplier">Toptancı Ata</button>
+                </div>
+                <div class="bulk-status-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-bulk-pending">Bekliyor</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="btn-bulk-ordered">Sipariş Edildi</button>
+                    <button type="button" class="btn btn-success btn-sm" id="btn-bulk-completed">Alındı</button>
+                    <button type="button" class="btn btn-danger btn-sm" id="btn-bulk-delete">Sil</button>
+                    <button type="button" class="btn btn-secondary btn-sm btn-icon-only" id="btn-bulk-cancel"
+                        title="Toplu seçimi kapat" aria-label="Toplu seçimi kapat">×</button>
+                </div>
+            </div>
         </div>
 
         <!-- Mobile Floating Mic Button -->
         <div class="mobile-fab-container">
-            <button class="fab-btn fab-mic" id="fab-voice" title="Sesle Ekle">🎙️</button>
+            <button type="button" class="fab-btn fab-mic" id="fab-voice" title="Sesle Ekle" aria-label="Sesle Ekle">
+                <svg class="ui-icon ui-icon-lg" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                    <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                    <line x1="12" x2="12" y1="19" y2="22" />
+                </svg>
+            </button>
         </div>
     </div>
 
@@ -357,7 +650,12 @@
     <div class="modal-overlay" id="notes-modal">
         <div class="modal-card notes-modal-card">
             <div class="modal-header">
-                <h2 class="modal-title"><span>💬</span> Notlar</h2>
+                <h2 class="modal-title">
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>Notlar</span>
+                </h2>
                 <button type="button" class="btn-close" onclick="window.app.closeAllModals()">×</button>
             </div>
             <div class="notes-identity" id="notes-identity"></div>
@@ -366,13 +664,19 @@
             <form class="notes-name-form" id="notes-name-form" style="display: none;">
                 <label class="input-label" for="notes-name-input">Adın ne? Notlarında bu ad görünecek.</label>
                 <div class="notes-name-row">
-                    <input type="text" id="notes-name-input" maxlength="40" placeholder="Örn: Ahmet" autocomplete="given-name">
+                    <input type="text" id="notes-name-input" maxlength="40" placeholder="Örn: Ahmet"
+                        autocomplete="given-name">
                     <button type="submit" class="btn btn-primary">Kaydet</button>
                 </div>
             </form>
             <form class="notes-composer" id="notes-form">
                 <textarea id="notes-input" rows="1" maxlength="2000" placeholder="Not yaz…"></textarea>
-                <button type="submit" class="btn btn-primary notes-send-btn" title="Gönder">➤</button>
+                <button type="submit" class="btn btn-primary notes-send-btn" title="Gönder" aria-label="Gönder">
+                    <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m22 2-7 20-4-9-9-4Z" />
+                        <path d="M22 2 11 13" />
+                    </svg>
+                </button>
             </form>
         </div>
     </div>
@@ -381,7 +685,15 @@
     <div class="modal-overlay" id="stats-modal">
         <div class="modal-card stats-modal-card">
             <div class="modal-header">
-                <h2 class="modal-title"><span>📊</span> İstatistikler</h2>
+                <h2 class="modal-title">
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 3v18h18" />
+                        <path d="M18 17V9" />
+                        <path d="M13 17V5" />
+                        <path d="M8 17v-3" />
+                    </svg>
+                    <span>İstatistikler</span>
+                </h2>
                 <button type="button" class="btn-close" onclick="window.app.closeAllModals()">×</button>
             </div>
             <div id="stats-modal-body"></div>
@@ -390,42 +702,41 @@
 
     <!-- MODAL: DUPLICATE ITEM WARNING -->
     <div class="modal-overlay" id="duplicate-modal">
-        <div class="modal-card" style="border: 2px solid #f59e0b; max-width: 480px;">
-            <div class="modal-header" style="border-bottom-color: rgba(245, 158, 11, 0.3);">
-                <div class="modal-title" style="color: #fbbf24;">
-                    <span>⚠️</span>
+        <div class="modal-card dup-modal-card">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+                        <line x1="12" x2="12" y1="9" y2="13" />
+                        <line x1="12" x2="12.01" y1="17" y2="17" />
+                    </svg>
                     <span>Bu Ürün Zaten Listede Var!</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
-            <div style="padding: 0.5rem 0;">
-                <p style="font-size: 0.95rem; margin-bottom: 1rem; color: var(--text-primary);">
-                    Yazmak istediğiniz <strong id="dup-new-name" style="color:#60a5fa;"></strong> ürünü, listedeki
+            <div>
+                <p class="dup-lead-text">
+                    Yazmak istediğiniz <strong id="dup-new-name" class="dup-highlight-name"></strong> ürünü, listedeki
                     mevcut ürünle aynı veya çok benzer görünüyor:
                 </p>
 
-                <div
-                    style="background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 0.85rem; margin-bottom: 1.25rem;">
-                    <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.25rem;">LİSTEDEKİ MEVCUT
-                        ÜRÜN:</div>
-                    <div style="font-size: 1.05rem; font-weight: 700; color: #f8fafc;" id="dup-existing-name">-</div>
-                    <div style="font-size: 0.85rem; color: #38bdf8; margin-top: 0.25rem;">
+                <div class="dup-preview-box">
+                    <div class="dup-preview-label">LİSTEDEKİ MEVCUT ÜRÜN:</div>
+                    <div class="dup-preview-title" id="dup-existing-name">-</div>
+                    <div class="dup-preview-meta">
                         Mevcut Miktar: <strong id="dup-existing-qty">-</strong> | Durum: <span
                             id="dup-existing-status">-</span>
                     </div>
                 </div>
 
-                <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                    <button class="btn btn-primary" id="btn-dup-update-qty"
-                        style="padding: 0.75rem 1rem; justify-content: center; font-weight: 700;">
-                        ➕ Mevcut Ürünün Miktarını Güncelle / Artır
+                <div class="modal-actions-stack">
+                    <button type="button" class="btn btn-primary btn-full-center" id="btn-dup-update-qty">
+                        Mevcut Ürünün Miktarını Güncelle / Artır
                     </button>
-                    <button class="btn btn-secondary" id="btn-dup-force-add"
-                        style="padding: 0.65rem 1rem; justify-content: center;">
+                    <button type="button" class="btn btn-secondary btn-full-center" id="btn-dup-force-add">
                         Farklı Ürün, Yine de Ayrı Olarak Ekle
                     </button>
-                    <button class="btn btn-secondary" id="btn-dup-cancel"
-                        style="padding: 0.6rem 1rem; justify-content: center; color: var(--text-muted);">
+                    <button type="button" class="btn btn-secondary btn-full-center" id="btn-dup-cancel">
                         Vazgeç / İptal Et
                     </button>
                 </div>
@@ -435,32 +746,38 @@
 
     <!-- MODAL: SUPPLIERS MANAGEMENT (Toptancı Ekle / Sil) -->
     <div class="modal-overlay" id="suppliers-modal">
-        <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-card suppliers-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>🏢</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                        <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+                        <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+                        <path d="M10 6h4" />
+                        <path d="M10 10h4" />
+                        <path d="M10 14h4" />
+                        <path d="M10 18h4" />
+                    </svg>
                     <span>Toptancıları Yönet</span>
                 </div>
-                <button type="button" class="btn btn-secondary btn-sm" onclick="window.app.openAdminModal()"
-                    style="margin-left: auto; margin-right: 0.5rem; padding: 0.25rem 0.65rem; font-size: 0.8rem;"
-                    title="Yönetim Paneline Geri Dön">
-                    ← Yönetim Paneli
-                </button>
-                <button class="btn-close">&times;</button>
+                <div class="modal-header-actions">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="window.app.openAdminModal()"
+                        title="Yönetim Paneline Geri Dön">
+                        ← Yönetim Paneli
+                    </button>
+                    <button type="button" class="btn-close">&times;</button>
+                </div>
             </div>
-            <div style="padding: 0.5rem 0;">
+            <div>
                 <!-- Add New Supplier Form -->
-                <form id="add-supplier-form" style="display: flex; gap: 0.5rem; margin-bottom: 1.25rem;">
-                    <input type="text" id="new-supplier-name" placeholder="Yeni toptancı adı yazın..." required
-                        style="flex:1;">
+                <form id="add-supplier-form" class="suppliers-add-form">
+                    <input type="text" id="new-supplier-name" placeholder="Yeni toptancı adı yazın..." required>
                     <button type="submit" class="btn btn-primary">+ Ekle</button>
                 </form>
 
                 <!-- Current Suppliers List -->
-                <div style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.6rem;">
-                    KAYITLI TOPTANCILARINIZ:</div>
-                <div id="suppliers-list-container"
-                    style="display: flex; flex-direction: column; gap: 0.4rem; max-height: 280px; overflow-y: auto;">
+                <div class="suppliers-list-heading">KAYITLI TOPTANCILARINIZ:</div>
+                <div id="suppliers-list-container" class="suppliers-list-scroll">
                     <!-- Injected via JS -->
                 </div>
             </div>
@@ -469,15 +786,17 @@
 
     <!-- MODAL: EDIT ITEM (Eklenen Ürünü Düzenle) -->
     <div class="modal-overlay" id="edit-item-modal">
-        <div class="modal-card" style="max-width: 500px;">
+        <div class="modal-card edit-item-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>✏️</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                    </svg>
                     <span>Ürünü Düzenle</span>
                 </div>
                 <button class="btn-close" type="button">&times;</button>
             </div>
-            <form id="edit-item-form" style="display: flex; flex-direction: column; gap: 0.9rem; padding: 0.25rem 0;">
+            <form id="edit-item-form" class="edit-item-form">
                 <input type="hidden" id="edit-item-id">
 
                 <div class="form-group-vertical">
@@ -487,7 +806,7 @@
 
                 <div class="form-row-responsive">
                     <div class="form-group-vertical">
-                        <label class="input-label" for="edit-item-quantity">Miktar & Birim</label>
+                        <label class="input-label" for="edit-item-quantity">Miktar &amp; Birim</label>
                         <input type="text" id="edit-item-quantity" placeholder="Miktar (örn: 10 kutu)" required>
                     </div>
 
@@ -504,17 +823,17 @@
                         <label class="input-label" for="edit-item-urgency">Aciliyet Durumu</label>
                         <select id="edit-item-urgency">
                             <option value="normal">Normal</option>
-                            <option value="urgent">🚨 Acil</option>
-                            <option value="critical">🔴 Yok Satıyor (Kritik)</option>
+                            <option value="urgent">Acil</option>
+                            <option value="critical">Yok Satıyor (Kritik)</option>
                         </select>
                     </div>
 
                     <div class="form-group-vertical">
                         <label class="input-label" for="edit-item-status">Sipariş Durumu</label>
                         <select id="edit-item-status">
-                            <option value="pending">⏳ Bekliyor</option>
-                            <option value="ordered">🚚 Sipariş Edildi</option>
-                            <option value="completed">✅ Alındı</option>
+                            <option value="pending">Bekliyor</option>
+                            <option value="ordered">Sipariş Edildi</option>
+                            <option value="completed">Alındı</option>
                         </select>
                     </div>
                 </div>
@@ -528,31 +847,35 @@
                 <!-- Photo preview & controls within edit modal -->
                 <div class="form-group-vertical">
                     <label class="input-label">Ürün Fotoğrafı</label>
-                    <div id="edit-photo-container"
-                        style="display: flex; align-items: center; gap: 0.75rem; background: var(--bg-surface-elevated); padding: 0.5rem 0.75rem; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
-                        <img id="edit-photo-preview" src="" alt="Fotoğraf"
-                            style="width: 48px; height: 48px; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.15); display: none;">
-                        <span id="edit-photo-text"
-                            style="font-size: 0.85rem; color: var(--text-secondary); flex: 1;">Fotoğraf yok</span>
-                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo"
-                            style="padding: 0.35rem 0.7rem;">📷 Fotoğraf Ekle / Değiştir</button>
+                    <div id="edit-photo-container" class="edit-photo-box">
+                        <img id="edit-photo-preview" class="edit-photo-preview" src="" alt="Fotoğraf">
+                        <span id="edit-photo-text" class="edit-photo-status">Fotoğraf yok</span>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-change-photo">Fotoğraf Ekle
+                            / Değiştir</button>
                         <button type="button" class="btn btn-danger btn-sm" id="btn-edit-remove-photo"
-                            style="display: none; padding: 0.35rem 0.6rem;" title="Fotoğrafı Kaldır">✕</button>
+                            style="display: none;" title="Fotoğrafı Kaldır">✕</button>
                         <input type="file" id="edit-photo-file-input" accept="image/*" style="display: none;">
                     </div>
                 </div>
 
-                <div style="display: flex; gap: 0.75rem; justify-content: space-between; align-items: center; margin-top: 0.6rem; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-danger" onclick="window.app.deleteEditingItem()"
-                        style="padding: 0.65rem 1rem; font-weight: 600;">
-                        <span>🗑️</span>
+                <div class="edit-modal-footer">
+                    <button type="button" class="btn btn-danger" onclick="window.app.deleteEditingItem()">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 6h18" />
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                        </svg>
                         <span>Ürünü Sil</span>
                     </button>
-                    <div style="display: flex; gap: 0.75rem; margin-left: auto;">
-                        <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
-                            style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                        <button type="submit" class="btn btn-primary" style="padding: 0.65rem 1.5rem; font-weight: 700;">
-                            <span>💾</span>
+                    <div class="modal-actions-row">
+                        <button type="button" class="btn btn-secondary"
+                            onclick="window.app.closeAllModals()">Vazgeç</button>
+                        <button type="submit" class="btn btn-primary">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
+                            </svg>
                             <span>Değişiklikleri Kaydet</span>
                         </button>
                     </div>
@@ -563,13 +886,12 @@
 
     <!-- MODAL: IMAGE LIGHTBOX (Büyük Fotoğraf Görüntüleyici) -->
     <div class="modal-overlay" id="image-lightbox-modal">
-        <div class="modal-card" style="max-width: 600px; padding: 1rem; background: #000; text-align: center;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                <span id="lightbox-title" style="font-size: 0.95rem; font-weight: 600; color: #fff;"></span>
-                <button class="btn-close" style="color: #fff;">&times;</button>
+        <div class="modal-card lightbox-card">
+            <div class="lightbox-header">
+                <span id="lightbox-title" class="lightbox-title"></span>
+                <button type="button" class="btn-close">&times;</button>
             </div>
-            <img id="lightbox-img" src="" alt="Ürün Fotoğrafı"
-                style="max-width: 100%; max-height: 75vh; object-fit: contain; border-radius: var(--radius-md);">
+            <img id="lightbox-img" class="lightbox-img" src="" alt="Ürün Fotoğrafı">
         </div>
     </div>
 
@@ -578,49 +900,72 @@
 
     <!-- MODAL: ADMIN & SETTINGS (Yönetim ve Ayarlar) -->
     <div class="modal-overlay" id="password-modal">
-        <div class="modal-card" style="max-width: 520px; width: 95%;">
+        <div class="modal-card admin-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>⚙️</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
                     <span>Yönetim ve Ayarlar</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
 
-            <div style="display: flex; flex-direction: column; gap: 1.15rem; padding: 0.5rem 0;">
+            <div class="admin-sections-stack">
 
                 <!-- 1. Uygulama Adı ve İkonu -->
                 <div class="admin-section-box">
                     <div class="admin-section-title">
-                        <span>🏷️</span>
-                        <span>Uygulama Adı & Özelleştirme</span>
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="M12 2H2v10l9.29 9.29c.94.94 2.48.94 3.42 0l6.58-6.58c.94-.94.94-2.48 0-3.42L12 2Z" />
+                            <path d="M7 7h.01" />
+                        </svg>
+                        <span>Uygulama Adı &amp; Özelleştirme</span>
                     </div>
-                    <form id="form-change-app-name" style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                    <form id="form-change-app-name" class="admin-appname-form">
                         <input type="text" id="input-app-name" placeholder="Uygulama Adı yazın..." required
-                            style="flex: 1;" autocomplete="off">
-                        <button type="submit" class="btn btn-primary" id="btn-save-app-name"
-                            style="white-space: nowrap; padding: 0.6rem 1rem;">
-                            <span>💾</span>
+                            autocomplete="off">
+                        <button type="submit" class="btn btn-primary" id="btn-save-app-name">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                <polyline points="17 21 17 13 7 13 7 21" />
+                                <polyline points="7 3 7 8 15 8" />
+                            </svg>
                             <span>Adı Kaydet</span>
                         </button>
                     </form>
-                    <button type="button" class="btn btn-secondary" id="btn-open-icon-from-settings"
-                        style="width: 100%; justify-content: center;">
-                        <span>🎨</span>
+                    <button type="button" class="btn btn-secondary btn-full-center" id="btn-open-icon-from-settings">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                            <circle cx="9" cy="9" r="2" />
+                            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                        </svg>
                         <span>Uygulama İkonunu Değiştir</span>
                     </button>
                 </div>
 
-                <!-- 2. Hızlı İşlemler & Araçlar (Üst Kısımdan Taşınanlar) -->
+                <!-- 2. Hızlı İşlemler & Araçlar -->
                 <div class="admin-section-box">
                     <div class="admin-section-title">
-                        <span>🛠️</span>
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path
+                                d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+                        </svg>
                         <span>İşlemler ve Araçlar</span>
                     </div>
                     <div class="admin-tools-grid">
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-copy-list"
                             title="Tüm Listeyi Panoya Kopyala">
-                            <span class="tool-icon">📋</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                    <path
+                                        d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Listeyi Kopyala</strong>
                                 <small>Panoya metin kopyalar</small>
@@ -629,7 +974,13 @@
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-suppliers"
                             title="Toptancıları Ekle / Sil / Yönet">
-                            <span class="tool-icon">🏢</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z" />
+                                    <path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2" />
+                                    <path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Toptancılar</strong>
                                 <small>Ekle / Sil / Yönet</small>
@@ -638,7 +989,14 @@
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-pdf"
                             title="PDF / Yazdır Çıktısı Al">
-                            <span class="tool-icon">📄</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <polyline points="6 9 6 2 18 2 18 9" />
+                                    <path
+                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                                    <rect width="12" height="8" x="6" y="14" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Yazdır / PDF</strong>
                                 <small>Sipariş fişi al</small>
@@ -647,7 +1005,13 @@
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-toggle-sound"
                             title="Ses Bildirimleri">
-                            <span class="tool-icon" id="sound-tool-icon">🔔</span>
+                            <span class="tool-icon" id="sound-tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                                    <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong id="sound-tool-title">Ses Bildirimleri</strong>
                                 <small id="sound-tool-subtitle">Açık / Kapalı</small>
@@ -658,66 +1022,79 @@
 
                 <!-- 3. Telefon Bildirimleri (Web Push) -->
                 <div class="admin-section-box">
-                    <div class="admin-section-title" style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span>📱</span>
+                    <div class="admin-section-title has-badge">
+                        <div class="admin-section-title-left">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+                                <path d="M12 18h.01" />
+                            </svg>
                             <span>Telefon Bildirimleri (Web Push)</span>
                         </div>
-                        <span id="push-status-badge" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
-                            ⚪ Kontrol ediliyor...
+                        <span id="push-status-badge" class="admin-status-pill is-muted">
+                            Kontrol ediliyor...
                         </span>
                     </div>
-                    <div style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
-                        Dükkanda veya başka bir cihazda <strong>yeni bir eksik ürün eklendiğinde</strong>, bu telefonunuza anında sesli ve titreşimli sistem bildirimi gelir.
+                    <div class="admin-section-desc">
+                        Dükkanda veya başka bir cihazda <strong>yeni bir eksik ürün eklendiğinde</strong>, bu
+                        telefonunuza anında sesli ve titreşimli sistem bildirimi gelir.
                     </div>
 
-                    <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                        <button type="button" class="btn btn-primary" id="btn-toggle-push" style="width: 100%; justify-content: center; padding: 0.7rem; font-weight: 700;">
-                            <span id="push-btn-icon">🔔</span>
+                    <div class="admin-push-actions">
+                        <button type="button" class="btn btn-primary btn-full-center" id="btn-toggle-push">
+                            <span id="push-btn-icon"></span>
                             <span id="push-btn-text">Bu Telefonda Bildirimleri Aç</span>
                         </button>
 
-                        <button type="button" class="btn btn-secondary" id="btn-test-push" style="width: 100%; justify-content: center; padding: 0.55rem; font-size: 0.82rem;" title="Telefonunuza test bildirimi gönderin">
-                            <span>🧪</span>
+                        <button type="button" class="btn btn-secondary btn-sm btn-full-center" id="btn-test-push"
+                            title="Telefonunuza test bildirimi gönderin">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                            </svg>
                             <span>Test Bildirimi Gönder</span>
                         </button>
                     </div>
 
-                    <div id="push-info-hint" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.6rem; line-height: 1.35;">
-                        💡 <em>İpucu: Bildirim gelmesi için "Bildirimleri Aç" butonuna basıp çıkan tarayıcı uyarısına "İzin Ver" demeniz yeterlidir.</em>
+                    <div id="push-info-hint" class="admin-hint-text">
+                        İpucu: Bildirim gelmesi için "Bildirimleri Aç" butonuna basıp çıkan tarayıcı uyarısına "İzin
+                        Ver" demeniz yeterlidir.
                     </div>
                 </div>
 
                 <!-- 4. Otomatik Yedekleme & Güvenlik (Auto-Backup) -->
                 <div class="admin-section-box">
-
-                    <div class="admin-section-title"
-                        style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; align-items: center; gap: 0.5rem;">
-                            <span>🛡️</span>
+                    <div class="admin-section-title has-badge">
+                        <div class="admin-section-title-left">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                            </svg>
                             <span>Otomatik Yedekleme (Auto-Backup)</span>
                         </div>
-                        <span
-                            style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.72rem; padding: 0.2rem 0.55rem; font-weight: 700; border-radius: 999px;">
-                            🟢 7/24 Aktif
+                        <span class="admin-status-pill is-active">
+                            <span class="pulse-dot"></span>
+                            <span>7/24 Aktif</span>
                         </span>
                     </div>
-                    <div
-                        style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.85rem; line-height: 1.45;">
+                    <div class="admin-section-desc">
                         Dükkanınızda yapılan her ürün ekleme, düzenleme veya silme işleminde ve saat başı sunucuya
                         <strong>otomatik güvenlik yedeği</strong> alınır. Ürünleriniz hiçbir zaman kaybolmaz.
                     </div>
 
-                    <div
-                        style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: var(--radius-sm); padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem;">
-                        <span style="color: var(--text-muted);">Son Otomatik Yedek:</span>
-                        <strong id="admin-last-backup-badge" style="color: #38bdf8;">Kontrol ediliyor...</strong>
+                    <div class="admin-backup-summary">
+                        <span>Son Otomatik Yedek:</span>
+                        <strong id="admin-last-backup-badge">Kontrol ediliyor...</strong>
                     </div>
 
                     <div class="admin-tools-grid">
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-trigger-instant-backup"
                             title="Sunucuya Anında Yeni Yedek Kaydet">
-                            <span class="tool-icon">💾</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Şimdi Yedek Al</strong>
                                 <small>Anlık güvenli snapshot</small>
@@ -726,16 +1103,27 @@
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-open-server-backups"
                             title="Tüm Geçmiş Yedekleri Gör ve Geri Yükle">
-                            <span class="tool-icon">🕒</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <polyline points="12 6 12 12 16 14" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Geçmiş Yedekler</strong>
-                                <small>Listele & Geri Yükle</small>
+                                <small>Listele &amp; Geri Yükle</small>
                             </div>
                         </button>
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-export-backup"
                             title="Tüm Ürünlerin Güvenlik Yedeğini İndir (JSON)">
-                            <span class="tool-icon">📤</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="7 10 12 15 17 10" />
+                                    <line x1="12" x2="12" y1="15" y2="3" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Yedeği İndir</strong>
                                 <small>JSON dosyası indir</small>
@@ -744,7 +1132,13 @@
 
                         <button type="button" class="btn btn-secondary admin-tool-btn" id="btn-import-backup-trigger"
                             title="Yedek Dosyasını Geri Yükle (JSON)">
-                            <span class="tool-icon">📥</span>
+                            <span class="tool-icon">
+                                <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="17 8 12 3 7 8" />
+                                    <line x1="12" x2="12" y1="3" y2="15" />
+                                </svg>
+                            </span>
                             <div class="tool-text">
                                 <strong>Dosyadan Yükle</strong>
                                 <small>JSON dosyasını yükle</small>
@@ -754,33 +1148,28 @@
                     <input type="file" id="backup-file-input" accept=".json,application/json" style="display: none;">
                 </div>
 
-                <!-- 4. Şifre Değiştir -->
-
+                <!-- 5. Şifre Değiştir -->
                 <div class="admin-section-box">
                     <div class="admin-section-title">
-                        <span>🔐</span>
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                        </svg>
                         <span>Şifre Değiştir</span>
                     </div>
                     <form id="change-password-form">
-                        <div id="pwd-change-msg"
-                            style="display:none; font-size:0.85rem; padding:0.5rem; border-radius:6px; margin-bottom:0.75rem;">
-                        </div>
-                        <div class="form-row-responsive" style="margin-bottom: 0.75rem;">
+                        <div id="pwd-change-msg" class="pwd-change-msg"></div>
+                        <div class="admin-pwd-grid">
                             <div class="form-group-vertical">
-                                <label
-                                    style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Mevcut
-                                    Şifre</label>
+                                <label class="input-label" for="input-curr-pwd">Mevcut Şifre</label>
                                 <input type="password" id="input-curr-pwd" placeholder="Mevcut şifreniz" required>
                             </div>
                             <div class="form-group-vertical">
-                                <label
-                                    style="font-size:0.8rem; color:var(--text-secondary); margin-bottom:0.25rem;">Yeni
-                                    Şifre</label>
+                                <label class="input-label" for="input-new-pwd">Yeni Şifre</label>
                                 <input type="password" id="input-new-pwd" placeholder="Yeni şifreniz" required>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary"
-                            style="width:100%; justify-content:center; padding: 0.65rem;">Şifreyi Güncelle</button>
+                        <button type="submit" class="btn btn-primary btn-full-center">Şifreyi Güncelle</button>
                     </form>
                 </div>
 
@@ -788,35 +1177,34 @@
         </div>
     </div>
 
-    <!-- MODAL: APP ICON (Uygulama İkonunu Değiştir) -->
+    <!--  (Uygulama İkonunu Değiştir) -->
     <div class="modal-overlay" id="app-icon-modal">
-        <div class="modal-card" style="max-width: 480px;">
+        <div class="modal-card icon-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>🎨</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+                        <circle cx="9" cy="9" r="2" />
+                        <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
+                    </svg>
                     <span>Uygulama İkonunu Değiştir</span>
                 </div>
                 <button class="btn-close" type="button">&times;</button>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 1.1rem; padding: 0.35rem 0;">
+            <div class="admin-sections-stack">
                 <!-- Live Preview Block -->
-                <div
-                    style="display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 1.25rem; background: var(--bg-surface-elevated); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg);">
-                    <div id="icon-preview-box" class="brand-icon"
-                        style="width: 56px; height: 56px; font-size: 2rem; cursor: default;">⚡</div>
+                <div class="icon-preview-stage">
+                    <div id="icon-preview-box" class="brand-icon icon-preview-box">⚡</div>
                     <div>
-                        <div style="font-weight: 800; font-size: 1.15rem; color: #fff;" id="icon-preview-app-title">App
-                        </div>
-                        <div style="font-size: 0.8rem; color: #38bdf8;" id="icon-preview-caption">Canlı Görünüm
-                            Önizlemesi</div>
+                        <div class="icon-preview-title" id="icon-preview-app-title">HKC</div>
+                        <div class="icon-preview-caption" id="icon-preview-caption">Canlı Görünüm Önizlemesi</div>
                     </div>
                 </div>
 
                 <!-- Preset Emoji Grid -->
                 <div class="form-group-vertical">
                     <label class="input-label">Popüler İkon Seçin</label>
-                    <div class="emoji-picker-grid" id="app-preset-icons-grid"
-                        style="grid-template-columns: repeat(6, 1fr); gap: 0.45rem;">
+                    <div class="emoji-picker-grid cols-6" id="app-preset-icons-grid">
                         <button type="button" class="emoji-opt-btn" data-icon="⚡">⚡</button>
                         <button type="button" class="emoji-opt-btn" data-icon="🛍️">🛍️</button>
                         <button type="button" class="emoji-opt-btn" data-icon="🏬">🏬</button>
@@ -841,21 +1229,24 @@
                 <!-- Custom Emoji or Text input -->
                 <div class="form-group-vertical">
                     <label class="input-label" for="custom-icon-text-input">Veya Özel Emoji / Harf Yazın</label>
-                    <input type="text" id="custom-icon-text-input" placeholder="Örn: 🛒, 🌟, AK, HK" maxlength="4"
-                        style="text-align: center; font-size: 1.1rem; font-weight: 700;">
+                    <input type="text" id="custom-icon-text-input" class="icon-custom-input"
+                        placeholder="Örn: 🛒, 🌟, AK, HK" maxlength="4">
                 </div>
 
                 <!-- Custom Image Upload Option -->
                 <div class="form-group-vertical">
                     <label class="input-label">Veya Kendi Logonuzu / Fotoğrafınızı Yükleyin</label>
-                    <div style="display: flex; gap: 0.5rem; align-items: center;">
-                        <button type="button" class="btn btn-secondary" id="btn-upload-custom-logo"
-                            style="flex: 1; padding: 0.6rem;">
-                            <span>📁</span>
+                    <div class="icon-upload-row">
+                        <button type="button" class="btn btn-secondary" id="btn-upload-custom-logo" style="flex: 1;">
+                            <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" x2="12" y1="3" y2="15" />
+                            </svg>
                             <span>Cihazdan Logo / Fotoğraf Seç</span>
                         </button>
                         <button type="button" class="btn btn-danger btn-sm" id="btn-clear-custom-logo"
-                            style="display: none; padding: 0.6rem;" title="Fotoğrafı Kaldır">
+                            style="display: none;" title="Fotoğrafı Kaldır">
                             ✕ Kaldır
                         </button>
                         <input type="file" id="custom-logo-file-input" accept="image/*" style="display: none;">
@@ -863,12 +1254,15 @@
                 </div>
 
                 <!-- Action buttons -->
-                <div style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
-                        style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                    <button type="button" class="btn btn-primary" id="btn-save-app-icon"
-                        style="padding: 0.65rem 1.5rem; font-weight: 700;">
-                        <span>💾</span>
+                <div class="modal-actions-row">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="window.app.closeAllModals()">Vazgeç</button>
+                    <button type="button" class="btn btn-primary" id="btn-save-app-icon">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                            <polyline points="17 21 17 13 7 13 7 21" />
+                            <polyline points="7 3 7 8 15 8" />
+                        </svg>
                         <span>İkonu Kaydet</span>
                     </button>
                 </div>
@@ -881,20 +1275,21 @@
         <div class="modal-card" style="max-width: 440px;">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>⚡</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                    </svg>
                     <span>Hızlı Seçeneklere Ürün Ekle</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
-            <form id="add-quick-pill-form"
-                style="display: flex; flex-direction: column; gap: 0.95rem; padding: 0.25rem 0;">
+            <form id="add-quick-pill-form" class="edit-item-form">
                 <div class="form-group-vertical">
                     <label class="input-label" for="new-pill-name">Ürün Adı ve Ölçüsü</label>
                     <input type="text" id="new-pill-name" placeholder="Örn: PPRC Boru 20mm, Çelik Dübel 10x80" required
                         autocomplete="off">
                 </div>
                 <div class="form-group-vertical">
-                    <label class="input-label" for="new-pill-qty">Varsayılan Miktar & Birim</label>
+                    <label class="input-label" for="new-pill-qty">Varsayılan Miktar &amp; Birim</label>
                     <input type="text" id="new-pill-qty" placeholder="Örn: 10 kutu, 5 paket, 2 koli, 20 boy"
                         value="1 kutu">
                 </div>
@@ -917,10 +1312,9 @@
                         <button type="button" class="emoji-opt-btn" data-emoji="⚡">⚡</button>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary"
-                    style="margin-top: 0.6rem; justify-content: center; padding: 0.8rem; font-weight: 700;">
-                    <span>➕</span>
-                    <span>Hızlı Seçeneklere Ekle</span>
+                <button type="submit" class="btn btn-primary btn-full-center"
+                    style="margin-top: 0.45rem; padding: 0.8rem;">
+                    <span>+ Hızlı Seçeneklere Ekle</span>
                 </button>
             </form>
         </div>
@@ -928,30 +1322,40 @@
 
     <!-- MODAL: Voice Listening Popup -->
     <div class="modal-overlay" id="voice-modal">
-        <div class="modal-card" style="max-width: 420px;">
+        <div class="modal-card voice-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>🎙️</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                        <line x1="12" x2="12" y1="19" y2="22" />
+                    </svg>
                     <span>Sesle Eksik Yazdırılıyor</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
             <div class="voice-visualizer">
                 <div class="voice-wave-ring">
-                    <span class="voice-wave-icon">🎤</span>
+                    <span class="voice-wave-icon">
+                        <svg class="ui-icon" style="width: 38px; height: 38px;" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" />
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                            <line x1="12" x2="12" y1="19" y2="22" />
+                        </svg>
+                    </span>
                 </div>
                 <div class="voice-transcript-preview" id="voice-transcript-text">
                     Sizi dinliyorum... Lütfen konuşun.
                 </div>
-                <div id="voice-modal-actions" style="display: none; gap: 0.65rem; margin-top: 1.25rem; width: 100%;">
-                    <button type="button" class="btn btn-primary" id="btn-voice-retry" style="flex: 1; justify-content: center; padding: 0.65rem; font-weight: 700;">
-                        🔄 Tekrar Dene
+                <div id="voice-modal-actions" class="voice-modal-actions">
+                    <button type="button" class="btn btn-primary" id="btn-voice-retry" style="flex: 1;">
+                        Tekrar Dene
                     </button>
-                    <button type="button" class="btn btn-secondary" id="btn-voice-keyboard" style="flex: 1; justify-content: center; padding: 0.65rem;">
-                        ⌨️ Klavyeyle Yaz
+                    <button type="button" class="btn btn-secondary" id="btn-voice-keyboard" style="flex: 1;">
+                        Klavyeyle Yaz
                     </button>
                 </div>
-                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:1.25rem;">
+                <div class="voice-examples">
                     Örnek: "10 kutu 4x50 sunta vidası", "2 koli şeffaf silikon acil", "5 paket 8mm dübel", "1 koli koli
                     bandı"
                 </div>
@@ -959,75 +1363,68 @@
         </div>
     </div>
 
-    <!-- MODAL: Confirmation Dialog (No native alert/confirm) -->
+    <!-- MODAL: Confirmation Dialog -->
     <div class="modal-overlay" id="confirm-dialog-modal">
-        <div class="modal-card" style="max-width: 420px; text-align: center;">
-            <div style="font-size: 2.8rem; margin-bottom: 0.75rem;" id="confirm-modal-icon">⚠️</div>
-            <h3 id="confirm-modal-title"
-                style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Onay Gerekiyor</h3>
-            <p id="confirm-modal-desc"
-                style="font-size: 0.9rem; color: #94a3b8; line-height: 1.5; margin-bottom: 1.35rem;">Bu işlemi yapmak
-                istediğinize emin misiniz?</p>
-            <div style="display: flex; gap: 0.75rem; justify-content: center;">
-                <button type="button" class="btn btn-secondary" id="confirm-modal-btn-cancel"
-                    style="flex: 1; padding: 0.75rem; font-weight: 700;">Vazgeç</button>
-                <button type="button" class="btn btn-danger" id="confirm-modal-btn-ok"
-                    style="flex: 1; padding: 0.75rem; font-weight: 700;">Evet, Devam Et</button>
+        <div class="modal-card confirm-modal-card">
+            <div class="confirm-icon-circle" id="confirm-modal-icon">⚠️</div>
+            <h3 id="confirm-modal-title" class="confirm-modal-title">Onay Gerekiyor</h3>
+            <p id="confirm-modal-desc" class="confirm-modal-desc">Bu işlemi yapmak istediğinize emin misiniz?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="btn btn-secondary" id="confirm-modal-btn-cancel">Vazgeç</button>
+                <button type="button" class="btn btn-danger" id="confirm-modal-btn-ok">Evet, Devam Et</button>
             </div>
         </div>
     </div>
 
     <!-- MODAL: Import Backup Preview & Confirmation -->
     <div class="modal-overlay" id="import-backup-modal">
-        <div class="modal-card" style="max-width: 460px;">
+        <div class="modal-card import-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>📥</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" x2="12" y1="3" y2="15" />
+                    </svg>
                     <span>Yedek Dosyasını İçe Aktar</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
             <div style="margin-bottom: 1.25rem;">
-                <div
-                    style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.25); border-radius: var(--radius-md); padding: 0.9rem; margin-bottom: 1rem;">
-                    <div style="font-size: 0.8rem; color: #a5b4fc; margin-bottom: 0.35rem;" id="import-file-name">📁
-                        dosya.json</div>
-                    <div style="font-size: 0.98rem; font-weight: 800; color: #fff;" id="import-summary-text">Yedek
-                        dosyası inceleniyor...</div>
+                <div class="import-summary-box">
+                    <div class="import-file-name" id="import-file-name">dosya.json</div>
+                    <div class="import-summary-text" id="import-summary-text">Yedek dosyası inceleniyor...</div>
                 </div>
 
-                <div style="font-size: 0.82rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.6rem;">Yükleme
-                    Yöntemini Seçin:</div>
+                <div class="import-mode-heading">Yükleme Yöntemini Seçin:</div>
 
-                <label
-                    style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--radius-sm); margin-bottom: 0.6rem; cursor: pointer;">
-                    <input type="radio" name="import-mode" value="merge" checked style="margin-top: 0.25rem;">
+                <label class="import-mode-option">
+                    <input type="radio" name="import-mode" value="merge" checked>
                     <div>
-                        <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem;">🔄 Mevcut Listeyle Birleştir
-                            (Tavsiye Edilen)</div>
-                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Şu anki dükkan ürünleriniz
-                            silinmez, yedekteki ürünler listenize eklenir / güncellenir.</div>
+                        <div class="import-mode-title">Mevcut Listeyle Birleştir (Tavsiye Edilen)</div>
+                        <div class="import-mode-desc">Şu anki dükkan ürünleriniz silinmez, yedekteki ürünler listenize
+                            eklenir / güncellenir.</div>
                     </div>
                 </label>
 
-                <label
-                    style="display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem; background: #141724; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: var(--radius-sm); cursor: pointer;">
-                    <input type="radio" name="import-mode" value="replace" style="margin-top: 0.25rem;">
+                <label class="import-mode-option is-danger">
+                    <input type="radio" name="import-mode" value="replace">
                     <div>
-                        <div style="font-weight: 700; color: #f87171; font-size: 0.88rem;">⚠️ Listeyi Temizle ve
-                            Sıfırdan Yükle</div>
-                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 0.15rem;">Mevcut ürünler temizlenir,
-                            sadece yedek dosyasındaki ürünler yüklenir.</div>
+                        <div class="import-mode-title">Listeyi Temizle ve Sıfırdan Yükle</div>
+                        <div class="import-mode-desc">Mevcut ürünler temizlenir, sadece yedek dosyasındaki ürünler
+                            yüklenir.</div>
                     </div>
                 </label>
             </div>
 
-            <div style="display: flex; gap: 0.75rem; justify-content: flex-end;">
-                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
-                    style="padding: 0.65rem 1.25rem;">Vazgeç</button>
-                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup"
-                    style="padding: 0.65rem 1.35rem; font-weight: 800;">
-                    <span>📥</span>
+            <div class="modal-actions-row">
+                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()">Vazgeç</button>
+                <button type="button" class="btn btn-primary" id="btn-confirm-import-backup">
+                    <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" x2="12" y1="3" y2="15" />
+                    </svg>
                     <span>Yedeği Şimdi Yükle</span>
                 </button>
             </div>
@@ -1036,50 +1433,53 @@
 
     <!-- MODAL: Geçmiş Otomatik Yedekler ve Geri Yükleme -->
     <div class="modal-overlay" id="server-backups-modal">
-        <div class="modal-card" style="max-width: 650px; width: 95%;">
+        <div class="modal-card backups-modal-card">
             <div class="modal-header">
                 <div class="modal-title">
-                    <span>🛡️</span>
+                    <svg class="ui-icon ui-icon-md" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    </svg>
                     <span>Otomatik Güvenlik Yedekleri</span>
                 </div>
-                <button class="btn-close">&times;</button>
+                <button type="button" class="btn-close">&times;</button>
             </div>
 
-            <div style="margin-bottom: 0.85rem;">
-                <p style="font-size: 0.84rem; color: var(--text-secondary); margin: 0 0 0.75rem 0; line-height: 1.45;">
+            <div>
+                <p class="backups-intro">
                     Sistem tarafından dükkanınız için otomatik alınan son 35 güvenlik yedeği aşağıdadır. İstediğiniz
                     yedeği indirebilir veya <strong>"Geri Yükle"</strong> butonuna tıklayarak ürünlerinizi o tarihteki
                     haline tek tıkla döndürebilirsiniz.
                 </p>
-                <div
-                    style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:var(--radius-sm); padding:0.6rem 0.85rem; margin-bottom:0.75rem;">
-                    <span style="font-size:0.8rem; color:#94a3b8;">Otomatik Koruma: <strong style="color:#10b981;">🟢
-                            7/24 Aktif</strong></span>
-                    <button type="button" class="btn btn-secondary" id="btn-refresh-backups-list"
-                        style="padding:0.35rem 0.65rem; font-size:0.78rem;">
-                        🔄 Yenile
+                <div class="backups-status-strip">
+                    <span class="backups-status-label">Otomatik Koruma: <strong>7/24 Aktif</strong></span>
+                    <button type="button" class="btn btn-secondary btn-xs" id="btn-refresh-backups-list">
+                        <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                            <path d="M21 3v5h-5" />
+                            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                            <path d="M8 16H3v5" />
+                        </svg>
+                        <span>Yenile</span>
                     </button>
                 </div>
             </div>
 
             <!-- Backups List Container -->
-            <div id="server-backups-list"
-                style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 0.6rem; padding-right: 0.25rem;">
-                <div style="text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.88rem;">
-                    ⏳ Yedekler listeleniyor...
-                </div>
+            <div id="server-backups-list" class="backups-list-scroll">
+                <div class="backups-empty-state">Yedekler listeleniyor...</div>
             </div>
 
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255, 255, 255, 0.08);">
-                <button type="button" class="btn btn-primary" id="btn-modal-instant-backup"
-                    style="padding: 0.6rem 1rem; font-size: 0.85rem;">
-                    <span>💾</span><span>Şimdi Yeni Yedek Al</span>
+            <div class="backups-modal-footer">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-modal-instant-backup">
+                    <svg class="ui-icon ui-icon-sm" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    <span>Şimdi Yeni Yedek Al</span>
                 </button>
-                <button type="button" class="btn btn-secondary" onclick="window.app.closeAllModals()"
-                    style="padding: 0.6rem 1.2rem;">
-                    Kapat
-                </button>
+                <button type="button" class="btn btn-secondary btn-sm"
+                    onclick="window.app.closeAllModals()">Kapat</button>
             </div>
         </div>
     </div>
@@ -1097,13 +1497,12 @@
         }
     </script>
 
-
     <!-- App Scripts with Cache Busting -->
     <script src="/js/duplicate-detector.js?v=20261017_2358"></script>
     <script src="/js/audio.js?v=20261017_2358"></script>
     <script src="/js/speech.js?v=20261017_2358"></script>
-    <script src="/js/export.js?v=20261021_notes"></script>
-    <script src="/js/app.js?v=20261021_names"></script>
+    <script src="/js/export.js?v=20261124_deluxe"></script>
+    <script src="/js/app.js?v=20261124_deluxe3"></script>
     <script>
         document.getElementById('print-date').textContent = new Date().toLocaleString('tr-TR');
     </script>

@@ -1,6 +1,6 @@
 //  Web Push & Background Service Worker
-// Çevrimdışı çalışma: uygulama dosyaları ve son liste önbellekte tutulur
-const CACHE_NAME = 'eksik-app-v1';
+// Çevrimdışı çalışma: uygulama kabuğu önbellekte, veriler localStorage önbelleğinde tutulur
+const CACHE_NAME = 'eksik-app-v4-deluxe3';
 const APP_SHELL = [
     '/',
     '/css/style.css',
@@ -40,7 +40,7 @@ self.addEventListener('fetch', (event) => {
     const isFont = url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com';
     if (!isSameOrigin && !isFont) return;
     if (isSameOrigin && url.pathname.startsWith('/socket.io/') && url.pathname !== '/socket.io/socket.io.js') return;
-    if (isSameOrigin && (url.pathname.startsWith('/api/push') || url.pathname.startsWith('/api/backups'))) return;
+    if (isSameOrigin && url.pathname.startsWith('/api/')) return;
 
     event.respondWith(
         fetch(req)
@@ -71,8 +71,8 @@ self.addEventListener('push', (event) => {
     let data = {
         title: '🛍️ Yeni Eksik Ürün!',
         body: 'Listeye yeni bir eksik ürün eklendi.',
-        icon: '/img/icon-192.png',
-        badge: '/img/icon-192.png',
+        icon: '/images/logo.jpg',
+        badge: '/images/logo.jpg',
         tag: 'eksik-item-' + Date.now(),
         data: { url: '/' }
     };
@@ -88,8 +88,8 @@ self.addEventListener('push', (event) => {
 
     const options = {
         body: data.body,
-        icon: data.icon || '/img/icon-192.png',
-        badge: data.badge || '/img/icon-192.png',
+        icon: data.icon || '/images/logo.jpg',
+        badge: data.badge || '/images/logo.jpg',
         tag: data.tag || 'eksik-app-notification',
         renotify: true,
         vibrate: [250, 100, 250, 100, 250],

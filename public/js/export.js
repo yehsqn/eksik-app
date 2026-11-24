@@ -1,11 +1,25 @@
 // PDF / Print Order Sheet Manager
 class ExportManager {
+    escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     // Generate and open clean, well-structured PDF print dialog
-    printOrderSheet(items, shopName = 'Dükkan') {
-        const activeItems = (items || []).filter(i => i.status !== 'completed');
+    printOrderSheet(items, shopName = 'HKC') {
+        const activeItems = (items || []).filter(i => i.status !== 'completed' && i.status !== 'deleted');
 
         if (activeItems.length === 0) {
-            alert('Yazdırılacak / PDF yapılacak aktif eksik ürün bulunmuyor.');
+            if (window.app && typeof window.app.showToast === 'function') {
+                window.app.showToast('Yazdırılacak / PDF yapılacak aktif eksik ürün bulunmuyor.');
+            } else {
+                alert('Yazdırılacak / PDF yapılacak aktif eksik ürün bulunmuyor.');
+            }
             return;
         }
 
@@ -17,10 +31,10 @@ class ExportManager {
             groups[sup].push(item);
         });
 
+        const safeShop = this.escapeHtml((shopName || 'HKC').trim() || 'HKC');
         const dateStr = new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         const timeStr = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
 
-        // Build clean printable document inside print container
         let printArea = document.getElementById('pdf-print-area');
         if (!printArea) {
             printArea = document.createElement('div');
@@ -29,8 +43,8 @@ class ExportManager {
         }
 
         const urgencyLabel = (u) => {
-            if (u === 'critical') return '<span class="print-urgent">🔴 YOK SATIYOR</span>';
-            if (u === 'urgent') return '<span class="print-urgent">🚨 ACİL</span>';
+            if (u === 'critical') return '<span class="print-urgent">YOK SATIYOR</span>';
+            if (u === 'urgent') return '<span class="print-urgent">ACİL</span>';
             return 'Normal';
         };
 
@@ -38,7 +52,7 @@ class ExportManager {
             <div class="pdf-container">
                 <div class="pdf-header">
                     <div class="pdf-title-block">
-                        <h1>HKC EKSİK LİSTESİ</h1>
+                        <h1>${safeShop.toLocaleUpperCase('tr-TR')} EKSİK LİSTESİ</h1>
                         <p class="pdf-meta">Tarih: ${dateStr} ${timeStr} | Toplam Çeşit: <strong>${activeItems.length} Ürün</strong></p>
                     </div>
                 </div>
@@ -46,9 +60,10 @@ class ExportManager {
 
         Object.keys(groups).forEach(supplier => {
             const supItems = groups[supplier];
+            const safeSup = this.escapeHtml(supplier.toLocaleUpperCase('tr-TR'));
             html += `
                 <div class="pdf-supplier-section">
-                    <div class="pdf-supplier-title">🏢 TOPTANCI: ${supplier.toUpperCase()} (${supItems.length} Çeşit)</div>
+                    <div class="pdf-supplier-title">TOPTANCI: ${safeSup} (${supItems.length} Çeşit)</div>
                     <table class="pdf-table">
                         <thead>
                             <tr>
@@ -60,13 +75,13 @@ class ExportManager {
                             </tr>
                         </thead>
                         <tbody>
-                            ${supItems.map((item, idx) => `
+                            ${supItems.map(item => `
                                 <tr>
                                     <td style="text-align: center;"><div class="print-checkbox"></div></td>
-                                    <td class="pdf-item-name">${item.name}</td>
-                                    <td class="pdf-item-qty"><strong>${item.quantity}</strong></td>
+                                    <td class="pdf-item-name">${this.escapeHtml(item.name)}</td>
+                                    <td class="pdf-item-qty"><strong>${this.escapeHtml(item.quantity)}</strong></td>
                                     <td>${urgencyLabel(item.urgency)}</td>
-                                    <td style="color:#555; font-size:12px;">${item.notes || '-'}</td>
+                                    <td style="color:#475569; font-size:12px;">${item.notes ? this.escapeHtml(item.notes) : '-'}</td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -77,18 +92,15 @@ class ExportManager {
 
         html += `
                 <div class="pdf-footer">
-                    <div>Bu liste SQNOVA SOFTWARE-App uygulaması ile oluşturulmuştur.</div>
+                    <div>Bu liste ${safeShop} Eksik &amp; Sipariş Takip Sistemi ile oluşturulmuştur.</div>
                 </div>
             </div>
-            
         `;
 
         printArea.innerHTML = html;
 
-        // Trigger browser print dialog (Users can select "Save as PDF" / "PDF olarak kaydet" or Print)
-        // "PDF olarak kaydet" dosya adı sayfa başlığından gelir
         const originalTitle = document.title;
-        document.title = 'HKC Eksik Listesi';
+        document.title = `${(shopName || 'HKC').trim() || 'HKC'} Eksik Listesi`;
         window.addEventListener('afterprint', () => { document.title = originalTitle; }, { once: true });
 
         setTimeout(() => {

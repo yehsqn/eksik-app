@@ -1,7 +1,38 @@
 const { createClient } = require('@libsql/client');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 require('dotenv').config();
+
+function hashPassword(plain) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const derived = crypto.scryptSync(String(plain), salt, 64).toString('hex');
+    return `scrypt$${salt}$${derived}`;
+}
+
+function verifyPassword(plain, stored) {
+    const storedStr = String(stored || '');
+    const plainStr = String(plain || '');
+    if (storedStr.startsWith('scrypt$')) {
+        const parts = storedStr.split('$');
+        if (parts.length !== 3) return { valid: false, needsMigration: false };
+        const [, salt, keyHex] = parts;
+        try {
+            const expectedBuf = Buffer.from(keyHex, 'hex');
+            const actualBuf = crypto.scryptSync(plainStr, salt, expectedBuf.length);
+            if (expectedBuf.length !== actualBuf.length) {
+                return { valid: false, needsMigration: false };
+            }
+            return { valid: crypto.timingSafeEqual(expectedBuf, actualBuf), needsMigration: false };
+        } catch (e) {
+            return { valid: false, needsMigration: false };
+        }
+    }
+    const a = Buffer.from(plainStr, 'utf8');
+    const b = Buffer.from(storedStr, 'utf8');
+    const valid = a.length === b.length && crypto.timingSafeEqual(a, b);
+    return { valid, needsMigration: valid };
+}
 
 const DATA_DIR = path.join(__dirname, 'data');
 if (!fs.existsSync(DATA_DIR)) {
@@ -22,7 +53,7 @@ const dbConfig = isTurso
 
 const client = createClient(dbConfig);
 
-console.log(isTurso ? '☁️ Turso Bulut Veritabanına Bağlanıldı' : '💾 Yerel SQLite / LibSQL Veritabanı Aktif');
+console.log(isTurso ? 'Sistem Aktif' : 'Sistem Yerel');
 
 // "Şeffaf  Silikon " ve "şeffaf silikon" aynı ürün sayılsın
 function normalizeNameKey(name) {
@@ -43,15 +74,21 @@ async function initDb() {
             notes TEXT DEFAULT '',
             image TEXT DEFAULT '',
             barcode TEXT DEFAULT '',
+            addedBy TEXT DEFAULT '',
             createdAt TEXT NOT NULL,
             updatedAt TEXT NOT NULL,
             source TEXT DEFAULT 'web'
         )
     `);
 
-    // Migration: add image column if table already existed without it
+    // Migration: add image & addedBy columns if table already existed without them
     try {
         await client.execute('ALTER TABLE items ADD COLUMN image TEXT DEFAULT ""');
+    } catch (e) {
+        // Column already exists, safe to ignore
+    }
+    try {
+        await client.execute('ALTER TABLE items ADD COLUMN addedBy TEXT DEFAULT ""');
     } catch (e) {
         // Column already exists, safe to ignore
     }
@@ -148,14 +185,29 @@ async function initDb() {
         console.error('Eksik geçmişi aktarma hatası:', e.message);
     }
 
-    // Insert default admin user if none exists
-    const users = await client.execute('SELECT * FROM users LIMIT 1');
+    // Insert default admin user if none exists, and migrate any legacy plaintext passwords
+    const users = await client.execute('SELECT id, password FROM users');
     if (users.rows.length === 0) {
         await client.execute({
             sql: 'INSERT INTO users (id, username, password, role, createdAt) VALUES (?, ?, ?, ?, ?)',
-            args: ['user_default_admin', 'admin', '123', 'admin', new Date().toISOString()]
+            args: ['user_default_admin', 'admin', hashPassword('123'), 'admin', new Date().toISOString()]
         });
-        console.log('👤 Varsayılan kullanıcı: admin / 123');
+        console.log('👤 Varsayılan kullanıcı oluşturuldu');
+    } else {
+        let migratedCount = 0;
+        for (const u of users.rows) {
+            const pwdStr = String(u.password || '');
+            if (!pwdStr.startsWith('scrypt$')) {
+                await client.execute({
+                    sql: 'UPDATE users SET password = ? WHERE id = ?',
+                    args: [hashPassword(pwdStr), u.id]
+                });
+                migratedCount++;
+            }
+        }
+        if (migratedCount > 0) {
+            console.log(`🔐 ${migratedCount} kullanıcı şifresi güvenli hash formatına yükseltildi`);
+        }
     }
 
     // Insert default initial suppliers if empty
@@ -180,12 +232,14 @@ async function initDb() {
             sql: "INSERT OR IGNORE INTO settings (key, value) VALUES ('app_icon', ?)",
             args: [JSON.stringify({ icon: '/images/logo.jpg', isImage: true })]
         });
-    } catch (e) {}
+    } catch (e) { }
 }
 
 module.exports = {
     client,
     initDb,
     isTurso,
-    normalizeNameKey
+    normalizeNameKey,
+    hashPassword,
+    verifyPassword
 };
